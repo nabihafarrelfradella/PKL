@@ -1,0 +1,72 @@
+<!-- MODAL HAPUS -->
+<div class="modal fade" data-bs-backdrop="static" id="Hmodaldemo8">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-body text-center p-4 pb-5">
+                <button type="reset" aria-label="Close" onclick="resetH()" class="btn-close position-absolute" data-bs-dismiss="modal"><span aria-hidden="true">×</span></button>
+                <br>
+                <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
+                <h3 class="mb-5">Yakin hapus <span id="vbarang"></span> ?</h3>
+                <input type="hidden" name="idbarang" id="idbarang">
+                <button class="btn btn-danger-light pd-x-25 d-none" id="btnLoaderH" type="button" disabled="">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading...
+                </button>
+                <button onclick="submitFormH()" class="btn btn-danger-light pd-x-25" id="btnSubmit">Iya</button>
+                <button type="reset" data-bs-dismiss="modal" class="btn btn-default pd-x-25">Batal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function submitFormH() {
+        setLoadingH(true);
+        const id = $("input[name='idbarang']").val();
+        $.ajax({
+            type: 'POST',
+            url: "{{url('admin/barang/proses_hapus')}}/" + id,
+            data: {
+                _token: "{{csrf_token()}}"
+            },
+            success: function(data) {
+                if (data.success) {
+                    swal({
+                        title: "Berhasil dihapus!",
+                        type: "success"
+                    });
+                    $('#Hmodaldemo8').modal('toggle');
+                    table.ajax.reload(null, false);
+                    resetH();
+                } else {
+                    validasi(data.error, 'error');
+                    setLoadingH(false);
+                }
+            },
+            error: function(xhr) {
+                var errorMsg = 'Gagal menghapus data!';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.status == 500) {
+                    errorMsg = 'Terjadi kesalahan sistem (500)!';
+                }
+                validasi(errorMsg, 'error');
+                setLoadingH(false);
+            }
+        });
+    }
+    function resetH() {
+        $("input[name='idbarang']").val('');
+        setLoadingH(false);
+    }
+    function setLoadingH(bool) {
+        if (bool == true) {
+            $('#btnLoaderH').removeClass('d-none');
+            $('#btnSubmit').addClass('d-none');
+        } else {
+            $('#btnSubmit').removeClass('d-none');
+            $('#btnLoaderH').addClass('d-none');
+        }
+    }
+</script>
