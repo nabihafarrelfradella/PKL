@@ -106,7 +106,6 @@ class BarangController extends Controller
                         "jenisbarang_id" => $row->jenisbarang_id,
                         "satuan_id" => $row->satuan_id,
                         "merk_id" => $row->merk_id,
-                        "barang_id" => $row->barang_id,
                         "barang_kode" => $row->barang_kode,
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
                         "barang_harga" => $row->barang_harga,
@@ -120,20 +119,20 @@ class BarangController extends Controller
                     if ($hakEdit > 0 && $hakDelete > 0) {
                         $button .= '
                         <div class="g-2">
-                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
+                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>
+                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-trash-2 fs-14"></span></a>
                         </div>
                         ';
                     } else if ($hakEdit > 0 && $hakDelete == 0) {
                         $button .= '
                         <div class="g-2">
-                            <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
+                            <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>
                         </div>
                         ';
                     } else if ($hakEdit == 0 && $hakDelete > 0) {
                         $button .= '
                         <div class="g-2">
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
+                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-trash-2 fs-14"></span></a>
                         </div>
                         ';
                     } else {
@@ -224,13 +223,13 @@ class BarangController extends Controller
                     if ($request->get('param') == 'tambah') {
                         $button .= '
                         <div class="g-2">
-                            <a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick=pilihBarang(' . json_encode($array) . ')>Pilih</a>
+                            <a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="pilihBarang(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')">Pilih</a>
                         </div>
                         ';
                     } else {
                         $button .= '
                     <div class="g-2">
-                        <a class="btn btn-success btn-sm" href="javascript:void(0)" onclick=pilihBarangU(' . json_encode($array) . ')>Pilih</a>
+                        <a class="btn btn-success btn-sm" href="javascript:void(0)" onclick="pilihBarangU(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')">Pilih</a>
                     </div>
                     ';
                     }
@@ -266,7 +265,7 @@ class BarangController extends Controller
             'barang_nama' => $request->nama,
             'barang_slug' => $slug,
             'barang_harga' => $request->harga,
-            'barang_stok' => 0,
+            'barang_stok' => $request->stok,
 
         ]);
 

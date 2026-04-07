@@ -9,9 +9,26 @@ use App\Models\Admin\RoleModel;
 use App\Models\Admin\SubmenuModel;
 use App\Models\Admin\UserModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class AksesController extends Controller
 {
+    private function logActivity($activity, $details)
+    {
+        $user = Session::get('user');
+        DB::table('tbl_audit_log')->insert([
+            'user_id' => $user->user_id,
+            'role_slug' => $user->role_slug,
+            'activity' => $activity,
+            'module' => 'Access Control',
+            'details' => $details,
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+    }
+
     public function index($role)
     {
         $data["title"] = "Akses";
@@ -48,6 +65,8 @@ class AksesController extends Controller
             ]);
         }
 
+        $this->logActivity('GRANT_ACCESS', "Granted {$akses} access for {$type} (ID: {$idmenu}) to role_id: {$idrole}");
+
         $data['title'] = "Akses";
 
         //redirect to index
@@ -63,6 +82,8 @@ class AksesController extends Controller
         } else if ($type == 'othermenu') {
             AksesModel::where(array('othermenu_id' => $idmenu, 'role_id' => $idrole, 'akses_type' => $akses))->delete();
         }
+
+        $this->logActivity('REVOKE_ACCESS', "Revoked {$akses} access for {$type} (ID: {$idmenu}) from role_id: {$idrole}");
 
         $data['title'] = "Akses";
         //redirect to index
@@ -182,6 +203,8 @@ class AksesController extends Controller
         AksesModel::insert($object2);
         AksesModel::insert($object3);
 
+        $this->logActivity('GRANT_ALL_ACCESS', "Granted ALL access to role_id: {$idrole}");
+
         $data['title'] = "Akses";
         //redirect to index
         return redirect(url('admin/akses/' . $idrole))->with($data);
@@ -190,6 +213,8 @@ class AksesController extends Controller
     public function unsetAllAkses($idrole)
     {
         AksesModel::where(array('role_id' => $idrole))->delete();
+
+        $this->logActivity('REVOKE_ALL_ACCESS', "Revoked ALL access from role_id: {$idrole}");
 
         $data['title'] = "Akses";
         //redirect to index

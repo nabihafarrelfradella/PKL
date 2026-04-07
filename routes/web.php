@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\LoginController;
 use App\Http\Controllers\Admin\MerkController;
 use App\Http\Controllers\Master\AksesController;
 use App\Http\Controllers\Master\AppreanceController;
+use App\Http\Controllers\Master\AuditController;
 use App\Http\Controllers\Master\MenuController;
 use App\Http\Controllers\Master\RoleController;
 use App\Http\Controllers\Master\UserController;
@@ -43,8 +44,6 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::get('/admin/profile/{user}', [UserController::class, 'profile']);
     Route::post('/admin/updatePassword/{user}', [UserController::class, 'updatePassword']);
     Route::post('/admin/updateProfile/{user}', [UserController::class, 'updateProfile']);
-    Route::get('/admin/appreance/', [AppreanceController::class, 'index']);
-    Route::post('/admin/appreance/{setting}', [AppreanceController::class, 'update']);
 
     Route::middleware(['checkRoleUser:/dashboard,menu'])->group(function () {
         Route::get('/', [DashboardController::class, 'index']);
@@ -73,11 +72,11 @@ Route::group(['middleware' => 'userlogin'], function () {
 
     Route::middleware(['checkRoleUser:/barang,submenu'])->group(function () {
         // Barang
-        Route::resource('/admin/barang', \App\Http\Controllers\Admin\BarangController::class);
+        Route::get('/admin/barang', [BarangController::class, 'index']);
         Route::get('/admin/barang/show/', [BarangController::class, 'show'])->name('barang.getbarang');
         Route::post('/admin/barang/proses_tambah/', [BarangController::class, 'proses_tambah'])->name('barang.store');
-        Route::post('/admin/barang/proses_ubah/{barang}', [BarangController::class, 'proses_ubah']);
-        Route::post('/admin/barang/proses_hapus/{barang}', [BarangController::class, 'proses_hapus']);
+        Route::post('/admin/barang/proses_ubah/{id}', [BarangController::class, 'proses_ubah']);
+        Route::post('/admin/barang/proses_hapus/{id}', [BarangController::class, 'proses_hapus']);
     });
 
     Route::middleware(['checkRoleUser:/customer,menu'])->group(function () {
@@ -137,11 +136,14 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::middleware(['checkRoleUser:1,othermenu'])->group(function () {
 
         Route::middleware(['checkRoleUser:2,othermenu'])->group(function () {
-            // Menu
-            Route::resource('/admin/menu', \App\Http\Controllers\Master\MenuController::class);
-            Route::post('/admin/menu/hapus', [MenuController::class, 'hapus']);
-            Route::get('/admin/menu/sortup/{sort}', [MenuController::class, 'sortup']);
-            Route::get('/admin/menu/sortdown/{sort}', [MenuController::class, 'sortdown']);
+            // Audit Trail
+            Route::get('/admin/audit', [AuditController::class, 'index'])->name('audit.index');
+            Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('audit.getaudit');
+            
+            // Legacy Redirect for Menu (since it was replaced by Audit Trail)
+            Route::get('/admin/menu', function() {
+                return redirect()->route('audit.index');
+            });
         });
 
         Route::middleware(['checkRoleUser:3,othermenu'])->group(function () {

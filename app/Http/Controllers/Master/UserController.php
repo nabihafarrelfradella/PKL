@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\RoleModel;
 use App\Models\Admin\UserModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -13,6 +14,21 @@ use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
+    private function logActivity($activity, $details)
+    {
+        $user = Session::get('user');
+        DB::table('tbl_audit_log')->insert([
+            'user_id' => $user->user_id,
+            'role_slug' => $user->role_slug,
+            'activity' => $activity,
+            'module' => 'User Management',
+            'details' => $details,
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+    }
+
     public function index()
     {
         $data["title"] = "User";
@@ -59,8 +75,8 @@ class UserController extends Controller
                     $button = '';
                     $button .= '
                     <div class="g-2">
-                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
+                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=\'update(' . json_encode($array) . ')\'><span class="fe fe-edit text-success fs-14"></span></a>
+                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=\'hapus(' . json_encode($array) . ')\'><span class="fe fe-trash-2 fs-14"></span></a>
                     </div>
                     ';
                     return $button;
@@ -84,7 +100,7 @@ class UserController extends Controller
 
 
         //create post
-        UserModel::create([
+        $user = UserModel::create([
             'user_foto' => $img,
             'user_nmlengkap' => $request->nmlengkap,
             'user_nama'   => $request->username,
@@ -92,6 +108,8 @@ class UserController extends Controller
             'role_id' => $request->role,
             'user_password' => md5($request->pwd)
         ]);
+
+        $this->logActivity('CREATE', "Created user: {$user->user_nama} ({$user->user_email}) with role_id: {$user->role_id}");
 
         $data['title'] = "User";
         Session::flash('status', 'success');
@@ -114,7 +132,7 @@ class UserController extends Controller
             //delete old image
             Storage::delete('public/users/' . $user->user_foto);
 
-            if ($request->pwd == '') {
+            if ($request->pwdU == '') {
                 //update post with new image
                 $user->update([
                     'user_foto'     => $image->hashName(),
@@ -135,7 +153,7 @@ class UserController extends Controller
                 ]);
             }
         } else {
-            if ($request->pwd == '') {
+            if ($request->pwdU == '') {
                 //update post without image
                 $user->update([
                     'user_nmlengkap' => $request->nmlengkapU,
@@ -155,6 +173,8 @@ class UserController extends Controller
             }
         }
 
+        $this->logActivity('UPDATE', "Updated user: {$user->user_nama} (user_id: {$user->user_id})");
+
         $data['title'] = "User";
         Session::flash('status', 'success');
         Session::flash('msg', 'Berhasil diubah!');
@@ -170,6 +190,7 @@ class UserController extends Controller
             $user->update([
                 'user_password' => md5($request->newpassword)
             ]);
+            $this->logActivity('UPDATE_PASSWORD', "Updated password for user: {$user->user_nama} (user_id: {$user->user_id})");
             Session::flash('status', 'success');
             Session::flash('msg', 'Password berhasil di ubah!');
         } else {
@@ -231,6 +252,8 @@ class UserController extends Controller
 
         //delete post
         UserModel::findOrFail($request->iduser)->delete();
+
+        $this->logActivity('DELETE', "Deleted user: {$detail->user_nama} (user_id: {$request->iduser})");
 
         $data['title'] = "User";
         Session::flash('status', 'success');

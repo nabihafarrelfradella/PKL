@@ -7,11 +7,12 @@ use App\Models\Admin\SubmenuModel; ?>
 @section('content')
 <!-- PAGE-HEADER -->
 <div class="page-header">
-    <h1 class="page-title">Akses</h1>
+    <h1 class="page-title">Access Control</h1>
     <div>
         <ol class="breadcrumb">
-            <li class="breadcrumb-item text-gray">Settings</li>
-            <li class="breadcrumb-item active" aria-current="page">Akses</li>
+            <li class="breadcrumb-item text-gray">Master Data</li>
+            <li class="breadcrumb-item text-gray">User Management</li>
+            <li class="breadcrumb-item active" aria-current="page">Access Control</li>
         </ol>
     </div>
 </div>
@@ -73,6 +74,7 @@ use App\Models\Admin\SubmenuModel; ?>
                         </thead>
                         <tbody>
                             @foreach($menu as $m)
+                            @if($m->menu_judul != 'User' && $m->menu_judul != 'Settings')
                             <tr>
                                 <td>
                                     <span class="fw-bold">
@@ -153,6 +155,7 @@ use App\Models\Admin\SubmenuModel; ?>
                                     @endif
                                 </td>
                             </tr>
+                            @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -161,6 +164,7 @@ use App\Models\Admin\SubmenuModel; ?>
                 <h4 class="text-gray">Hak Akses Sub Menu <span class="badge bg-primary badge-sm">{{$detailrole == '' ? '' : $detailrole->role_title}}</span></h4>
                 @endif
                 @foreach($menusub as $ms)
+                @if($ms->menu_judul != 'User')
                 <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
                     <h6 class="fw-bold">{{$ms->menu_judul}}</h6>
                     <?php
@@ -306,8 +310,10 @@ use App\Models\Admin\SubmenuModel; ?>
                         </tbody>
                     </table>
                 </div>
+                @endif
                 @endforeach
 
+                @if($detailrole->role_id == 1)
                 <div class="d-flex justify-content-between mb-2">
                     <h4 class="text-gray">Hak Akses Settings <span class="badge bg-primary badge-sm">{{$detailrole == '' ? '' : $detailrole->role_title}}</span></h4>
                     <?php
@@ -777,6 +783,7 @@ use App\Models\Admin\SubmenuModel; ?>
                         </tbody>
                     </table>
                 </div>
+                @endif
 
                 @endif
 

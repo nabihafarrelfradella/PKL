@@ -27,16 +27,37 @@ class LoginController extends Controller
 
         if ($getCount > 0) {
             $query = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')->select()->where($where)->first();
+            
+            // Overhaul: Strict Role-Based Authentication
+            // Only Admin (role_id 1) and Staff Gudang (role_id 2) are allowed to login
+            if ($query->role_id != 1 && $query->role_id != 2) {
+                Session::flash('status', 'error');
+                Session::flash('msg', 'Role Anda tidak diizinkan untuk login!');
+                return redirect(URL::previous());
+            }
+
             $role = AksesModel::where('role_id', '=', $query->role_id)->get();
 
             $request->session()->put('user', $query);
             $request->session()->put('user_role', $role);
 
+            // Audit Logging: Successful Login
+            \Illuminate\Support\Facades\DB::table('tbl_audit_log')->insert([
+                'user_id' => $query->user_id,
+                'role_slug' => $query->role_slug,
+                'activity' => 'Login',
+                'module' => 'Auth',
+                'details' => 'User logged into the system',
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
             Session::flash('status', 'success');
             Session::flash('msg', 'Selamat Datang ' . $query->user_nmlengkap);
 
-            //redirect to index
-            return redirect(URL::previous());
+            //redirect to dashboard
+            return redirect('/admin/dashboard');
         } else {
             Session::flash('status', 'error');
             Session::flash('msg', 'User password tidak cocok!');
