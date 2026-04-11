@@ -25,6 +25,23 @@
                 </div>
                 @endif
             </div>
+            <!-- FILTER BAR -->
+            <div class="card-body border-bottom pb-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Nama Barang</label>
+                        <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">Serial Number</label>
+                        <input type="text" id="filterSerial" class="form-control form-control-sm" placeholder="Cari serial number...">
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fe fe-search me-1"></i>Cari</button>
+                        <button class="btn btn-light btn-sm ms-1" onclick="resetFilter()"><i class="fe fe-x me-1"></i>Reset</button>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
@@ -121,6 +138,10 @@
             lengthChange: true,
             "ajax": {
                 "url": "{{route('barang.getbarang')}}",
+                "data": function(d) {
+                    d.filter_nama   = $('#filterNama').val();
+                    d.filter_serial = $('#filterSerial').val();
+                }
             },
             "columns": [{
                     data: 'DT_RowIndex',
@@ -177,6 +198,21 @@
                 },
             ],
         });
+
+        // Filter on Enter key
+        $('#filterNama, #filterSerial').on('keypress', function(e) {
+            if (e.which === 13) doFilter();
+        });
+
+        function doFilter() {
+            table.ajax.reload();
+        }
+
+        function resetFilter() {
+            $('#filterNama').val('');
+            $('#filterSerial').val('');
+            table.ajax.reload();
+        }
 
         // Cek stok menipis
         $.ajax({

@@ -4,17 +4,9 @@
 <!-- PAGE-HEADER -->
 <div class="page-header">
     <h1 class="page-title">Dashboard</h1>
-    <div>
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item text-gray">Admin</li>
-            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-        </ol>
-    </div>
     <div class="ms-auto pageheader-btn">
         <a href="#modalTracking" data-bs-toggle="modal" class="btn btn-primary btn-icon text-white me-2">
-            <span>
-                <i class="fe fe-search"></i>
-            </span> Cek Resi / Tracking
+            <i class="fe fe-search me-1"></i> Cek Resi
         </a>
     </div>
 </div>
@@ -183,6 +175,8 @@
         </div>
     </div>
 </div>
+
+@endsection
 
 @section('scripts')
 <script>

@@ -158,16 +158,16 @@ Pada setiap item barang, generate dan tampilkan **QR Code** untuk atribut beriku
 
 ## Checklist Penyelesaian
 
-- [ ] A1 — Filter pencarian (nama barang & serial number)
-- [ ] A2 — Kolom serial number & jam pada barang masuk
-- [ ] A3 — Satuan barang: Meter, Pcs, Roll, Unit
-- [ ] A4 — Kolom serial number di halaman barang
-- [ ] A5 — Kode barang unik dengan sufiks urutan
-- [ ] A6 — Hapus pilihan customer dari barang masuk
-- [ ] B1 — Jam pada transaksi barang keluar
-- [ ] B2 — Select2 untuk daftar pegawai
-- [ ] B3 — Kolom teknisi & keterangan pada barang keluar
-- [ ] B4 — Pop-up notifikasi stok menipis (< 5)
+- [x] A1 — Filter pencarian (nama barang & serial number)
+- [x] A2 — Kolom serial number & jam pada barang masuk
+- [x] A3 — Satuan barang: Meter, Pcs, Roll, Unit
+- [x] A4 — Kolom serial number di halaman barang
+- [x] A5 — Kode barang unik dengan sufiks urutan
+- [x] A6 — Hapus pilihan customer dari barang masuk
+- [x] B1 — Jam pada transaksi barang keluar
+- [x] B2 — Select2 untuk daftar pegawai
+- [x] B3 — Kolom teknisi & keterangan pada barang keluar
+- [x] B4 — Pop-up notifikasi stok menipis (< 5)
 - [ ] C1 — Halaman tracking barang
 - [ ] C2 — QR Code untuk setiap atribut barang
 - [ ] C3 — Integrasi library QR Code

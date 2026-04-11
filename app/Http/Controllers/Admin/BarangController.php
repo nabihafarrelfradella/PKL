@@ -34,7 +34,18 @@ class BarangController extends Controller
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')->orderBy('barang_id', 'DESC')->get();
+            $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+                ->orderBy('barang_id', 'DESC');
+
+            if ($request->filter_nama) {
+                $query->where('tbl_barang.barang_nama', 'LIKE', '%' . $request->filter_nama . '%');
+            }
+            if ($request->filter_serial) {
+                $query->where('tbl_barang.serial_number', 'LIKE', '%' . $request->filter_serial . '%');
+            }
+
+            $data = $query->get();
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('img', function ($row) {
