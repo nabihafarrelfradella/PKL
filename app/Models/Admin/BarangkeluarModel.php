@@ -20,5 +20,9 @@ class BarangkeluarModel extends Model
         'bk_tgl_kembali',
         'bk_kondisi_kembali',
         'bk_jumlah_kembali',
+        'serial_number',
+        'jam_keluar',
+        'teknisi',
+        'keterangan',
     ]; 
 }

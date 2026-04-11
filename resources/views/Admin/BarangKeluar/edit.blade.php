@@ -18,8 +18,21 @@
                             <input type="text" name="tglkeluarU" class="form-control datepicker-date" placeholder="">
                         </div>
                         <div class="form-group">
-                            <label for="tujuanU" class="form-label">Tujuan</label>
-                            <input type="text" name="tujuanU" class="form-control" placeholder="">
+                            <label for="tujuanU" class="form-label">Tujuan Pegawai</label>
+                            <select name="tujuanU" class="form-control select2U" style="width: 100%;">
+                                <option value="">-- Pilih Pegawai --</option>
+                                @foreach($pegawai as $pgw)
+                                    <option value="{{ $pgw->user_nmlengkap }}">{{ $pgw->user_nmlengkap }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="teknisiU" class="form-label">Teknisi (untuk Serial Number)</label>
+                            <input type="text" name="teknisiU" class="form-control" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <label for="keteranganU" class="form-label">Keterangan (untuk Non-Serial Number)</label>
+                            <input type="text" name="keteranganU" class="form-control" placeholder="">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -53,6 +66,10 @@
                                     <input type="text" class="form-control" id="jenisU" readonly>
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="serial_numberU" class="form-label">Serial Number</label>
+                            <input type="text" name="serial_numberU" class="form-control" placeholder="">
                         </div>
                         <div class="form-group">
                             <label for="jmlU" class="form-label">Jumlah Keluar <span class="text-danger">*</span></label>
@@ -96,6 +113,12 @@
         getbarangbyidU($('input[name="kdbarangU"]').val());
         resetValidU();
     }
+
+    $(document).ready(function() {
+        $('.select2U').select2({
+            dropdownParent: $('#Umodaldemo8')
+        });
+    });
 
     function getbarangbyidU(id) {
         $("#loaderkdU").removeClass('d-none');
@@ -157,7 +180,10 @@
         const bkkode = $("input[name='bkkodeU']").val();
         const tglkeluar = $("input[name='tglkeluarU']").val();
         const kdbarang = $("input[name='kdbarangU']").val();
-        const tujuan = $("input[name='tujuanU']").val();
+        const tujuan = $("select[name='tujuanU']").val();
+        const teknisi = $("input[name='teknisiU']").val();
+        const keterangan = $("input[name='keteranganU']").val();
+        const serial_number = $("input[name='serial_numberU']").val();
         const jml = $("input[name='jmlU']").val();
 
         $.ajax({
@@ -169,6 +195,9 @@
                 tglkeluar: tglkeluar,
                 barang: kdbarang,
                 tujuan: tujuan,
+                teknisi: teknisi,
+                keterangan: keterangan,
+                serial_number: serial_number,
                 jml: jml
             },
             success: function(data) {
@@ -196,7 +225,10 @@
         $("input[name='bkkodeU']").val('');
         $("input[name='tglkeluarU']").val('');
         $("input[name='kdbarangU']").val('');
-        $("input[name='tujuanU']").val('');
+        $("select[name='tujuanU']").val('').trigger('change');
+        $("input[name='teknisiU']").val('');
+        $("input[name='keteranganU']").val('');
+        $("input[name='serial_numberU']").val('');
         $("input[name='jmlU']").val('0');
         $("#nmbarangU").val('');
         $("#satuanU").val('');

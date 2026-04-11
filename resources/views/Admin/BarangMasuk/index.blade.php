@@ -32,11 +32,12 @@
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
                             <th class="border-bottom-0" width="1%">No</th>
+                            <th class="border-bottom-0">Jam Masuk</th>
                             <th class="border-bottom-0">Tanggal Masuk</th>
                             <th class="border-bottom-0">Kode Barang Masuk</th>
                             <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Customer</th>
                             <th class="border-bottom-0">Barang</th>
+                            <th class="border-bottom-0">Serial Number</th>
                             <th class="border-bottom-0">Jumlah Masuk</th>
                             <th class="border-bottom-0" width="1%">Action</th>
                         </thead>
@@ -54,6 +55,27 @@
 @include('Admin.BarangMasuk.hapus')
 @include('Admin.BarangMasuk.barang')
 
+<!-- MODAL QR -->
+<div class="modal fade" data-bs-backdrop="static" id="Qmodaldemo8">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title">QR Code Resi</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="qrCodeContainer" class="mb-3">
+                    <img id="qrImage" src="" alt="QR Code">
+                </div>
+                <h5 id="qrKodeUnik" class="font-weight-bold"></h5>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="printQR()">Print <i class="fe fe-printer"></i></button>
+                <button class="btn btn-light" data-bs-dismiss="modal">Tutup <i class="fe fe-x"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function generateID() {
         id = new Date().getTime();
@@ -64,7 +86,7 @@
         $("input[name='idbmU']").val(data.bm_id);
         $("input[name='bmkodeU']").val(data.bm_kode);
         $("input[name='kdbarangU']").val(data.barang_kode);
-        $("select[name='customerU']").val(data.customer_id);
+        $("input[name='serial_numberU']").val(data.serial_number);
         $("input[name='jmlU']").val(data.bm_jumlah);
 
         getbarangbyidU(data.barang_kode);
@@ -78,6 +100,24 @@
     function hapus(data) {
         $("input[name='idbm']").val(data.bm_id);
         $("#vbm").html("Kode BM " + "<b>" + data.bm_kode + "</b>");
+    }
+
+    function showQR(data) {
+        const kode = data.kode_barang_unik;
+        const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(kode);
+        $("#qrImage").attr("src", qrUrl);
+        $("#qrKodeUnik").text(kode);
+    }
+
+    function printQR() {
+        var printWindow = window.open('', '', 'height=400,width=600');
+        printWindow.document.write('<html><head><title>Print QR</title>');
+        printWindow.document.write('</head><body style="text-align:center;">');
+        printWindow.document.write('<img src="' + $("#qrImage").attr("src") + '" />');
+        printWindow.document.write('<h2>' + $("#qrKodeUnik").text() + '</h2>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
     }
 
     function validasi(judul, status) {
@@ -127,6 +167,10 @@
                     searchable: false
                 },
                 {
+                    data: 'jam_masuk',
+                    name: 'jam_masuk',
+                },
+                {
                     data: 'tgl',
                     name: 'bm_tanggal',
                 },
@@ -139,12 +183,12 @@
                     name: 'barang_kode',
                 },
                 {
-                    data: 'customer',
-                    name: 'customer_nama',
-                },
-                {
                     data: 'barang',
                     name: 'barang_nama',
+                },
+                {
+                    data: 'serial_number',
+                    name: 'serial_number',
                 },
                 {
                     data: 'bm_jumlah',

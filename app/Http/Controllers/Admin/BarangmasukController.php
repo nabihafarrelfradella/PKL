@@ -18,25 +18,19 @@ class BarangmasukController extends Controller
     {
         $data["title"] = "Barang Masuk";
         $data["hakTambah"] = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'create'))->count();
-        $data["customer"] = CustomerModel::orderBy('customer_id', 'DESC')->get();
         return view('Admin.BarangMasuk.index', $data);
     }
 
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->orderBy('bm_id', 'DESC')->get();
+            $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->orderBy('bm_id', 'DESC')->get();
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
                     $tgl = $row->bm_tanggal == '' ? '-' : Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y');
 
                     return $tgl;
-                })
-                ->addColumn('customer', function ($row) {
-                    $customer = $row->customer_id == '' ? '-' : $row->customer_nama;
-
-                    return $customer;
                 })
                 ->addColumn('barang', function ($row) {
                     $barang = $row->barang_id == '' ? '-' : $row->barang_nama;
@@ -48,11 +42,18 @@ class BarangmasukController extends Controller
                         "bm_id" => $row->bm_id,
                         "bm_kode" => $row->bm_kode,
                         "barang_kode" => $row->barang_kode,
-                        "customer_id" => $row->customer_id,
                         "bm_tanggal" => $row->bm_tanggal,
-                        "bm_jumlah" => $row->bm_jumlah
+                        "bm_jumlah" => $row->bm_jumlah,
+                        "serial_number" => $row->serial_number,
+                        "jam_masuk" => $row->jam_masuk,
+                        "kode_barang_unik" => $row->kode_barang_unik
                     );
                     $button = '';
+                    $button .= '
+                    <div class="g-2">
+                        <a class="btn modal-effect text-info btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Qmodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Print QR" onclick=showQR(' . json_encode($array) . ')><span class="fe fe-printer fs-14"></span></a>
+                    </div>
+                    ';
                     $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'update'))->count();
                     $hakDelete = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'delete'))->count();
                     if ($hakEdit > 0 && $hakDelete > 0) {
@@ -79,20 +80,26 @@ class BarangmasukController extends Controller
                     }
                     return $button;
                 })
-                ->rawColumns(['action', 'tgl', 'customer', 'barang'])->make(true);
+                ->rawColumns(['action', 'tgl', 'barang'])->make(true);
         }
     }
 
     public function proses_tambah(Request $request)
     {
+        // Generate kode unik
+        $timestamp = now()->timestamp;
+        $urutan = str_pad(BarangmasukModel::whereDate('created_at', now()->format('Y-m-d'))->count() + 1, 2, '0', STR_PAD_LEFT);
+        $kode_barang_unik = 'BRG-' . $timestamp . '-' . $urutan;
 
         //insert data
         BarangmasukModel::create([
             'bm_tanggal' => $request->tglmasuk,
             'bm_kode' => $request->bmkode,
             'barang_kode' => $request->barang,
-            'customer_id'   => $request->customer,
             'bm_jumlah'   => $request->jml,
+            'serial_number' => $request->serial_number,
+            'kode_barang_unik' => $kode_barang_unik,
+            'jam_masuk' => now(),
         ]);
 
         return response()->json(['success' => 'Berhasil']);
@@ -105,8 +112,8 @@ class BarangmasukController extends Controller
         $barangmasuk->update([
             'bm_tanggal' => $request->tglmasuk,
             'barang_kode' => $request->barang,
-            'customer_id'   => $request->customer,
             'bm_jumlah'   => $request->jml,
+            'serial_number' => $request->serial_number,
         ]);
 
         return response()->json(['success' => 'Berhasil']);

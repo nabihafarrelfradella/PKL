@@ -34,14 +34,18 @@
                             class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                             <thead>
                                 <th class="border-bottom-0" width="1%">No</th>
+                                <th class="border-bottom-0">Jam Keluar</th>
                                 <th class="border-bottom-0">Tanggal Keluar</th>
                                 <th class="border-bottom-0">Kode Barang Keluar</th>
                                 <th class="border-bottom-0">Kode Barang</th>
                                 <th class="border-bottom-0">Barang</th>
                                 <th class="border-bottom-0">Tipe</th>
+                                <th class="border-bottom-0">Serial Number</th>
+                                <th class="border-bottom-0">Teknisi</th>
+                                <th class="border-bottom-0">Keterangan</th>
                                 <th class="border-bottom-0">Status</th>
                                 <th class="border-bottom-0">Jumlah Keluar</th>
-                                <th class="border-bottom-0">Tujuan</th>
+                                <th class="border-bottom-0">Tujuan Pegawai</th>
                                 <th class="border-bottom-0" width="1%">Action</th>
                             </thead>
                             <tbody></tbody>
@@ -77,7 +81,10 @@
             $("input[name='bkkodeU']").val(data.bk_kode);
             $("input[name='kdbarangU']").val(data.barang_kode);
             $("input[name='jmlU']").val(data.bk_jumlah);
-            $("input[name='tujuanU']").val(data.bk_tujuan.replace(/_/g, ' '));
+            $("select[name='tujuanU']").val(data.bk_tujuan).trigger('change');
+            $("input[name='teknisiU']").val(data.teknisi);
+            $("input[name='keteranganU']").val(data.keterangan);
+            $("input[name='serial_numberU']").val(data.serial_number);
 
             getbarangbyidU(data.barang_kode);
 
@@ -139,6 +146,10 @@
                         searchable: false
                     },
                     {
+                        data: 'jam_keluar',
+                        name: 'jam_keluar',
+                    },
+                    {
                         data: 'tgl',
                         name: 'bk_tanggal',
                     },
@@ -157,6 +168,18 @@
                     {
                         data: 'tipe',
                         name: 'tipe_barang',
+                    },
+                    {
+                        data: 'serial_number',
+                        name: 'serial_number',
+                    },
+                    {
+                        data: 'teknisi',
+                        name: 'teknisi',
+                    },
+                    {
+                        data: 'keterangan',
+                        name: 'keterangan',
                     },
                     {
                         data: 'status',

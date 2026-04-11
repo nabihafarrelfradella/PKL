@@ -59,6 +59,11 @@ class BarangController extends Controller
 
                     return $satuan;
                 })
+                ->addColumn('serial_number', function ($row) {
+                    $sn = $row->serial_number == '' ? '-' : $row->serial_number;
+
+                    return $sn;
+                })
                 ->addColumn('merk', function ($row) {
                     $merk = $row->merk_id == '' ? '-' : $row->merk_nama;
 
@@ -111,6 +116,7 @@ class BarangController extends Controller
                         "barang_harga" => $row->barang_harga,
                         "barang_stok" => $row->barang_stok,
                         "barang_gambar" => $row->barang_gambar,
+                        "serial_number" => $row->serial_number,
                         "tipe_barang" => $row->jenisbarang_ket,
                     );
                     $button = '';
@@ -141,7 +147,7 @@ class BarangController extends Controller
 
                     return $button;
                 })
-                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe'])->make(true);
+                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe', 'serial_number'])->make(true);
         }
     }
 
@@ -169,6 +175,11 @@ class BarangController extends Controller
                     $satuan = $row->satuan_id == '' ? '-' : $row->satuan_id;
 
                     return $satuan;
+                })
+                ->addColumn('serial_number', function ($row) {
+                    $sn = $row->serial_number == '' ? '-' : $row->serial_number;
+
+                    return $sn;
                 })
                 ->addColumn('merk', function ($row) {
                     $merk = $row->merk_id == '' ? '-' : $row->merk_nama;
@@ -236,7 +247,7 @@ class BarangController extends Controller
 
                     return $button;
                 })
-                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe'])->make(true);
+                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe', 'serial_number'])->make(true);
         }
     }
 
@@ -266,6 +277,7 @@ class BarangController extends Controller
             'barang_slug' => $slug,
             'barang_harga' => $request->harga,
             'barang_stok' => $request->stok,
+            'serial_number' => $request->serial_number,
 
         ]);
 
@@ -298,6 +310,7 @@ class BarangController extends Controller
                 'barang_slug' => $slug,
                 'barang_harga' => $request->harga,
                 'barang_stok' => $request->stok,
+                'serial_number' => $request->serial_number,
             ]);
         } else {
             //update data without image
@@ -310,6 +323,7 @@ class BarangController extends Controller
                 'barang_slug' => $slug,
                 'barang_harga' => $request->harga,
                 'barang_stok' => $request->stok,
+                'serial_number' => $request->serial_number,
             ]);
         }
 
@@ -345,5 +359,30 @@ class BarangController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function checkStok()
+    {
+        $data = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+                ->get();
+        
+        $lowStockItems = [];
+        
+        foreach ($data as $row) {
+            $jmlmasuk = BarangmasukModel::where('barang_kode', '=', $row->barang_kode)->sum('bm_jumlah');
+            $jmlkeluar = BarangkeluarModel::where('barang_kode', '=', $row->barang_kode)->sum('bk_jumlah');
+            $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
+            
+            if ($totalstok < 5) {
+                $lowStockItems[] = [
+                    'kode' => $row->barang_kode,
+                    'nama' => $row->barang_nama,
+                    'stok' => $totalstok
+                ];
+            }
+        }
+        
+        return response()->json($lowStockItems);
     }
 }

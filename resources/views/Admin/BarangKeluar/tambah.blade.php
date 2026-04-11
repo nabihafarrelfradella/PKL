@@ -17,8 +17,21 @@
                             <input type="text" name="tglkeluar" class="form-control datepicker-date" placeholder="">
                         </div>
                         <div class="form-group">
-                            <label for="tujuan" class="form-label">Tujuan</label>
-                            <input type="text" name="tujuan" class="form-control" placeholder="">
+                            <label for="tujuan" class="form-label">Tujuan Pegawai</label>
+                            <select name="tujuan" class="form-control select2" style="width: 100%;">
+                                <option value="">-- Pilih Pegawai --</option>
+                                @foreach($pegawai as $pgw)
+                                    <option value="{{ $pgw->user_nmlengkap }}">{{ $pgw->user_nmlengkap }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="teknisi" class="form-label">Teknisi (untuk Serial Number)</label>
+                            <input type="text" name="teknisi" class="form-control" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <label for="keterangan" class="form-label">Keterangan (untuk Non-Serial Number)</label>
+                            <input type="text" name="keterangan" class="form-control" placeholder="">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -52,6 +65,10 @@
                                     <input type="text" class="form-control" id="jenis" readonly>
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="serial_number" class="form-label">Serial Number</label>
+                            <input type="text" name="serial_number" class="form-control" placeholder="">
                         </div>
                         <div class="form-group">
                             <label for="jml" class="form-label">Jumlah Keluar <span class="text-danger">*</span></label>
@@ -95,6 +112,12 @@
         getbarangbyid($('input[name="kdbarang"]').val());
         resetValid();
     }
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            dropdownParent: $('#modaldemo8')
+        });
+    });
 
     function getbarangbyid(id) {
         $("#loaderkd").removeClass('d-none');
@@ -154,7 +177,10 @@
         const bkkode = $("input[name='bkkode']").val();
         const tglkeluar = $("input[name='tglkeluar']").val();
         const kdbarang = $("input[name='kdbarang']").val();
-        const tujuan = $("input[name='tujuan']").val();
+        const tujuan = $("select[name='tujuan']").val();
+        const teknisi = $("input[name='teknisi']").val();
+        const keterangan = $("input[name='keterangan']").val();
+        const serial_number = $("input[name='serial_number']").val();
         const jml = $("input[name='jml']").val();
 
         $.ajax({
@@ -166,6 +192,9 @@
                 tglkeluar: tglkeluar,
                 barang: kdbarang,
                 tujuan: tujuan,
+                teknisi: teknisi,
+                keterangan: keterangan,
+                serial_number: serial_number,
                 jml: jml
             },
             success: function(data) {
@@ -193,7 +222,10 @@
         $("input[name='bkkode']").val('');
         $("input[name='tglkeluar']").val('');
         $("input[name='kdbarang']").val('');
-        $("input[name='tujuan']").val('');
+        $("select[name='tujuan']").val('').trigger('change');
+        $("input[name='teknisi']").val('');
+        $("input[name='keterangan']").val('');
+        $("input[name='serial_number']").val('');
         $("input[name='jml']").val('0');
         $("#nmbarang").val('');
         $("#satuan").val('');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\AksesModel;
 use App\Models\Admin\BarangkeluarModel;
 use App\Models\Admin\BarangModel;
+use App\Models\Admin\UserModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -17,6 +18,7 @@ class BarangkeluarController extends Controller
     {
         $data["title"] = "Barang Keluar";
         $data["hakTambah"] = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'create'))->count();
+        $data["pegawai"] = UserModel::orderBy('user_nmlengkap', 'ASC')->get();
         return view('Admin.BarangKeluar.index', $data);
     }
 
@@ -66,6 +68,10 @@ class BarangkeluarController extends Controller
                         "bk_jumlah" => $row->bk_jumlah,
                         "tipe_barang" => $row->jenisbarang_ket,
                         "bk_status" => $row->bk_status,
+                        "serial_number" => $row->serial_number,
+                        "teknisi" => $row->teknisi,
+                        "keterangan" => $row->keterangan,
+                        "jam_keluar" => $row->jam_keluar
                     );
                     $button = '';
                     $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'update'))->count();
@@ -103,7 +109,7 @@ class BarangkeluarController extends Controller
                     }
                     return $button;
                 })
-                ->rawColumns(['action', 'tgl', 'tujuan', 'barang', 'status', 'tipe'])->make(true);
+                ->rawColumns(['action', 'tgl', 'tujuan', 'barang', 'status', 'tipe', 'teknisi'])->make(true);
         }
     }
 
@@ -125,6 +131,10 @@ class BarangkeluarController extends Controller
             'bk_tujuan'   => $request->tujuan,
             'bk_jumlah'   => $request->jml,
             'bk_status'   => $status,
+            'serial_number' => $request->serial_number,
+            'teknisi' => $request->teknisi,
+            'keterangan' => $request->keterangan,
+            'jam_keluar' => now(),
         ]);
 
         return response()->json(['success' => 'Berhasil']);
@@ -151,6 +161,9 @@ class BarangkeluarController extends Controller
             'barang_kode' => $request->barang,
             'bk_tujuan'   => $request->tujuan,
             'bk_jumlah'   => $request->jml,
+            'serial_number' => $request->serial_number,
+            'teknisi' => $request->teknisi,
+            'keterangan' => $request->keterangan,
         ]);
 
         return response()->json(['success' => 'Berhasil']);

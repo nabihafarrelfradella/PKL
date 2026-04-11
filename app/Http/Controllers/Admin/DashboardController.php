@@ -28,4 +28,23 @@ class DashboardController extends Controller
         $data["user"] = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')->select()->orderBy('user_id', 'DESC')->count();
         return view('Admin.Dashboard.index', $data);
     }
+
+    public function cekResi(Request $request)
+    {
+        $resi = $request->resi;
+
+        $masuk = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->where('kode_barang_unik', $resi)
+            ->orWhere('tbl_barangmasuk.serial_number', $resi)
+            ->get();
+
+        $keluar = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->where('tbl_barangkeluar.serial_number', $resi)
+            ->get();
+
+        return response()->json([
+            'masuk' => $masuk,
+            'keluar' => $keluar
+        ]);
+    }
 }

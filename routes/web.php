@@ -49,6 +49,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/admin', [DashboardController::class, 'index']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+        Route::post('/admin/dashboard/cekResi', [DashboardController::class, 'cekResi'])->name('dashboard.cekResi');
     });
 
     Route::middleware(['checkRoleUser:/jenisbarang,submenu'])->group(function () {
@@ -77,6 +78,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang/proses_tambah/', [BarangController::class, 'proses_tambah'])->name('barang.store');
         Route::post('/admin/barang/proses_ubah/{id}', [BarangController::class, 'proses_ubah']);
         Route::post('/admin/barang/proses_hapus/{id}', [BarangController::class, 'proses_hapus']);
+        Route::get('/admin/barang/check-stok', [BarangController::class, 'checkStok'])->name('barang.checkStok');
     });
 
     Route::middleware(['checkRoleUser:/customer,menu'])->group(function () {

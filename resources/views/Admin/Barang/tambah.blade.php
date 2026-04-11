@@ -30,9 +30,9 @@
                             <select name="satuan" class="form-control">
                                 <option value="">-- Pilih --</option>
                                 <option value="Meter">Meter</option>
-                                <option value="Qty">Qty</option>
                                 <option value="Pcs">Pcs</option>
-                                <option value="Kg">Kg</option>
+                                <option value="Roll">Roll</option>
+                                <option value="Unit">Unit</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -43,6 +43,10 @@
                                 <option value="{{$m->merk_id}}">{{$m->merk_nama}}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="serial_number" class="form-label">Serial Number</label>
+                            <input type="text" name="serial_number" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="stok" class="form-label">Stok Barang <span class="text-danger">*</span></label>
@@ -117,6 +121,7 @@
         const satuan = $("select[name='satuan']").val();
         const merk = $("select[name='merk']").val();
         const stok = $("input[name='stok']").val();
+        const serial_number = $("input[name='serial_number']").val();
         const harga = $("input[name='harga']").val();
         const foto = $('#GetFile')[0].files;
         var fd = new FormData();
@@ -128,6 +133,7 @@
         fd.append('satuan', satuan);
         fd.append('merk', merk);
         fd.append('stok', stok);
+        fd.append('serial_number', serial_number);
         fd.append('harga', harga);
         fd.append('_token', "{{csrf_token()}}");
         $.ajax({
@@ -164,6 +170,7 @@
         $("select[name='jenisbarang']").val('');
         $("select[name='satuan']").val('');
         $("select[name='merk']").val('');
+        $("input[name='serial_number']").val('');
         $("input[name='stok']").val('0');
         $("input[name='harga']").val('');
         $("#outputImg").attr("src", "{{url('/assets/default/barang/image.png')}}");

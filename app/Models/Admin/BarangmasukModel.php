@@ -16,5 +16,8 @@ class BarangmasukModel extends Model
         'customer_id',
         'bm_tanggal',
         'bm_jumlah',
+        'serial_number',
+        'kode_barang_unik',
+        'jam_masuk',
     ]; 
 }

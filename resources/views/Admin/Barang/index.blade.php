@@ -37,6 +37,7 @@
                             <th class="border-bottom-0">Tipe</th>
                             <th class="border-bottom-0">Satuan</th>
                             <th class="border-bottom-0">Merk</th>
+                            <th class="border-bottom-0">Serial Number</th>
                             <th class="border-bottom-0">Stok</th>
                             <th class="border-bottom-0">Harga</th>
                             <th class="border-bottom-0" width="1%">Action</th>
@@ -68,6 +69,7 @@
         $("select[name='satuanU']").val(data.satuan_id);
         $("select[name='merkU']").val(data.merk_id);
         $("input[name='stokU']").val(data.barang_stok);
+        $("input[name='serial_numberU']").val(data.serial_number);
         $("input[name='hargaU']").val(data.barang_harga);
         if(data.barang_gambar != 'image.png'){
             $("#outputImgU").attr("src", "{{asset('storage/barang/')}}"+"/"+data.barang_gambar);    
@@ -156,6 +158,10 @@
                     name: 'merk_nama',
                 },
                 {
+                    data: 'serial_number',
+                    name: 'serial_number',
+                },
+                {
                     data: 'totalstok',
                     name: 'barang_stok',
                 },
@@ -170,6 +176,29 @@
                     searchable: false
                 },
             ],
+        });
+
+        // Cek stok menipis
+        $.ajax({
+            type: 'GET',
+            url: "{{route('barang.checkStok')}}",
+            success: function(data) {
+                if (data.length > 0) {
+                    let htmlList = '<ul style="text-align: left;">';
+                    data.forEach(item => {
+                        htmlList += `<li><b>${item.nama}</b> (Stok: ${item.stok})</li>`;
+                    });
+                    htmlList += '</ul>';
+
+                    swal({
+                        title: "Peringatan Stok Menipis!",
+                        html: true,
+                        text: "Beberapa barang memiliki stok kurang dari 5:<br><br>" + htmlList,
+                        type: "warning",
+                        confirmButtonText: "Tutup"
+                    });
+                }
+            }
         });
     });
 </script>

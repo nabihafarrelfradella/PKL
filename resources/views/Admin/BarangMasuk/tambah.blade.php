@@ -17,13 +17,8 @@
                             <input type="text" name="tglmasuk" class="form-control datepicker-date" placeholder="">
                         </div>
                         <div class="form-group">
-                            <label for="customer" class="form-label">Pilih Customer <span class="text-danger">*</span></label>
-                            <select name="customer" id="customer" class="form-control">
-                                <option value="">-- Pilih Customer --</option>
-                                @foreach ($customer as $c)
-                                <option value="{{ $c->customer_id }}">{{ $c->customer_nama }}</option>
-                                @endforeach
-                            </select>
+                            <label for="serial_number" class="form-label">Serial Number</label>
+                            <input type="text" name="serial_number" class="form-control" placeholder="Contoh: SN-123456">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -130,7 +125,6 @@
     function checkForm() {
         const tglmasuk = $("input[name='tglmasuk']").val();
         const status = $("#status").val();
-        const customer = $("select[name='customer']").val();
         const jml = $("input[name='jml']").val();
         setLoading(true);
         resetValid();
@@ -138,11 +132,6 @@
         if (tglmasuk == "") {
             validasi('Tanggal Masuk wajib di isi!', 'warning');
             $("input[name='tglmasuk']").addClass('is-invalid');
-            setLoading(false);
-            return false;
-        } else if (customer == "") {
-            validasi('Customer wajib di pilih!', 'warning');
-            $("select[name='customer']").addClass('is-invalid');
             setLoading(false);
             return false;
         } else if (status == "false") {
@@ -165,7 +154,7 @@
         const bmkode = $("input[name='bmkode']").val();
         const tglmasuk = $("input[name='tglmasuk']").val();
         const kdbarang = $("input[name='kdbarang']").val();
-        const customer = $("select[name='customer']").val();
+        const serial_number = $("input[name='serial_number']").val();
         const jml = $("input[name='jml']").val();
 
         $.ajax({
@@ -176,7 +165,7 @@
                 bmkode: bmkode,
                 tglmasuk: tglmasuk,
                 barang: kdbarang,
-                customer: customer,
+                serial_number: serial_number,
                 jml: jml
             },
             success: function(data) {
@@ -195,7 +184,7 @@
     function resetValid() {
         $("input[name='tglmasuk']").removeClass('is-invalid');
         $("input[name='kdbarang']").removeClass('is-invalid');
-        $("select[name='customer']").removeClass('is-invalid');
+        $("input[name='serial_number']").removeClass('is-invalid');
         $("input[name='jml']").removeClass('is-invalid');
     };
 
@@ -204,7 +193,7 @@
         $("input[name='bmkode']").val('');
         $("input[name='tglmasuk']").val('');
         $("input[name='kdbarang']").val('');
-        $("select[name='customer']").val('');
+        $("input[name='serial_number']").val('');
         $("input[name='jml']").val('0');
         $("#nmbarang").val('');
         $("#satuan").val('');
