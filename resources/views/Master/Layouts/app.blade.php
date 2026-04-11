@@ -96,13 +96,12 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
 
 <!-- GLOBAL-LOADER -->
 @if ($appreance != '')
-    <div id="global-loader" class="{{ $appreance->appreance_theme == 'dark-mode' ? 'bg-dark' : '' }}">
-    @else
-        <div id="global-loader">
+    <div id="global-loader" class="{{ $appreance->appreance_theme == 'dark-mode' ? 'bg-dark' : '' }}" style="display: none !important;">
+@else
+    <div id="global-loader" style="display: none !important;">
 @endif
-<img src="{{ url('/assets/images/loader.svg') }}" class="loader-img" alt="Loader">
+<!-- <img src="{{ url('/assets/images/loader.svg') }}" class="loader-img" alt="Loader"> -->
 </div>
-
 <!-- /GLOBAL-LOADER -->
 
 <!-- PAGE -->
