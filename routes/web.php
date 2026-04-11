@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\LapBarangMasukController;
 use App\Http\Controllers\Admin\LapStokBarangController;
 use App\Http\Controllers\Admin\LoginController;
 use App\Http\Controllers\Admin\MerkController;
+use App\Http\Controllers\Admin\BarangTrackingController;
 use App\Http\Controllers\Master\AksesController;
 use App\Http\Controllers\Master\AppreanceController;
 use App\Http\Controllers\Master\AuditController;
@@ -134,6 +135,11 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/lapstokbarang/pdf/', [LapStokBarangController::class, 'pdf'])->name('lap-sb.pdf');
         Route::get('/admin/lap-stok-barang/show/', [LapStokBarangController::class, 'show'])->name('lap-sb.getlap-sb');
     });
+
+    // Barang Tracking (open to all authenticated users)
+    Route::get('/admin/barang-tracking', [BarangTrackingController::class, 'index'])->name('barang-tracking.index');
+    Route::get('/admin/barang-tracking/show', [BarangTrackingController::class, 'show'])->name('barang-tracking.show');
+
 
     Route::middleware(['checkRoleUser:1,othermenu'])->group(function () {
 

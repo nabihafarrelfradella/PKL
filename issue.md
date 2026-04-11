@@ -168,6 +168,6 @@ Pada setiap item barang, generate dan tampilkan **QR Code** untuk atribut beriku
 - [x] B2 — Select2 untuk daftar pegawai
 - [x] B3 — Kolom teknisi & keterangan pada barang keluar
 - [x] B4 — Pop-up notifikasi stok menipis (< 5)
-- [ ] C1 — Halaman tracking barang
-- [ ] C2 — QR Code untuk setiap atribut barang
-- [ ] C3 — Integrasi library QR Code
+- [x] C1 — Halaman tracking barang
+- [x] C2 — QR Code untuk setiap atribut barang
+- [x] C3 — Integrasi library QR Code

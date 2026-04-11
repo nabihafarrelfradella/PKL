@@ -93,14 +93,15 @@
                 </li>
 
                 <!-- Transaksi -->
-                <li class="slide {{$title == 'Barang Masuk' || $title == 'Barang Keluar' ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{$title == 'Barang Masuk' || $title == 'Barang Keluar' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                <li class="slide {{$title == 'Barang Masuk' || $title == 'Barang Keluar' || $title == 'Barang Tracking' ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{$title == 'Barang Masuk' || $title == 'Barang Keluar' || $title == 'Barang Tracking' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
                         <i class="side-menu__icon fe fe-repeat"></i>
                         <span class="side-menu__label">Transaksi</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{url('/admin/barang-masuk')}}" class="slide-item {{$title == 'Barang Masuk' ? 'active' : ''}}">Barang Masuk</a></li>
                         <li><a href="{{url('/admin/barang-keluar')}}" class="slide-item {{$title == 'Barang Keluar' ? 'active' : ''}}">Barang Keluar</a></li>
+                        <li><a href="{{url('/admin/barang-tracking')}}" class="slide-item {{$title == 'Barang Tracking' ? 'active' : ''}}">Barang Tracking</a></li>
                     </ul>
                 </li>
 
