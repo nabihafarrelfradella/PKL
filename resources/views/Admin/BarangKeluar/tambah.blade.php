@@ -14,7 +14,7 @@
                         </div>
                         <div class="form-group">
                             <label for="tglkeluar" class="form-label">Tanggal Keluar <span class="text-danger">*</span></label>
-                            <input type="text" name="tglkeluar" class="form-control datepicker-date" placeholder="">
+                            <input type="text" name="tglkeluar" class="form-control" value="{{ \Carbon\Carbon::now()->format('Y-m-d H:i:s') }}" readonly>
                         </div>
                         <div class="form-group">
                             <label for="tujuan" class="form-label">Tujuan Pegawai</label>
@@ -132,7 +132,7 @@
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("true");
                     $("#nmbarang").val(data[0].barang_nama);
-                    $("#satuan").val(data[0].satuan_nama);
+                    $("#satuan").val(data[0].satuan_id);
                     $("#jenis").val(data[0].jenisbarang_nama);
                 } else {
                     $("#loaderkd").addClass('d-none');

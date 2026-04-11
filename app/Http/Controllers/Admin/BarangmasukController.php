@@ -28,7 +28,7 @@ class BarangmasukController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
-                    $tgl = $row->bm_tanggal == '' ? '-' : Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y');
+                    $tgl = $row->bm_tanggal == '' ? '-' : Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y H:i:s');
 
                     return $tgl;
                 })
@@ -45,7 +45,7 @@ class BarangmasukController extends Controller
                         "bm_tanggal" => $row->bm_tanggal,
                         "bm_jumlah" => $row->bm_jumlah,
                         "serial_number" => $row->serial_number,
-                        "jam_masuk" => $row->jam_masuk,
+                        "jam_masuk" => $row->bm_tanggal,
                         "kode_barang_unik" => $row->kode_barang_unik
                     );
                     $button = '';

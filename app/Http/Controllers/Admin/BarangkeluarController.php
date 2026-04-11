@@ -29,7 +29,7 @@ class BarangkeluarController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
-                    $tgl = $row->bk_tanggal == '' ? '-' : Carbon::parse($row->bk_tanggal)->translatedFormat('d F Y');
+                    $tgl = $row->bk_tanggal == '' ? '-' : Carbon::parse($row->bk_tanggal)->translatedFormat('d F Y H:i:s');
 
                     return $tgl;
                 })
@@ -71,7 +71,7 @@ class BarangkeluarController extends Controller
                         "serial_number" => $row->serial_number,
                         "teknisi" => $row->teknisi,
                         "keterangan" => $row->keterangan,
-                        "jam_keluar" => $row->jam_keluar
+                        "jam_keluar" => $row->bk_tanggal
                     );
                     $button = '';
                     $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'update'))->count();

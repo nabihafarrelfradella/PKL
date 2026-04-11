@@ -91,10 +91,11 @@
 
         getbarangbyidU(data.barang_kode);
 
-        $("input[name='tglmasukU").bootstrapdatepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true
-        }).bootstrapdatepicker("update", data.bm_tanggal);
+        let datetime = data.bm_tanggal;
+        if(data.jam_masuk) {
+            datetime = data.jam_masuk;
+        }
+        $("input[name='tglmasukU']").val(datetime);
     }
 
     function hapus(data) {

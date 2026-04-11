@@ -15,7 +15,7 @@
                         </div>
                         <div class="form-group">
                             <label for="tglkeluarU" class="form-label">Tanggal Keluar <span class="text-danger">*</span></label>
-                            <input type="text" name="tglkeluarU" class="form-control datepicker-date" placeholder="">
+                            <input type="text" name="tglkeluarU" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="tujuanU" class="form-label">Tujuan Pegawai</label>
@@ -133,7 +133,7 @@
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("true");
                     $("#nmbarangU").val(data[0].barang_nama);
-                    $("#satuanU").val(data[0].satuan_nama);
+                    $("#satuanU").val(data[0].satuan_id);
                     $("#jenisU").val(data[0].jenisbarang_nama);
                 } else {
                     $("#loaderkdU").addClass('d-none');
