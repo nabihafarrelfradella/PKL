@@ -21,9 +21,12 @@ class LapBarangMasukController extends Controller
     public function print(Request $request)
     {
         if ($request->tglawal) {
-            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])->orderBy('bm_id', 'DESC')->get();
+            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])
+                ->orderBy('bm_id', 'DESC')->get();
         } else {
-            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->orderBy('bm_id', 'DESC')->get();
+            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->orderBy('bm_id', 'DESC')->get();
         }
 
         $data["title"] = "Print Barang Masuk";
@@ -58,9 +61,12 @@ class LapBarangMasukController extends Controller
     {
         if ($request->ajax()) {
             if ($request->tglawal == '') {
-                $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->orderBy('bm_id', 'DESC')->get();
+                $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                    ->orderBy('bm_id', 'DESC')->get();
             } else {
-                $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])->orderBy('bm_id', 'DESC')->get();
+                $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                    ->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])
+                    ->orderBy('bm_id', 'DESC')->get();
             }
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -75,11 +81,15 @@ class LapBarangMasukController extends Controller
                     return $customer;
                 })
                 ->addColumn('barang', function ($row) {
-                    $barang = $row->barang_id == '' ? '-' : $row->barang_nama;
-
-                    return $barang;
+                    return $row->barang_id == '' ? '-' : $row->barang_nama;
                 })
-                ->rawColumns(['tgl', 'customer', 'barang'])->make(true);
+                ->addColumn('serial_number', function ($row) {
+                    return $row->serial_number ?? '-';
+                })
+                ->addColumn('kode_unik', function ($row) {
+                    return $row->kode_barang_unik ?? '-';
+                })
+                ->rawColumns(['tgl', 'barang'])->make(true);
         }
     }
 }

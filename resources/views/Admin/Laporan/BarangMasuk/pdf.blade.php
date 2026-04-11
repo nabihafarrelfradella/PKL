@@ -1,89 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<?php
-
-use Carbon\Carbon;
-?>
+<?php use Carbon\Carbon; ?>
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Manajemen Alfatindo">
-    <meta name="author" content="Manajemen Alfatindo">
-    <meta name="keywords" content="">
-    <meta name="csrf-token" content="{{ csrf_token() }}" />
-
     <title>{{$title}}</title>
-
     <style>
-        * {
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        #table1 {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 32px;
-        }
-
-        #table1 td,
-        #table1 th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        #table1 th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            color: black;
-            font-size: 12px;
-        }
-
-        #table1 td {
-            font-size: 11px;
-        }
-
-        .font-medium {
-            font-weight: 500;
-        }
-
-        .font-bold {
-            font-weight: 600;
-        }
-
-        .d-2 {
-            display: flex;
-            align-items: flex-start;
-            margin-top: 32px;
-        }
+        * { font-family: Arial, Helvetica, sans-serif; }
+        .header { text-align: center; margin-bottom: 8px; }
+        .header img { width: 140px; }
+        .header h1 { margin: 8px 0 4px; font-size: 22px; font-weight: 700; }
+        .header h4 { margin: 0; font-size: 14px; font-weight: 400; color: #555; }
+        hr { border: none; border-top: 2px solid #2d3c89; margin: 8px 0 16px; }
+        #table1 { border-collapse: collapse; width: 100%; margin-top: 8px; }
+        #table1 td, #table1 th { border: 1px solid #ccc; padding: 7px 8px; }
+        #table1 thead tr { background: #2d3c89; }
+        #table1 th { color: #fff; font-size: 11px; padding: 9px 8px; }
+        #table1 td { font-size: 11px; }
+        #table1 tbody tr:nth-child(even) { background: #f5f7ff; }
     </style>
-
 </head>
 
 <body>
 
-    <center>
-        <h1 class="font-medium">Laporan Barang Masuk</h1>
+    <div class="header">
+        <img src="{{url('/assets/default/web/default.png')}}" alt="Alfatindo">
+        <h1>Laporan Barang Masuk</h1>
         @if($tglawal == '')
-        <h4 class="font-medium">Semua Tanggal</h4>
+        <h4>Semua Tanggal</h4>
         @else
-        <h4 class="font-medium">{{Carbon::parse($tglawal)->translatedFormat('d F Y')}} - {{Carbon::parse($tglakhir)->translatedFormat('d F Y')}}</h4>
+        <h4>{{Carbon::parse($tglawal)->translatedFormat('d F Y')}} &mdash; {{Carbon::parse($tglakhir)->translatedFormat('d F Y')}}</h4>
         @endif
-    </center>
+    </div>
+    <hr>
 
-
-    <table border="1" id="table1">
+    <table id="table1">
         <thead>
             <tr>
                 <th align="center" width="1%">NO</th>
                 <th>TGL MASUK</th>
-                <th>KODE BRG MASUK</th>
+                <th>KODE UNIK / RESI</th>
+                <th>KODE BM</th>
                 <th>KODE BARANG</th>
-                <th>CUSTOMER</th>
-                <th>BARANG</th>
-                <th>JML MASUK</th>
+                <th>NAMA BARANG</th>
+                <th>SERIAL NUMBER</th>
+                <th align="center">JML</th>
             </tr>
         </thead>
         <tbody>
@@ -91,11 +53,12 @@ use Carbon\Carbon;
             @foreach($data as $d)
             <tr>
                 <td align="center">{{$no++}}</td>
-                <td>{{Carbon::parse($d->bm_tanggal)->translatedFormat('d F Y')}}</td>
+                <td>{{Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}</td>
+                <td>{{$d->kode_barang_unik ?? '-'}}</td>
                 <td>{{$d->bm_kode}}</td>
                 <td>{{$d->barang_kode}}</td>
-                <td>{{$d->customer_nama}}</td>
                 <td>{{$d->barang_nama}}</td>
+                <td>{{$d->serial_number ?? '-'}}</td>
                 <td align="center">{{$d->bm_jumlah}}</td>
             </tr>
             @endforeach
@@ -103,5 +66,4 @@ use Carbon\Carbon;
     </table>
 
 </body>
-
 </html>
