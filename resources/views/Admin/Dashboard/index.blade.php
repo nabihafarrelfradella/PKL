@@ -4,124 +4,160 @@
 <!-- PAGE-HEADER -->
 <div class="page-header">
     <h1 class="page-title">Dashboard</h1>
-    <div>
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item text-gray">Admin</li>
-            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-        </ol>
-    </div>
     <div class="ms-auto pageheader-btn">
         <a href="#modalTracking" data-bs-toggle="modal" class="btn btn-primary btn-icon text-white me-2">
-            <span>
-                <i class="fe fe-search"></i>
-            </span> Cek Resi / Tracking
+            <span><i class="fe fe-search"></i></span> Cek Resi / Tracking
         </a>
     </div>
 </div>
 <!-- PAGE-HEADER END -->
 
-<!-- ROW 1 OPEN -->
-<div class="row">
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-primary img-card box-primary-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$jenis}}</h2>
-                        <p class="text-white mb-0">Jenis Barang </p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-package text-white fs-40 me-2 mt-2"></i> </div>
+<style>
+    .stat-card {
+        border-radius: 14px;
+        padding: 20px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0;
+        position: relative;
+        overflow: hidden;
+        min-height: 100px;
+    }
+    .stat-card .stat-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .stat-card .stat-info h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 2px 0;
+        color: #fff;
+        line-height: 1;
+    }
+    .stat-card .stat-info p {
+        font-size: 0.82rem;
+        margin: 0;
+        color: rgba(255,255,255,0.85);
+        font-weight: 400;
+    }
+    .stat-card .stat-icon {
+        font-size: 2.2rem;
+        color: rgba(255,255,255,0.35);
+        line-height: 1;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        bottom: -18px;
+        right: 60px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+    }
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        right: 10px;
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+    }
+</style>
+
+<!-- ROW STAT CARDS -->
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #6c63d5;">
+                <div class="stat-info">
+                    <h3>{{$jenis}}</h3>
+                    <p>Jenis Barang</p>
                 </div>
+                <div class="stat-icon"><i class="fe fe-package"></i></div>
             </div>
         </div>
     </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card  bg-success img-card box-success-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$merk}}</h2>
-                        <p class="text-white mb-0">Merk Barang</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-package text-white fs-40 me-2 mt-2"></i> </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #1fba8c;">
+                <div class="stat-info">
+                    <h3>{{$merk}}</h3>
+                    <p>Merk Barang</p>
                 </div>
+                <div class="stat-icon"><i class="fe fe-package"></i></div>
             </div>
         </div>
     </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-info img-card box-info-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$barang}}</h2>
-                        <p class="text-white mb-0">Barang</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-package text-white fs-40 me-2 mt-2"></i> </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #2f80ed;">
+                <div class="stat-info">
+                    <h3>{{$barang}}</h3>
+                    <p>Barang</p>
                 </div>
+                <div class="stat-icon"><i class="fe fe-package"></i></div>
             </div>
         </div>
     </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-success img-card box-success-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$bm}}</h2>
-                        <p class="text-white mb-0">Barang Masuk</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-repeat text-white fs-40 me-2 mt-2"></i> </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #0bbfaa;">
+                <div class="stat-info">
+                    <h3>{{$bm}}</h3>
+                    <p>Barang Masuk</p>
                 </div>
+                <div class="stat-icon"><i class="fe fe-repeat"></i></div>
             </div>
         </div>
     </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-danger img-card box-danger-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$bk}}</h2>
-                        <p class="text-white mb-0">Barang Keluar</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-repeat text-white fs-40 me-2 mt-2"></i> </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-purple img-card box-purple-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$customer}}</h2>
-                        <p class="text-white mb-0">Customer</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-user text-white fs-40 me-2 mt-2"></i> </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- COL END -->
-    <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-        <div class="card bg-warning img-card box-warning-shadow">
-            <div class="card-body">
-                <div class="d-flex">
-                    <div class="text-white">
-                        <h2 class="mb-0 number-font">{{$user}}</h2>
-                        <p class="text-white mb-0">User</p>
-                    </div>
-                    <div class="ms-auto"> <i class="fe fe-user text-white fs-40 me-2 mt-2"></i> </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- COL END -->
 </div>
-<!-- ROW 1 CLOSED -->
+
+<div class="row g-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #e84c4c;">
+                <div class="stat-info">
+                    <h3>{{$bk}}</h3>
+                    <p>Barang Keluar</p>
+                </div>
+                <div class="stat-icon"><i class="fe fe-repeat"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #9b3fdb;">
+                <div class="stat-info">
+                    <h3>{{$customer}}</h3>
+                    <p>Customer</p>
+                </div>
+                <div class="stat-icon"><i class="fe fe-user"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card mb-0" style="border-radius:14px; border:none;">
+            <div class="stat-card" style="background: #f0a500;">
+                <div class="stat-info">
+                    <h3>{{$user}}</h3>
+                    <p>User</p>
+                </div>
+                <div class="stat-icon"><i class="fe fe-user"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ROW CLOSED -->
 
 <!-- MODAL TRACKING -->
 <div class="modal fade" data-bs-backdrop="static" id="modalTracking">
@@ -184,6 +220,8 @@
     </div>
 </div>
 
+@endsection
+
 @section('scripts')
 <script>
     $.ajaxSetup({
@@ -216,8 +254,7 @@
             data: { resi: resi },
             success: function(response) {
                 $('#trackingContainer').removeClass('d-none');
-                
-                // Render Masuk
+
                 let htmlMasuk = '';
                 if (response.masuk.length > 0) {
                     response.masuk.forEach(m => {
@@ -236,14 +273,13 @@
                 }
                 $('#tbodyMasuk').html(htmlMasuk);
 
-                // Render Keluar
                 let htmlKeluar = '';
                 if (response.keluar.length > 0) {
                     response.keluar.forEach(k => {
                         let note = '';
                         if (k.teknisi) note += 'Teknisi: ' + k.teknisi + ' ';
                         if (k.keterangan) note += 'Keterangan: ' + k.keterangan;
-                        
+
                         htmlKeluar += `
                         <tr>
                             <td>${k.bk_kode}</td>
