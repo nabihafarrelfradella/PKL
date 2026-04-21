@@ -1,7 +1,6 @@
 @extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
-<!-- PAGE-HEADER -->
 <div class="page-header">
     <h1 class="page-title">{{$title}}</h1>
     <div>
@@ -11,9 +10,6 @@
         </ol>
     </div>
 </div>
-<!-- PAGE-HEADER END -->
-
-<!-- ROW -->
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="card">
@@ -25,16 +21,11 @@
                 </div>
                 @endif
             </div>
-            <!-- FILTER BAR -->
             <div class="card-body border-bottom pb-3">
                 <div class="row g-2 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label mb-1">Nama Barang</label>
                         <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang...">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label mb-1">Serial Number</label>
-                        <input type="text" id="filterSerial" class="form-control form-control-sm" placeholder="Cari serial number...">
                     </div>
                     <div class="col-md-auto">
                         <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fe fe-search me-1"></i>Cari</button>
@@ -46,18 +37,17 @@
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Gambar</th>
-                            <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Nama Barang</th>
-                            <th class="border-bottom-0">Jenis</th>
-                            <th class="border-bottom-0">Tipe</th>
-                            <th class="border-bottom-0">Satuan</th>
-                            <th class="border-bottom-0">Merk</th>
-                            <th class="border-bottom-0">Serial Number</th>
-                            <th class="border-bottom-0">Stok</th>
-                            <th class="border-bottom-0">Harga</th>
-                            <th class="border-bottom-0" width="1%">Action</th>
+                            <tr>
+                                <th class="border-bottom-0" width="1%">No</th>
+                                <th class="border-bottom-0">Gambar</th>
+                                <th class="border-bottom-0">Kode Barang</th>
+                                <th class="border-bottom-0">Nama Barang</th>
+                                <th class="border-bottom-0">Jenis</th>
+                                {{-- Kolom Tipe sudah dihapus --}}
+                                <th class="border-bottom-0">Merk</th>
+                                <th class="border-bottom-0">Stok</th>
+                                <th class="border-bottom-0" width="1%">Action</th>
+                            </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -66,8 +56,6 @@
         </div>
     </div>
 </div>
-<!-- END ROW -->
-
 @include('Admin.Barang.tambah', ['jenisbarang' => $jenisbarang, 'merk' => $merk])
 @include('Admin.Barang.edit', ['jenisbarang' => $jenisbarang, 'merk' => $merk])
 @include('Admin.Barang.hapus')
@@ -86,8 +74,6 @@
         $("select[name='satuanU']").val(data.satuan_id);
         $("select[name='merkU']").val(data.merk_id);
         $("input[name='stokU']").val(data.barang_stok);
-        $("input[name='serial_numberU']").val(data.serial_number);
-        $("input[name='hargaU']").val(data.barang_harga);
         if(data.barang_gambar != 'image.png'){
             $("#outputImgU").attr("src", "{{asset('storage/barang/')}}"+"/"+data.barang_gambar);    
         }
@@ -120,101 +106,53 @@
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
+
     var table;
     $(document).ready(function() {
-        //datatables
+        // DataTables menggunakan route lama kamu
         table = $('#table-1').DataTable({
             "processing": true,
             "serverSide": true,
             "info": true,
             "order": [],
-            "stateSave":true,
+            "stateSave": true,
             "scrollX": true,
             "lengthMenu": [
                 [5, 10, 25, 50, 100],
                 [5, 10, 25, 50, 100]
             ],
             "pageLength": 10,
-            lengthChange: true,
+            "lengthChange": true,
             "ajax": {
-                "url": "{{route('barang.getbarang')}}",
+                "url": "{{route('barang.getbarang')}}", // KEMBALI KE ROUTE LAMA
                 "data": function(d) {
-                    d.filter_nama   = $('#filterNama').val();
-                    d.filter_serial = $('#filterSerial').val();
+                    d.filter_nama = $('#filterNama').val();
                 }
             },
-            "columns": [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    searchable: false
-                },
-                {
-                    data: 'img',
-                    name: 'barang_gambar',
-                    searchable: false,
-                    orderable: false
-                },
-                {
-                    data: 'barang_kode',
-                    name: 'barang_kode',
-                },
-                {
-                    data: 'barang_nama',
-                    name: 'barang_nama',
-                },
-                {
-                    data: 'jenisbarang',
-                    name: 'jenisbarang_nama',
-                },
-                {
-                    data: 'tipe',
-                    name: 'jenisbarang_ket',
-                },
-                {
-                    data: 'satuan',
-                    name: 'satuan_id',
-                },
-                {
-                    data: 'merk',
-                    name: 'merk_nama',
-                },
-                {
-                    data: 'serial_number',
-                    name: 'serial_number',
-                },
-                {
-                    data: 'totalstok',
-                    name: 'barang_stok',
-                },
-                {
-                    data: 'currency',
-                    name: 'barang_harga'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false
-                },
+            "columns": [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'img', name: 'barang_gambar', searchable: false, orderable: false },
+                { data: 'barang_kode', name: 'barang_kode' },
+                { data: 'barang_nama', name: 'barang_nama' },
+                { data: 'jenisbarang', name: 'tbl_jenisbarang.jenisbarang_nama' },
+                // Kolom 'tipe' tetap dihapus dari sini agar tidak error
+                { data: 'merk', name: 'tbl_merk.merk_nama' },
+                { data: 'totalstok', name: 'totalstok', searchable: false, orderable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
         });
 
-        // Filter on Enter key
-        $('#filterNama, #filterSerial').on('keypress', function(e) {
-            if (e.which === 13) doFilter();
-        });
-
-        function doFilter() {
+        // Definisi fungsi filter agar bisa diakses oleh onclick di HTML
+        window.doFilter = function() {
             table.ajax.reload();
         }
 
-        function resetFilter() {
+        window.resetFilter = function() {
             $('#filterNama').val('');
-            $('#filterSerial').val('');
             table.ajax.reload();
         }
 
-        // Cek stok menipis
+        // Cek stok menipis (Tetap dipertahankan)
         $.ajax({
             type: 'GET',
             url: "{{route('barang.checkStok')}}",

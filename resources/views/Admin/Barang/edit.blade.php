@@ -46,16 +46,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="serial_numberU" class="form-label">Serial Number</label>
-                            <input type="text" name="serial_numberU" class="form-control">
-                        </div>
-                        <div class="form-group">
                             <label for="stokU" class="form-label">Stok Awal <span class="text-danger">*</span></label>
                             <input type="text" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" name="stokU" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="hargaU" class="form-label">Harga <span class="text-danger">*</span></label>
-                            <input type="text" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" name="hargaU" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-5">
@@ -64,7 +56,7 @@
                             <center>
                                 <img src="{{url('/assets/default/barang/image.png')}}" width="80%" alt="profile-user" id="outputImgU" class="">
                             </center>
-                            <input class="form-control mt-5" id="GetFileU" name="photoU" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
+                            <input class="form-control mt-5" id="GetFileU" name="photo" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
                         </div>
                     </div>
                 </div>
@@ -86,7 +78,6 @@
     function checkFormU() {
         const kode = $("input[name='kodeU']").val();
         const nama = $("input[name='namaU']").val();
-        const harga = $("input[name='hargaU']").val();
         const stok = $("input[name='stokU']").val();
         setLoadingU(true);
         resetValidU();
@@ -100,12 +91,7 @@
             $("input[name='namaU']").addClass('is-invalid');
             setLoadingU(false);
             return false;
-        } else if (harga == "") {
-            validasi('Harga Barang wajib di isi!', 'warning');
-            $("input[name='hargaU']").addClass('is-invalid');
-            setLoadingU(false);
-            return false;
-        }else if (stok == "") {
+        } else if (stok == "") {
             validasi('Stok Awal wajib di isi!', 'warning');
             $("input[name='stokU']").addClass('is-invalid');
             setLoadingU(false);
@@ -121,8 +107,6 @@
         const jenisbarang = $("select[name='jenisbarangU']").val();
         const satuan = $("select[name='satuanU']").val();
         const merk = $("select[name='merkU']").val();
-        const harga = $("input[name='hargaU']").val();
-        const serial_number = $("input[name='serial_numberU']").val();
         const stok = $("input[name='stokU']").val();
         const foto = $('#GetFileU')[0].files;
 
@@ -135,8 +119,6 @@
         fd.append('jenisbarang', jenisbarang);
         fd.append('satuan', satuan);
         fd.append('merk', merk);
-        fd.append('harga', harga);
-        fd.append('serial_number', serial_number);
         fd.append('stok', stok);
         fd.append('_token', "{{csrf_token()}}");
         $.ajax({
@@ -154,6 +136,10 @@
                 $('#Umodaldemo8').modal('toggle');
                 table.ajax.reload(null, false);
                 resetU();
+            },
+            error: function(data) {
+                setLoadingU(false);
+                validasi('Gagal mengubah data!', 'error');
             }
         });
     }
@@ -163,7 +149,6 @@
         $("select[name='jenisbarangU']").removeClass('is-invalid');
         $("select[name='satuanU']").removeClass('is-invalid');
         $("select[name='merkU']").removeClass('is-invalid');
-        $("input[name='hargaU']").removeClass('is-invalid');
         $("input[name='stokU']").removeClass('is-invalid');
     };
     function resetU() {
@@ -174,8 +159,6 @@
         $("select[name='jenisbarangU']").val('');
         $("select[name='satuanU']").val('');
         $("select[name='merkU']").val('');
-        $("input[name='hargaU']").val('');
-        $("input[name='serial_numberU']").val('');
         $("input[name='stokU']").val('');
         $("#outputImgU").attr("src", "{{url('/assets/default/barang/image.png')}}");
         $("#GetFileU").val('');

@@ -19,7 +19,7 @@ class BarangController extends Controller
     public function index()
     {
         $data["title"] = "Barang";
-        $data["hakTambah"] = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang', 'tbl_akses.akses_type' => 'create'))->count();
+        $data["hakTambah"] = (Session::get('user')->role_id == 1 || Session::get('user')->role_id == 2) ? 1 : 0;
         $data["jenisbarang"] = JenisBarangModel::orderBy('jenisbarang_id', 'DESC')->get();
         $data["merk"] = MerkModel::orderBy('merk_id', 'DESC')->get();
         return view('Admin.Barang.index', $data);
@@ -40,9 +40,6 @@ class BarangController extends Controller
 
             if ($request->filter_nama) {
                 $query->where('tbl_barang.barang_nama', 'LIKE', '%' . $request->filter_nama . '%');
-            }
-            if ($request->filter_serial) {
-                $query->where('tbl_barang.serial_number', 'LIKE', '%' . $request->filter_serial . '%');
             }
 
             $data = $query->get();
@@ -70,21 +67,12 @@ class BarangController extends Controller
 
                     return $satuan;
                 })
-                ->addColumn('serial_number', function ($row) {
-                    $sn = $row->serial_number == '' ? '-' : $row->serial_number;
-
-                    return $sn;
-                })
                 ->addColumn('merk', function ($row) {
                     $merk = $row->merk_id == '' ? '-' : $row->merk_nama;
 
                     return $merk;
                 })
-                ->addColumn('currency', function ($row) {
-                    $currency = $row->barang_harga == '' ? '-' : 'Rp ' . number_format($row->barang_harga, 0);
 
-                    return $currency;
-                })
                 ->addColumn('totalstok', function ($row) use ($request) {
                     if ($request->tglawal == '') {
                         $jmlmasuk = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->where('tbl_barangmasuk.barang_kode', '=', $row->barang_kode)->sum('tbl_barangmasuk.bm_jumlah');
@@ -100,12 +88,13 @@ class BarangController extends Controller
                     }
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
+                    $satuan = $row->satuan_id == '' ? '' : ' ' . $row->satuan_id;
                     if($totalstok == 0){
-                        $result = '<span class="">'.$totalstok.'</span>';
+                        $result = '<span class="">'.$totalstok.$satuan.'</span>';
                     }else if($totalstok > 0){
-                        $result = '<span class="text-success">'.$totalstok.'</span>';
+                        $result = '<span class="text-success">'.$totalstok.$satuan.'</span>';
                     }else{
-                        $result = '<span class="text-danger">'.$totalstok.'</span>';
+                        $result = '<span class="text-danger">'.$totalstok.$satuan.'</span>';
                     }
                     
 
@@ -124,33 +113,26 @@ class BarangController extends Controller
                         "merk_id" => $row->merk_id,
                         "barang_kode" => $row->barang_kode,
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
-                        "barang_harga" => $row->barang_harga,
                         "barang_stok" => $row->barang_stok,
                         "barang_gambar" => $row->barang_gambar,
-                        "serial_number" => $row->serial_number,
                         "tipe_barang" => $row->jenisbarang_ket,
                     );
                     $button = '';
-                    $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang', 'tbl_akses.akses_type' => 'update'))->count();
-                    $hakDelete = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang', 'tbl_akses.akses_type' => 'delete'))->count();
+                    $roleId = Session::get('user')->role_id;
+                    $hakEdit = ($roleId == 1 || $roleId == 2) ? 1 : 0;
+                    $hakDelete = ($roleId == 1 || $roleId == 2) ? 1 : 0;
                     if ($hakEdit > 0 && $hakDelete > 0) {
                         $button .= '
-                        <div class="g-2">
                         <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>
                         <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
                         ';
                     } else if ($hakEdit > 0 && $hakDelete == 0) {
                         $button .= '
-                        <div class="g-2">
-                            <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>
-                        </div>
+                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>
                         ';
                     } else if ($hakEdit == 0 && $hakDelete > 0) {
                         $button .= '
-                        <div class="g-2">
                         <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
                         ';
                     } else {
                         $button .= '-';
@@ -158,7 +140,7 @@ class BarangController extends Controller
 
                     return $button;
                 })
-                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe', 'serial_number'])->make(true);
+                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'totalstok', 'tipe'])->make(true);
         }
     }
 
@@ -187,21 +169,12 @@ class BarangController extends Controller
 
                     return $satuan;
                 })
-                ->addColumn('serial_number', function ($row) {
-                    $sn = $row->serial_number == '' ? '-' : $row->serial_number;
-
-                    return $sn;
-                })
                 ->addColumn('merk', function ($row) {
                     $merk = $row->merk_id == '' ? '-' : $row->merk_nama;
 
                     return $merk;
                 })
-                ->addColumn('currency', function ($row) {
-                    $currency = $row->barang_harga == '' ? '-' : 'Rp ' . number_format($row->barang_harga, 0);
 
-                    return $currency;
-                })
                 ->addColumn('totalstok', function ($row) use ($request) {
                     if ($request->tglawal == '') {
                         $jmlmasuk = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->where('tbl_barangmasuk.barang_kode', '=', $row->barang_kode)->sum('tbl_barangmasuk.bm_jumlah');
@@ -217,12 +190,13 @@ class BarangController extends Controller
                     }
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
+                    $satuan = $row->satuan_id == '' ? '' : ' ' . $row->satuan_id;
                     if($totalstok == 0){
-                        $result = '<span class="">'.$totalstok.'</span>';
+                        $result = '<span class="">'.$totalstok.$satuan.'</span>';
                     }else if($totalstok > 0){
-                        $result = '<span class="text-success">'.$totalstok.'</span>';
+                        $result = '<span class="text-success">'.$totalstok.$satuan.'</span>';
                     }else{
-                        $result = '<span class="text-danger">'.$totalstok.'</span>';
+                        $result = '<span class="text-danger">'.$totalstok.$satuan.'</span>';
                     }
                     
 
@@ -258,7 +232,7 @@ class BarangController extends Controller
 
                     return $button;
                 })
-                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe', 'serial_number'])->make(true);
+                ->rawColumns(['action', 'img', 'jenisbarang', 'satuan', 'merk', 'currency', 'totalstok', 'tipe'])->make(true);
         }
     }
 
@@ -286,9 +260,9 @@ class BarangController extends Controller
             'barang_kode' => $request->kode,
             'barang_nama' => $request->nama,
             'barang_slug' => $slug,
-            'barang_harga' => $request->harga,
             'barang_stok' => $request->stok,
-            'serial_number' => $request->serial_number,
+            'barang_harga' => '0',
+            'serial_number' => '-',
 
         ]);
 
@@ -319,9 +293,9 @@ class BarangController extends Controller
                 'barang_kode' => $request->kode,
                 'barang_nama' => $request->nama,
                 'barang_slug' => $slug,
-                'barang_harga' => $request->harga,
                 'barang_stok' => $request->stok,
-                'serial_number' => $request->serial_number,
+                'barang_harga' => '0',
+                'serial_number' => '-',
             ]);
         } else {
             //update data without image
@@ -332,9 +306,9 @@ class BarangController extends Controller
                 'barang_kode' => $request->kode,
                 'barang_nama' => $request->nama,
                 'barang_slug' => $slug,
-                'barang_harga' => $request->harga,
                 'barang_stok' => $request->stok,
-                'serial_number' => $request->serial_number,
+                'barang_harga' => '0',
+                'serial_number' => '-',
             ]);
         }
 

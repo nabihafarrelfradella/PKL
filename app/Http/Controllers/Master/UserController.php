@@ -9,257 +9,352 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
+    // =========================================================
+    // Helpers
+    // =========================================================
     private function logActivity($activity, $details)
     {
         $user = Session::get('user');
         DB::table('tbl_audit_log')->insert([
-            'user_id' => $user->user_id,
-            'role_slug' => $user->role_slug,
-            'activity' => $activity,
-            'module' => 'User Management',
-            'details' => $details,
+            'user_id'    => $user->user_id,
+            'role_slug'  => $user->role_slug,
+            'activity'   => $activity,
+            'module'     => 'User Management',
+            'details'    => $details,
             'ip_address' => request()->ip(),
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
     }
 
+    // =========================================================
+    // LEGACY – User List (generic, used by old admin/user routes)
+    // =========================================================
     public function index()
     {
-        $data["title"] = "User";
-        $data["role"] = RoleModel::latest()->get();
+        $data['title'] = 'User';
+        $data['role']  = RoleModel::latest()->get();
         return view('Master.User.index', $data);
     }
 
     public function profile(UserModel $user)
     {
-        $data["title"] = "Profile";
-        $data["data"] = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')->select()->where('tbl_user.user_id', '=', $user->user_id)->first();
+        $data['title'] = 'Profile';
+        $data['data']  = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
+            ->select()
+            ->where('tbl_user.user_id', '=', $user->user_id)
+            ->first();
         return view('Master.User.profile', $data);
     }
 
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')->select()->orderBy('user_id', 'DESC')->get();
-            return Datatables::of($data)
+            $data = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
+                ->select()
+                ->orderBy('user_id', 'DESC')
+                ->get();
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('img', function ($row) {
-                    if ($row->user_foto == "undraw_profile.svg") {
-                        $img = '<span class="avatar avatar-lg brround cover-image" data-bs-image-src="' . url('assets/images/users/14.jpg') . '" style="background: url(&quot;' . url('/assets/default/users') . '/' . $row->user_foto . '&quot;) center center;"></span>';
+                    if ($row->user_foto == 'undraw_profile.svg') {
+                        $img = '<span class="avatar avatar-lg brround cover-image" style="background: url(&quot;' . url('/assets/default/users') . '/' . $row->user_foto . '&quot;) center center;"></span>';
                     } else {
-                        $img = '<span class="avatar avatar-lg brround cover-image" data-bs-image-src="' . url('assets/images/users/14.jpg') . '" style="background: url(&quot;' . asset('storage/users/' . $row->user_foto) . '&quot;) center center;"></span>';
+                        $img = '<span class="avatar avatar-lg brround cover-image" style="background: url(&quot;' . asset('storage/users/' . $row->user_foto) . '&quot;) center center;"></span>';
                     }
-
                     return $img;
                 })
                 ->addColumn('role', function ($row) {
-                    $badge = '<span class="badge bg-primary badge-sm  me-1 mb-1 mt-1">' . $row->role_title . '</span>';
-
-                    return $badge;
+                    return '<span class="badge bg-primary badge-sm me-1 mb-1 mt-1">' . $row->role_title . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $array = array(
-                        "user_id" => $row->user_id,
-                        "user_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nama)),
-                        "user_nmlengkap" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nmlengkap)),
-                        "user_foto" => $row->user_foto,
-                        "role_id" => $row->role_id,
-                        "user_email" => $row->user_email
-                    );
-                    $button = '';
-                    $button .= '
+                    $array = [
+                        'user_id'        => $row->user_id,
+                        'user_nama'      => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nama)),
+                        'user_nmlengkap' => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nmlengkap)),
+                        'user_foto'      => $row->user_foto,
+                        'role_id'        => $row->role_id,
+                        'user_email'     => $row->user_email,
+                    ];
+                    return '
                     <div class="g-2">
-                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=\'update(' . json_encode($array) . ')\'><span class="fe fe-edit text-success fs-14"></span></a>
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=\'hapus(' . json_encode($array) . ')\'><span class="fe fe-trash-2 fs-14"></span></a>
-                    </div>
-                    ';
-                    return $button;
+                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" onclick=\'update(' . json_encode($array) . ')\'>
+                            <span class="fe fe-edit text-success fs-14"></span>
+                        </a>
+                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=\'hapus(' . json_encode($array) . ')\'>
+                            <span class="fe fe-trash-2 fs-14"></span>
+                        </a>
+                    </div>';
                 })
-                ->rawColumns(['action', 'img', 'role'])->make(true);
+                ->rawColumns(['action', 'img', 'role'])
+                ->make(true);
         }
     }
 
     public function store(Request $request)
     {
-        $img = "";
-
-        //upload image
-        if ($request->file('photo') == null) {
-            $img = "undraw_profile.svg";
-        } else {
-            $image = $request->file('photo');
-            $image->storeAs('public/users/', $image->hashName());
-            $img = $image->hashName();
+        $img = $request->file('photo') ? $request->file('photo')->hashName() : 'undraw_profile.svg';
+        if ($request->file('photo')) {
+            $request->file('photo')->storeAs('public/users/', $img);
         }
 
-
-        //create post
         $user = UserModel::create([
-            'user_foto' => $img,
+            'user_foto'      => $img,
             'user_nmlengkap' => $request->nmlengkap,
-            'user_nama'   => $request->username,
-            'user_email' => $request->email,
-            'role_id' => $request->role,
-            'user_password' => md5($request->pwd)
+            'user_nama'      => $request->username,
+            'user_email'     => $request->email,
+            'role_id'        => $request->role,
+            'user_password'  => md5($request->pwd),
         ]);
 
         $this->logActivity('CREATE', "Created user: {$user->user_nama} ({$user->user_email}) with role_id: {$user->role_id}");
 
-        $data['title'] = "User";
         Session::flash('status', 'success');
         Session::flash('msg', 'Berhasil ditambah!');
-
-        //redirect to index
-        return redirect()->route('user.index')->with($data);
+        return redirect()->route('user.index');
     }
 
     public function update(Request $request, UserModel $user)
     {
+        $updateData = [
+            'user_nmlengkap' => $request->nmlengkapU,
+            'user_nama'      => $request->usernameU,
+            'user_email'     => $request->emailU,
+            'role_id'        => $request->roleU,
+        ];
 
-        //check if image is uploaded
-        if ($request->hasFile('photoU')) {
-
-            //upload new image
-            $image = $request->file('photoU');
-            $image->storeAs('public/users', $image->hashName());
-
-            //delete old image
-            Storage::delete('public/users/' . $user->user_foto);
-
-            if ($request->pwdU == '') {
-                //update post with new image
-                $user->update([
-                    'user_foto'     => $image->hashName(),
-                    'user_nmlengkap' => $request->nmlengkapU,
-                    'user_nama'   => $request->usernameU,
-                    'user_email' => $request->emailU,
-                    'role_id' => $request->roleU,
-                ]);
-            } else {
-                //update post with new image
-                $user->update([
-                    'user_foto'     => $image->hashName(),
-                    'user_nmlengkap' => $request->nmlengkapU,
-                    'user_nama'   => $request->usernameU,
-                    'user_email' => $request->emailU,
-                    'role_id' => $request->roleU,
-                    'user_password' => md5($request->pwdU)
-                ]);
-            }
-        } else {
-            if ($request->pwdU == '') {
-                //update post without image
-                $user->update([
-                    'user_nmlengkap' => $request->nmlengkapU,
-                    'user_nama'   => $request->usernameU,
-                    'user_email' => $request->emailU,
-                    'role_id' => $request->roleU,
-                ]);
-            } else {
-                //update post with new image
-                $user->update([
-                    'user_nmlengkap' => $request->nmlengkapU,
-                    'user_nama'   => $request->usernameU,
-                    'user_email' => $request->emailU,
-                    'role_id' => $request->roleU,
-                    'user_password' => md5($request->pwdU)
-                ]);
-            }
+        if ($request->pwdU != '') {
+            $updateData['user_password'] = md5($request->pwdU);
         }
 
+        if ($request->hasFile('photoU')) {
+            $image = $request->file('photoU');
+            $image->storeAs('public/users', $image->hashName());
+            Storage::delete('public/users/' . $user->user_foto);
+            $updateData['user_foto'] = $image->hashName();
+        }
+
+        $user->update($updateData);
         $this->logActivity('UPDATE', "Updated user: {$user->user_nama} (user_id: {$user->user_id})");
 
-        $data['title'] = "User";
         Session::flash('status', 'success');
         Session::flash('msg', 'Berhasil diubah!');
-
-        //redirect to index
-        return redirect()->route('user.index')->with($data);
-    }
-
-    public function updatePassword(Request $request, UserModel $user)
-    {
-        $checkPassword = UserModel::where(array('user_id' => $user->user_id, 'user_password' => md5($request->currentpassword)))->count();
-        if ($checkPassword > 0) {
-            $user->update([
-                'user_password' => md5($request->newpassword)
-            ]);
-            $this->logActivity('UPDATE_PASSWORD', "Updated password for user: {$user->user_nama} (user_id: {$user->user_id})");
-            Session::flash('status', 'success');
-            Session::flash('msg', 'Password berhasil di ubah!');
-        } else {
-            Session::flash('status', 'error');
-            Session::flash('msg', 'Password saat ini tidak sama dengan password lama!');
-            Session::flash('currentpassword', $request->currentpassword);
-            Session::flash('newpassword', $request->newpassword);
-            Session::flash('confirmpassword', $request->confirmpassword);
-        }
-
-        $data['title'] = "Profile";
-        //redirect to index
-        return redirect(url('admin/profile/' . $user->user_id))->with($data);
-    }
-
-    public function updateProfile(Request $request, UserModel $user)
-    {
-
-        //check if image is uploaded
-        if ($request->hasFile('photoU')) {
-
-            //upload new image
-            $image = $request->file('photoU');
-            $image->storeAs('public/users', $image->hashName());
-
-            //delete old image
-            Storage::delete('public/users/' . $user->user_foto);
-
-            //update post with new image
-            $user->update([
-                'user_foto'  => $image->hashName(),
-                'user_nmlengkap' => $request->nmlengkap,
-                'user_nama'   => $request->username,
-                'user_email' => $request->email,
-            ]);
-        } else {
-            //update post without image
-            $user->update([
-                'user_nmlengkap' => $request->nmlengkap,
-                'user_nama'   => $request->username,
-                'user_email' => $request->email,
-            ]);
-        }
-
-        $data['title'] = "Profile";
-        Session::flash('status', 'success');
-        Session::flash('msg', 'Profile Berhasil diubah!');
-
-        //redirect to index
-        return redirect(url('admin/profile/' . $user->user_id))->with($data);
+        return redirect()->route('user.index');
     }
 
     public function hapus(Request $request)
     {
         $detail = UserModel::findOrFail($request->iduser);
-
-        //delete image
         Storage::delete('public/users/' . $detail->user_foto);
-
-        //delete post
-        UserModel::findOrFail($request->iduser)->delete();
-
+        $detail->delete();
         $this->logActivity('DELETE', "Deleted user: {$detail->user_nama} (user_id: {$request->iduser})");
 
-        $data['title'] = "User";
         Session::flash('status', 'success');
         Session::flash('msg', 'Berhasil dihapus!');
+        return redirect()->route('user.index');
+    }
 
-        //redirect to index
-        return redirect()->route('user.index')->with($data);
+    public function updatePassword(Request $request, UserModel $user)
+    {
+        $checkPassword = UserModel::where([
+            'user_id'       => $user->user_id,
+            'user_password' => md5($request->currentpassword),
+        ])->count();
+
+        if ($checkPassword > 0) {
+            $user->update(['user_password' => md5($request->newpassword)]);
+            $this->logActivity('UPDATE_PASSWORD', "Updated password for user: {$user->user_nama}");
+            Session::flash('status', 'success');
+            Session::flash('msg', 'Password berhasil di ubah!');
+        } else {
+            Session::flash('status', 'error');
+            Session::flash('msg', 'Password saat ini tidak sama dengan password lama!');
+        }
+
+        return redirect(url('admin/profile/' . $user->user_id));
+    }
+
+    public function updateProfile(Request $request, UserModel $user)
+    {
+        $updateData = [
+            'user_nmlengkap' => $request->nmlengkap,
+            'user_nama'      => $request->username,
+            'user_email'     => $request->email,
+        ];
+
+        if ($request->hasFile('photoU')) {
+            $image = $request->file('photoU');
+            $image->storeAs('public/users', $image->hashName());
+            Storage::delete('public/users/' . $user->user_foto);
+            $updateData['user_foto'] = $image->hashName();
+        }
+
+        $user->update($updateData);
+        Session::flash('status', 'success');
+        Session::flash('msg', 'Profile Berhasil diubah!');
+        return redirect(url('admin/profile/' . $user->user_id));
+    }
+
+    // =========================================================
+    // NEW: Daftar Teknisi (Pegawai Teknisi, role_id=3)
+    // =========================================================
+    public function teknisiIndex()
+    {
+        $data['title'] = 'Daftar Teknisi';
+        return view('Master.UserManagement.teknisi', $data);
+    }
+
+    public function teknisiShow(Request $request)
+    {
+        if ($request->ajax()) {
+            // role_id = 3 = Pegawai / Teknisi
+            $data = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
+                ->where('tbl_user.role_id', 3)
+                ->select('tbl_user.*', 'tbl_role.role_title', 'tbl_role.role_slug')
+                ->orderBy('user_id', 'DESC')
+                ->get();
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    $array = [
+                        'user_id'        => $row->user_id,
+                        'user_nama'      => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nama)),
+                        'user_nmlengkap' => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nmlengkap)),
+                        'user_email'     => $row->user_email,
+                        'user_phone'     => $row->user_phone ?? '',
+                    ];
+                    return '
+                    <div class="d-flex gap-1">
+                        <a class="btn btn-sm btn-success-light" data-bs-toggle="modal" href="#modalEditTeknisi" onclick="editTeknisi(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')">
+                            <span class="fe fe-edit fs-14"></span>
+                        </a>
+                        <a class="btn btn-sm btn-danger-light" data-bs-toggle="modal" href="#modalHapusTeknisi" onclick="hapusTeknisi(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')">
+                            <span class="fe fe-trash-2 fs-14"></span>
+                        </a>
+                    </div>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+    }
+
+    public function teknisiStore(Request $request)
+    {
+        $request->validate([
+            'nmlengkap' => 'required|string|max:255',
+            'username'  => 'required|string|max:100|unique:tbl_user,user_nama',
+            'email'     => 'required|email|unique:tbl_user,user_email',
+            'pwd'       => 'required|min:6',
+        ], [
+            'nmlengkap.required' => 'Nama Lengkap wajib diisi',
+            'username.required'  => 'Username wajib diisi',
+            'username.unique'    => 'Username sudah digunakan',
+            'email.required'     => 'Email wajib diisi',
+            'email.unique'       => 'Email sudah digunakan',
+            'pwd.required'       => 'Password wajib diisi',
+            'pwd.min'            => 'Password minimal 6 karakter',
+        ]);
+
+        $user = UserModel::create([
+            'user_foto'      => 'undraw_profile.svg',
+            'user_nmlengkap' => $request->nmlengkap,
+            'user_nama'      => $request->username,
+            'user_email'     => $request->email,
+            'user_phone'     => $request->phone ?? null,
+            'role_id'        => 3, // Pegawai Teknisi — hardcoded
+            'user_password'  => md5($request->pwd),
+        ]);
+
+        $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email})");
+
+        return response()->json(['success' => 'Akun Teknisi berhasil ditambahkan!']);
+    }
+
+    public function teknisiUpdate(Request $request, UserModel $user)
+    {
+        // Ensure we only update teknisi accounts
+        if ($user->role_id != 3) {
+            return response()->json(['error' => 'Akun ini bukan Pegawai Teknisi!'], 403);
+        }
+
+        $updateData = [
+            'user_nmlengkap' => $request->nmlengkap,
+            'user_nama'      => $request->username,
+            'user_email'     => $request->email,
+            'user_phone'     => $request->phone ?? null,
+        ];
+
+        if ($request->pwd && $request->pwd != '') {
+            $updateData['user_password'] = md5($request->pwd);
+        }
+
+        $user->update($updateData);
+        $this->logActivity('UPDATE_TEKNISI', "Owner updated Teknisi account: {$user->user_nama} (user_id: {$user->user_id})");
+
+        return response()->json(['success' => 'Akun Teknisi berhasil diperbarui!']);
+    }
+
+    public function teknisiDestroy(Request $request, UserModel $user)
+    {
+        // Ensure we only delete teknisi accounts
+        if ($user->role_id != 3) {
+            return response()->json(['error' => 'Akun ini bukan Pegawai Teknisi!'], 403);
+        }
+
+        $nama = $user->user_nama;
+        $id   = $user->user_id;
+        $user->delete();
+
+        $this->logActivity('DELETE_TEKNISI', "Owner deleted Teknisi account: {$nama} (user_id: {$id})");
+        return response()->json(['success' => 'Akun Teknisi berhasil dihapus!']);
+    }
+
+    // =========================================================
+    // NEW: Admin Gudang (role_id=2) — View + Edit only
+    // =========================================================
+    public function adminGudangIndex()
+    {
+        $data['title']       = 'Admin Gudang';
+        $data['adminGudang'] = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
+            ->where('tbl_user.role_id', 2) // Staff Gudang
+            ->select('tbl_user.*', 'tbl_role.role_title')
+            ->first();
+        return view('Master.UserManagement.admin_gudang', $data);
+    }
+
+    public function adminGudangUpdate(Request $request, UserModel $user)
+    {
+        if ($user->role_id != 2) {
+            return response()->json(['error' => 'Akun ini bukan Admin Gudang!'], 403);
+        }
+
+        $updateData = [
+            'user_nmlengkap' => $request->nmlengkap,
+            'user_nama'      => $request->username,
+            'user_email'     => $request->email,
+        ];
+
+        if ($request->pwd && $request->pwd != '') {
+            $updateData['user_password'] = md5($request->pwd);
+        }
+
+        $user->update($updateData);
+        $this->logActivity('UPDATE_ADMIN_GUDANG', "Owner updated Admin Gudang account: {$user->user_nama} (user_id: {$user->user_id})");
+
+        return response()->json(['success' => 'Akun Admin Gudang berhasil diperbarui!']);
+    }
+
+    // =========================================================
+    // NEW: Access Control Info (informational, read-only)
+    // =========================================================
+    public function accessControl()
+    {
+        $data['title'] = 'Access Control';
+        return view('Master.UserManagement.access_control', $data);
     }
 }

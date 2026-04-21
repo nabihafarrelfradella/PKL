@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('tbl_barangmasuk', function (Blueprint $table) {
             $table->increments('bm_id');
-            $table->string('bm_kode');
+            $table->string('bm_kode')->unique(); // Tambahkan unique agar kode tidak kembar
             $table->string('barang_kode');
-            $table->string('customer_id');
-            $table->string('bm_tanggal');
-            $table->string('bm_jumlah');
+            $table->integer('customer_id'); // Biasanya ID itu integer
+            $table->date('bm_tanggal');     // Gunakan date untuk validasi tanggal
+            $table->integer('bm_jumlah');   // Gunakan integer untuk angka
             $table->timestamps();
         });
     }

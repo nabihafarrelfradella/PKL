@@ -39,7 +39,6 @@
                                 <th class="border-bottom-0">Kode Barang Keluar</th>
                                 <th class="border-bottom-0">Kode Barang</th>
                                 <th class="border-bottom-0">Barang</th>
-                                <th class="border-bottom-0">Tipe</th>
                                 <th class="border-bottom-0">Serial Number</th>
                                 <th class="border-bottom-0">Teknisi</th>
                                 <th class="border-bottom-0">Keterangan</th>
@@ -165,10 +164,6 @@
                     {
                         data: 'barang',
                         name: 'barang_nama',
-                    },
-                    {
-                        data: 'tipe',
-                        name: 'tipe_barang',
                     },
                     {
                         data: 'serial_number',

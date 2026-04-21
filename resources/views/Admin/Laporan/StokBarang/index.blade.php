@@ -37,16 +37,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <label for="" class="fw-bold">Filter Tipe Barang</label>
-                        <div class="form-group">
-                            <select name="tipe" class="form-control">
-                                <option value="">-- Semua Tipe --</option>
-                                <option value="Barang Kembali">Barang Kembali</option>
-                                <option value="Barang Habis Pakai">Barang Habis Pakai</option>
-                            </select>
-                        </div>
-                    </div>
                     <div class="col-md-6 mt-5">
                         <button class="btn btn-success-light" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
                         <button class="btn btn-secondary-light" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
@@ -60,7 +50,6 @@
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Kode Barang</th>
                             <th class="border-bottom-0">Barang</th>
-                            <th class="border-bottom-0">Tipe</th>
                             <th class="border-bottom-0">Stok Awal</th>
                             <th class="border-bottom-0">Jumlah Masuk</th>
                             <th class="border-bottom-0">Jumlah Keluar</th>
@@ -112,7 +101,6 @@
                 "data": function(d) {
                     d.tglawal = $('input[name="tglawal"]').val();
                     d.tglakhir = $('input[name="tglakhir"]').val();
-                    d.tipe = $('select[name="tipe"]').val();
                 }
             },
 
@@ -128,10 +116,6 @@
                 {
                     data: 'barang_nama',
                     name: 'barang_nama',
-                },
-                {
-                    data: 'tipe',
-                    name: 'tipe_barang',
                 },
                 {
                     data: 'stokawal',
@@ -166,30 +150,17 @@
     function reset() {
         $('input[name="tglawal"]').val('');
         $('input[name="tglakhir"]').val('');
-        $('select[name="tipe"]').val('');
         table.ajax.reload(null, false);
     }
 
     function print() {
         var tglawal = $('input[name="tglawal"]').val();
         var tglakhir = $('input[name="tglakhir"]').val();
-        var tipe = $('select[name="tipe"]').val();
-        window.open(
-            "{{route('lap-sb.print')}}?tglawal=" + tglawal + "&tglakhir=" + tglakhir + "&tipe=" + tipe,
-            '_blank'
-        );
-
     }
 
     function pdf() {
         var tglawal = $('input[name="tglawal"]').val();
         var tglakhir = $('input[name="tglakhir"]').val();
-        var tipe = $('select[name="tipe"]').val();
-        window.open(
-            "{{route('lap-sb.pdf')}}?tglawal=" + tglawal + "&tglakhir=" + tglakhir + "&tipe=" + tipe,
-            '_blank'
-        );
-
     }
 
     function validasi(judul, status) {

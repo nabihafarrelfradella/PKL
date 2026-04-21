@@ -16,7 +16,6 @@
                             <th class="border-bottom-0">Kode Barang</th>
                             <th class="border-bottom-0">Nama Barang</th>
                             <th class="border-bottom-0">Jenis</th>
-                            <th class="border-bottom-0">Tipe</th>
                             <th class="border-bottom-0">Satuan</th>
                             <th class="border-bottom-0">Merk</th>
                             <th class="border-bottom-0">Stok</th>
@@ -119,10 +118,6 @@
                     name: 'jenisbarang_nama',
                 },
                 {
-                    data: 'tipe',
-                    name: 'tipe_barang',
-                },
-                {
                     data: 'satuan',
                     name: 'satuan_nama',
                 },
@@ -133,10 +128,6 @@
                 {
                     data: 'totalstok',
                     name: 'barang_stok'
-                },
-                {
-                    data: 'currency',
-                    name: 'barang_harga'
                 },
                 {
                     data: 'action',

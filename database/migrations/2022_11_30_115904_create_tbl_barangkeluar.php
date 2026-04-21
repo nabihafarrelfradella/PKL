@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('tbl_barangkeluar', function (Blueprint $table) {
             $table->increments('bk_id');
-            $table->string('bk_kode');
+            $table->string('bk_kode')->unique();
             $table->string('barang_kode');
-            $table->string('bk_tanggal');
+            $table->date('bk_tanggal');
             $table->string('bk_tujuan')->nullable();
-            $table->string('bk_jumlah');
+            $table->integer('bk_jumlah');
             $table->timestamps();
         });
     }

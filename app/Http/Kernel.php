@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'useractive' => \App\Http\Middleware\CheckUserActive::class,
         'preventBackHistory' => \App\Http\Middleware\PreventBackHistory::class,
         'checkRoleUser' => \App\Http\Middleware\CheckRoleUser::class,
+        'checkOwnerOnly' => \App\Http\Middleware\CheckOwnerOnly::class,
     ];
 }

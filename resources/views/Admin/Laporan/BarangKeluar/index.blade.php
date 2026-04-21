@@ -27,18 +27,20 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <input type="text" name="tglawal" class="form-control datepicker-date" placeholder="Tanggal Awal">
+                            <label class="form-label small text-muted">Dari Tanggal</label>
+                            <input type="date" name="tglawal" id="tglawal" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <input type="text" name="tglakhir" class="form-control datepicker-date" placeholder="Tanggal Akhir">
+                            <label class="form-label small text-muted">Sampai Tanggal</label>
+                            <input type="date" name="tglakhir" id="tglakhir" class="form-control">
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <button class="btn btn-success-light" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
-                        <button class="btn btn-secondary-light" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
-                        <button class="btn btn-primary-light" onclick="print()"><i class="fe fe-printer"></i> Print</button>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-success-light me-1" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
+                        <button class="btn btn-secondary-light me-1" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
+                        <button class="btn btn-primary-light me-1" onclick="print()"><i class="fe fe-printer"></i> Print</button>
                         <button class="btn btn-danger-light" onclick="pdf()"><i class="fa fa-file-pdf-o"></i> PDF</button>
                     </div>
                 </div>
@@ -47,11 +49,13 @@
                         <thead>
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Tanggal Keluar</th>
-                            <th class="border-bottom-0">Kode Barang Keluar</th>
+                            <th class="border-bottom-0">Kode BK</th>
                             <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Barang</th>
+                            <th class="border-bottom-0">Nama Barang</th>
+                            <th class="border-bottom-0">Serial Number</th>
                             <th class="border-bottom-0">Jumlah Keluar</th>
-                            <th class="border-bottom-0">Tujuan</th>
+                            <th class="border-bottom-0">Status</th>
+                            <th class="border-bottom-0">Tujuan / Teknisi</th>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -73,6 +77,10 @@
     });
 
     $(document).ready(function() {
+        // Auto-fill today's date
+        const today = new Date().toISOString().split('T')[0];
+        $('#tglawal').val(today);
+        $('#tglakhir').val(today);
         getData();
     });
 
@@ -85,7 +93,7 @@
             "info": true,
             "order": [],
             "scrollX": true,
-            "stateSave": true,
+            "stateSave": false,
             "lengthMenu": [
                 [5, 10, 25, 50, 100, -1],
                 [5, 10, 25, 50, 100, 'Semua']
@@ -124,8 +132,19 @@
                     name: 'barang_nama',
                 },
                 {
+                    data: 'serial_number',
+                    name: 'serial_number',
+                    defaultContent: '-'
+                },
+                {
                     data: 'bk_jumlah',
                     name: 'bk_jumlah',
+                },
+                {
+                    data: 'status_badge',
+                    name: 'bk_status',
+                    searchable: false,
+                    orderable: false
                 },
                 {
                     data: 'tujuan',

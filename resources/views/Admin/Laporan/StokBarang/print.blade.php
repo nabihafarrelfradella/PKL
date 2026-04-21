@@ -52,7 +52,6 @@ use Carbon\Carbon;
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
                 <th>SATUAN</th>
-                <th>TIPE</th>
                 <th align="center">STOK AWAL</th>
                 <th align="center">JML MASUK</th>
                 <th align="center">JML KELUAR</th>

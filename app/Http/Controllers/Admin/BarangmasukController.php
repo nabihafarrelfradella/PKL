@@ -3,128 +3,140 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin\AksesModel;
 use App\Models\Admin\BarangmasukModel;
-use App\Models\Admin\BarangModel;
-use App\Models\Admin\CustomerModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\DB; // Tambahkan ini
 
 class BarangmasukController extends Controller
 {
     public function index()
     {
         $data["title"] = "Barang Masuk";
-        $data["hakTambah"] = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'create'))->count();
+        // Menggunakan session user secara aman
+        $user = Session::get('user');
+        $data["hakTambah"] = ($user && ($user->role_id == 1 || $user->role_id == 2)) ? 1 : 0;
         return view('Admin.BarangMasuk.index', $data);
     }
 
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->orderBy('bm_id', 'DESC')->get();
+            // Gunakan select untuk menghindari tabrakan kolom ID antara tabel barang dan barang masuk
+            $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama', 'tbl_barang.barang_id as id_barang_master')
+                ->orderBy('tbl_barangmasuk.bm_id', 'DESC')
+                ->get();
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
-                    $tgl = $row->bm_tanggal == '' ? '-' : Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y H:i:s');
-
-                    return $tgl;
+                    return $row->bm_tanggal ? Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y H:i:s') : '-';
                 })
                 ->addColumn('barang', function ($row) {
-                    $barang = $row->barang_id == '' ? '-' : $row->barang_nama;
-
-                    return $barang;
+                    return $row->barang_nama ?? '-';
                 })
                 ->addColumn('action', function ($row) {
-                    $array = array(
+                    // Data untuk dikirim ke modal JavaScript
+                    $array = [
                         "bm_id" => $row->bm_id,
                         "bm_kode" => $row->bm_kode,
                         "barang_kode" => $row->barang_kode,
                         "bm_tanggal" => $row->bm_tanggal,
                         "bm_jumlah" => $row->bm_jumlah,
                         "serial_number" => $row->serial_number,
-                        "jam_masuk" => $row->bm_tanggal,
                         "kode_barang_unik" => $row->kode_barang_unik
-                    );
-                    $button = '';
-                    $button .= '
-                    <div class="g-2">
-                        <a class="btn modal-effect text-info btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Qmodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Print QR" onclick=showQR(' . json_encode($array) . ')><span class="fe fe-printer fs-14"></span></a>
-                    </div>
-                    ';
-                    $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'update'))->count();
-                    $hakDelete = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Masuk', 'tbl_akses.akses_type' => 'delete'))->count();
-                    if ($hakEdit > 0 && $hakDelete > 0) {
+                    ];
+                    
+                    $json_data = htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8');
+                    
+                    $user = Session::get('user');
+                    $roleId = $user ? $user->role_id : 0;
+                    $isAuthorized = ($roleId == 1 || $roleId == 2);
+
+                    $button = '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Qmodaldemo8" title="Print QR" onclick=\'showQR(' . $json_data . ')\'><span class="fe fe-printer fs-14"></span></a>';
+
+                    if ($isAuthorized) {
                         $button .= '
-                        <div class="g-2">
-                        <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
-                        ';
-                    } else if ($hakEdit > 0 && $hakDelete == 0) {
-                        $button .= '
-                        <div class="g-2">
-                            <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
-                        </div>
-                        ';
-                    } else if ($hakEdit == 0 && $hakDelete > 0) {
-                        $button .= '
-                        <div class="g-2">
-                        <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
-                        ';
-                    } else {
-                        $button .= '-';
+                            <a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" title="Edit" onclick=\'update(' . $json_data . ')\'><span class="fe fe-edit text-success fs-14"></span></a>
+                            <a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" title="Hapus" onclick=\'hapus(' . $json_data . ')\'><span class="fe fe-trash-2 fs-14"></span></a>';
                     }
+
                     return $button;
                 })
-                ->rawColumns(['action', 'tgl', 'barang'])->make(true);
+                ->rawColumns(['action'])
+                ->make(true);
         }
     }
 
     public function proses_tambah(Request $request)
     {
-        // Generate kode unik
-        $timestamp = now()->timestamp;
-        $urutan = str_pad(BarangmasukModel::whereDate('created_at', now()->format('Y-m-d'))->count() + 1, 2, '0', STR_PAD_LEFT);
-        $kode_barang_unik = 'BRG-' . $timestamp . '-' . $urutan;
+        try {
+            DB::beginTransaction();
 
-        //insert data
-        BarangmasukModel::create([
-            'bm_tanggal' => $request->tglmasuk,
-            'bm_kode' => $request->bmkode,
-            'barang_kode' => $request->barang,
-            'bm_jumlah'   => $request->jml,
-            'serial_number' => $request->serial_number,
-            'kode_barang_unik' => $kode_barang_unik,
-            'jam_masuk' => now(),
-        ]);
+            // Validasi sederhana (opsional tapi disarankan)
+            if(!$request->barang || !$request->jml) {
+                return response()->json(['error' => 'Data tidak lengkap'], 400);
+            }
 
-        return response()->json(['success' => 'Berhasil']);
+            // Generate kode unik
+            $timestamp = now()->timestamp;
+            // Gunakan whereDate pada created_at agar urutan reset setiap hari
+            $countToday = BarangmasukModel::whereDate('created_at', Carbon::today())->count();
+            $urutan = str_pad($countToday + 1, 2, '0', STR_PAD_LEFT);
+            $kode_barang_unik = 'BRG-' . $timestamp . '-' . $urutan;
+
+            BarangmasukModel::create([
+                'bm_tanggal'       => $request->tglmasuk ?? now(),
+                'bm_kode'          => $request->bmkode,
+                'barang_kode'      => $request->barang,
+                'bm_jumlah'        => $request->jml,
+                'serial_number'    => $request->serial_number,
+                'kode_barang_unik' => $kode_barang_unik,
+                'jam_masuk'        => now(),
+                'customer_id'      => 0 // Sesuaikan jika ada input customer
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => 'Berhasil']);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-
-    public function proses_ubah(Request $request, BarangmasukModel $barangmasuk)
+    public function proses_ubah(Request $request)
     {
-        //update data
-        $barangmasuk->update([
-            'bm_tanggal' => $request->tglmasuk,
-            'barang_kode' => $request->barang,
-            'bm_jumlah'   => $request->jml,
-            'serial_number' => $request->serial_number,
-        ]);
+        try {
+            // Mencari data berdasarkan bm_id yang dikirim dari form hidden input
+            $barangmasuk = BarangmasukModel::findOrFail($request->bm_id);
+            
+            $barangmasuk->update([
+                'bm_tanggal'    => $request->tglmasuk,
+                'barang_kode'   => $request->barang,
+                'bm_jumlah'     => $request->jml,
+                'serial_number' => $request->serial_number,
+            ]);
 
-        return response()->json(['success' => 'Berhasil']);
+            return response()->json(['success' => 'Berhasil']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    public function proses_hapus(Request $request, BarangmasukModel $barangmasuk)
+    public function proses_hapus(Request $request)
     {
-        //delete
-        $barangmasuk->delete();
+        try {
+            // Ambil ID dari request untuk keamanan
+            $barangmasuk = BarangmasukModel::findOrFail($request->bm_id);
+            $barangmasuk->delete();
 
-        return response()->json(['success' => 'Berhasil']);
+            return response()->json(['success' => 'Berhasil']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-
 }

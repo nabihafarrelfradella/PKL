@@ -17,7 +17,7 @@ class BarangkeluarController extends Controller
     public function index()
     {
         $data["title"] = "Barang Keluar";
-        $data["hakTambah"] = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'create'))->count();
+        $data["hakTambah"] = (Session::get('user')->role_id == 1 || Session::get('user')->role_id == 2 || Session::get('user')->role_id == 3) ? 1 : 0;
         $data["pegawai"] = UserModel::orderBy('user_nmlengkap', 'ASC')->get();
         return view('Admin.BarangKeluar.index', $data);
     }
@@ -74,35 +74,28 @@ class BarangkeluarController extends Controller
                         "jam_keluar" => $row->bk_tanggal
                     );
                     $button = '';
-                    $hakEdit = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'update'))->count();
-                    $hakDelete = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_submenu.submenu_judul' => 'Barang Keluar', 'tbl_akses.akses_type' => 'delete'))->count();
+                    $roleId = Session::get('user')->role_id;
+                    $hakEdit = ($roleId == 1 || $roleId == 2) ? 1 : 0;
+                    $hakDelete = ($roleId == 1 || $roleId == 2) ? 1 : 0;
                     
-                    if ($row->bk_status == 'Dipinjam' && $row->jenisbarang_ket == 'Barang Kembali') {
+                    if (($roleId == 1 || $roleId == 2) && $row->bk_status == 'Dipinjam' && $row->jenisbarang_ket == 'Barang Kembali') {
                         $button .= '
-                        <div class="g-2">
                         <a class="btn modal-effect text-info btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Kmodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Kembalikan" onclick=kembali(' . json_encode($array) . ')><span class="fe fe-corner-up-left fs-14"></span></a>
-                        </div>
                         ';
                     }
 
                     if ($hakEdit > 0 && $hakDelete > 0) {
                         $button .= '
-                        <div class="g-2">
                         <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
                         <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
                         ';
                     } else if ($hakEdit > 0 && $hakDelete == 0) {
                         $button .= '
-                        <div class="g-2">
                             <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick=update(' . json_encode($array) . ')><span class="fe fe-edit text-success fs-14"></span></a>
-                        </div>
                         ';
                     } else if ($hakEdit == 0 && $hakDelete > 0) {
                         $button .= '
-                        <div class="g-2">
                         <a class="btn modal-effect text-danger btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=hapus(' . json_encode($array) . ')><span class="fe fe-trash-2 fs-14"></span></a>
-                        </div>
                         ';
                     } else {
                         if($button == '') $button .= '-';

@@ -1,7 +1,8 @@
 <?php
     use Illuminate\Support\Facades\Session;
-
-    $roleId = Session::get('user')->role_id;
+    $user   = Session::get('user');
+    $roleId = $user ? $user->role_id : 0;
+    // role_id=1 → Owner, role_id=2 → Admin Gudang, role_id=3 → Pegawai Teknisi
 ?>
 <!--APP-SIDEBAR-->
 <div class="sticky">
@@ -23,18 +24,18 @@
                     </div>
                 </div>
             </a>
-            <!-- LOGO -->
         </div>
         <div class="main-sidemenu">
             <div class="slide-left disabled" id="slide-left"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24">
                     <path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z" />
                 </svg></div>
             <ul class="side-menu">
+
                 <li class="sub-category">
                     <h3>Menu</h3>
                 </li>
 
-                <!-- Dashboard -->
+                <!-- Dashboard (semua role) -->
                 <li class="slide">
                     <a class="side-menu__item {{$title == 'Dashboard' ? 'active' : ''}}" data-bs-toggle="slide" href="{{url('/admin/dashboard')}}">
                         <i class="side-menu__icon fe fe-home"></i>
@@ -42,59 +43,35 @@
                     </a>
                 </li>
 
+                @if($roleId == 1 || $roleId == 2)
+                {{-- ============================================
+                     OWNER & ADMIN GUDANG
+                     ============================================ --}}
+
                 <li class="sub-category">
                     <h3>Master Data</h3>
                 </li>
 
                 <!-- Master Barang -->
-                <li class="slide {{$title == 'Jenis Barang' || $title == 'Merk' || $title == 'Barang' ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{$title == 'Jenis Barang' || $title == 'Merk' || $title == 'Barang' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                <li class="slide {{in_array($title, ['Jenis', 'Merk', 'Barang']) ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{in_array($title, ['Jenis', 'Merk', 'Barang']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
                         <i class="side-menu__icon fe fe-package"></i>
                         <span class="side-menu__label">Master Barang</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
-                        <li><a href="{{url('/admin/jenisbarang')}}" class="slide-item {{$title == 'Jenis Barang' ? 'active' : ''}}">Jenis</a></li>
-                        <li><a href="{{url('/admin/merk')}}" class="slide-item {{$title == 'Merk' ? 'active' : ''}}">Merk</a></li>
-                        <li><a href="{{url('/admin/barang')}}" class="slide-item {{$title == 'Barang' ? 'active' : ''}}">Barang</a></li>
+                        <li><a href="{{url('/admin/jenisbarang')}}" class="slide-item {{$title == 'Jenis' ? 'active' : ''}}">Jenis Barang</a></li>
+                        <li><a href="{{url('/admin/merk')}}" class="slide-item {{$title == 'Merk' ? 'active' : ''}}">Merk Barang</a></li>
+                        <li><a href="{{url('/admin/barang')}}" class="slide-item {{$title == 'Barang' ? 'active' : ''}}">Data Barang</a></li>
                     </ul>
                 </li>
-
-                <!-- User Management (Hanya muncul untuk Admin) -->
-                @if($roleId == 1)
-                <li class="slide {{$title == 'Role' || $title == 'User' || $title == 'Akses' ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{$title == 'Role' || $title == 'User' || $title == 'Akses' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
-                        <i class="side-menu__icon fe fe-users"></i>
-                        <span class="side-menu__label">User Management</span><i class="angle fe fe-chevron-right"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{url('/admin/role')}}" class="slide-item {{$title == 'Role' ? 'active' : ''}}">Role Management</a></li>
-                        <li><a href="{{url('/admin/user')}}" class="slide-item {{$title == 'User' ? 'active' : ''}}">User List</a></li>
-                        <li><a href="{{url('/admin/akses/role')}}" class="slide-item {{$title == 'Akses' ? 'active' : ''}}">Access Control</a></li>
-                        <li><a href="{{url('/admin/audit')}}" class="slide-item {{$title == 'Audit Trail' ? 'active' : ''}}">Audit Trail</a></li>
-                    </ul>
-                </li>
-                @endif
 
                 <li class="sub-category">
-                    <h3>Reports & Transactions</h3>
-                </li>
-
-                <!-- Laporan -->
-                <li class="slide {{$title == 'Laporan Barang Masuk' || $title == 'Laporan Barang Keluar' || $title == 'Laporan Stok Barang' ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{$title == 'Laporan Barang Masuk' || $title == 'Laporan Barang Keluar' || $title == 'Laporan Stok Barang' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
-                        <i class="side-menu__icon fe fe-printer"></i>
-                        <span class="side-menu__label">Laporan</span><i class="angle fe fe-chevron-right"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{url('/admin/lap-barang-masuk')}}" class="slide-item {{$title == 'Laporan Barang Masuk' ? 'active' : ''}}">Lap Barang Masuk</a></li>
-                        <li><a href="{{url('/admin/lap-barang-keluar')}}" class="slide-item {{$title == 'Laporan Barang Keluar' ? 'active' : ''}}">Lap Barang Keluar</a></li>
-                        <li><a href="{{url('/admin/lap-stok-barang')}}" class="slide-item {{$title == 'Laporan Stok Barang' ? 'active' : ''}}">Lap Stok Barang</a></li>
-                    </ul>
+                    <h3>Transaksi</h3>
                 </li>
 
                 <!-- Transaksi -->
-                <li class="slide {{$title == 'Barang Masuk' || $title == 'Barang Keluar' || $title == 'Barang Tracking' ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{$title == 'Barang Masuk' || $title == 'Barang Keluar' || $title == 'Barang Tracking' ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                <li class="slide {{in_array($title, ['Barang Masuk', 'Barang Keluar', 'Barang Tracking']) ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{in_array($title, ['Barang Masuk', 'Barang Keluar', 'Barang Tracking']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
                         <i class="side-menu__icon fe fe-repeat"></i>
                         <span class="side-menu__label">Transaksi</span><i class="angle fe fe-chevron-right"></i>
                     </a>
@@ -104,6 +81,72 @@
                         <li><a href="{{url('/admin/barang-tracking')}}" class="slide-item {{$title == 'Barang Tracking' ? 'active' : ''}}">Barang Tracking</a></li>
                     </ul>
                 </li>
+
+                <li class="sub-category">
+                    <h3>Laporan</h3>
+                </li>
+
+                <!-- Laporan -->
+                <li class="slide {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-printer"></i>
+                        <span class="side-menu__label">Laporan</span><i class="angle fe fe-chevron-right"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{url('/admin/lap-barang-masuk')}}" class="slide-item {{in_array($title, ['Lap Barang Masuk', 'Laporan Barang Masuk']) ? 'active' : ''}}">Lap. Barang Masuk</a></li>
+                        <li><a href="{{url('/admin/lap-barang-keluar')}}" class="slide-item {{in_array($title, ['Lap Barang Keluar', 'Laporan Barang Keluar']) ? 'active' : ''}}">Lap. Barang Keluar</a></li>
+                        <li><a href="{{url('/admin/lap-stok-barang')}}" class="slide-item {{in_array($title, ['Lap Stok Barang', 'Laporan Stok Barang']) ? 'active' : ''}}">Lap. Stok Barang</a></li>
+                    </ul>
+                </li>
+
+                @if($roleId == 1)
+                {{-- ============================================
+                     OWNER ONLY — User Management
+                     ============================================ --}}
+                <li class="sub-category">
+                    <h3>Manajemen Pengguna</h3>
+                </li>
+
+                <li class="slide {{in_array($title, ['Daftar Teknisi', 'Admin Gudang', 'Access Control', 'Audit Trail', 'Role', 'User']) ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{in_array($title, ['Daftar Teknisi', 'Admin Gudang', 'Access Control', 'Audit Trail', 'Role', 'User']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-users"></i>
+                        <span class="side-menu__label">User Management</span><i class="angle fe fe-chevron-right"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{route('user-mgmt.teknisi')}}" class="slide-item {{$title == 'Daftar Teknisi' ? 'active' : ''}}">Daftar Teknisi</a></li>
+                        <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Admin Gudang</a></li>
+                        <li><a href="{{route('user-mgmt.access-control')}}" class="slide-item {{$title == 'Access Control' ? 'active' : ''}}">Access Control</a></li>
+                        <li><a href="{{route('audit.index')}}" class="slide-item {{$title == 'Audit Trail' ? 'active' : ''}}">Audit Trail</a></li>
+                    </ul>
+                </li>
+                @endif
+
+                @elseif($roleId == 3)
+                {{-- ============================================
+                     PEGAWAI TEKNISI — Limited Access
+                     ============================================ --}}
+                <li class="sub-category">
+                    <h3>Transaksi</h3>
+                </li>
+
+                <!-- Barang Masuk (view only) -->
+                <li class="slide">
+                    <a class="side-menu__item {{$title == 'Barang Masuk' ? 'active' : ''}}" href="{{url('/admin/barang-masuk')}}">
+                        <i class="side-menu__icon fe fe-arrow-down-circle"></i>
+                        <span class="side-menu__label">Barang Masuk</span>
+                        <span class="badge bg-secondary ms-1" style="font-size:10px">View</span>
+                    </a>
+                </li>
+
+                <!-- Barang Keluar (view + form peminjaman) -->
+                <li class="slide">
+                    <a class="side-menu__item {{$title == 'Barang Keluar' ? 'active' : ''}}" href="{{url('/admin/barang-keluar')}}">
+                        <i class="side-menu__icon fe fe-arrow-up-circle"></i>
+                        <span class="side-menu__label">Barang Keluar</span>
+                        <span class="badge bg-info ms-1" style="font-size:10px">Form</span>
+                    </a>
+                </li>
+                @endif
 
                 <li class="sub-category">
                     <h3>Other</h3>

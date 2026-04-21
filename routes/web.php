@@ -77,7 +77,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/barang', [BarangController::class, 'index']);
         Route::get('/admin/barang/show/', [BarangController::class, 'show'])->name('barang.getbarang');
         Route::post('/admin/barang/proses_tambah/', [BarangController::class, 'proses_tambah'])->name('barang.store');
-        Route::post('/admin/barang/proses_ubah/{id}', [BarangController::class, 'proses_ubah']);
+        Route::post('/admin/barang/proses_ubah/{barang}', [BarangController::class, 'proses_ubah']);
         Route::post('/admin/barang/proses_hapus/{id}', [BarangController::class, 'proses_hapus']);
         Route::get('/admin/barang/check-stok', [BarangController::class, 'checkStok'])->name('barang.checkStok');
     });
@@ -141,42 +141,50 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::get('/admin/barang-tracking/show', [BarangTrackingController::class, 'show'])->name('barang-tracking.show');
 
 
-    Route::middleware(['checkRoleUser:1,othermenu'])->group(function () {
+    // =========================================================
+    // USER MANAGEMENT — Hanya Owner (role_id == 1)
+    // =========================================================
+    Route::middleware(['checkOwnerOnly'])->group(function () {
 
-        Route::middleware(['checkRoleUser:2,othermenu'])->group(function () {
-            // Audit Trail
-            Route::get('/admin/audit', [AuditController::class, 'index'])->name('audit.index');
-            Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('audit.getaudit');
-            
-            // Legacy Redirect for Menu (since it was replaced by Audit Trail)
-            Route::get('/admin/menu', function() {
-                return redirect()->route('audit.index');
-            });
+        // Audit Trail
+        Route::get('/admin/audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('audit.getaudit');
+
+        // Legacy menu redirect
+        Route::get('/admin/menu', function () {
+            return redirect()->route('audit.index');
         });
 
-        Route::middleware(['checkRoleUser:3,othermenu'])->group(function () {
-            // Role
-            Route::resource('/admin/role', \App\Http\Controllers\Master\RoleController::class);
-            Route::get('/admin/role/show/', [RoleController::class, 'show'])->name('role.getrole');
-            Route::post('/admin/role/hapus', [RoleController::class, 'hapus']);
-        });
+        // Role Management
+        Route::resource('/admin/role', \App\Http\Controllers\Master\RoleController::class);
+        Route::get('/admin/role/show/', [RoleController::class, 'show'])->name('role.getrole');
+        Route::post('/admin/role/hapus', [RoleController::class, 'hapus']);
 
-        Route::middleware(['checkRoleUser:4,othermenu'])->group(function () {
-            // List User
-            Route::resource('/admin/user', \App\Http\Controllers\Master\UserController::class);
-            Route::get('/admin/user/show/', [UserController::class, 'show'])->name('user.getuser');
-            Route::post('/admin/user/hapus', [UserController::class, 'hapus']);
-        });
+        // User Management (generic — full CRUD for Owner)
+        Route::resource('/admin/user', \App\Http\Controllers\Master\UserController::class);
+        Route::get('/admin/user/show/', [UserController::class, 'show'])->name('user.getuser');
+        Route::post('/admin/user/hapus', [UserController::class, 'hapus']);
 
-        Route::middleware(['checkRoleUser:5,othermenu'])->group(function () {
-            // Akses
-            Route::get('/admin/akses/{role}', [AksesController::class, 'index']);
-            Route::get('/admin/akses/addAkses/{idmenu}/{idrole}/{type}/{akses}', [AksesController::class, 'addAkses']);
-            Route::get('/admin/akses/removeAkses/{idmenu}/{idrole}/{type}/{akses}', [AksesController::class, 'removeAkses']);
-            Route::get('/admin/akses/setAll/{role}', [AksesController::class, 'setAllAkses']);
-            Route::get('/admin/akses/unsetAll/{role}', [AksesController::class, 'unsetAllAkses']);
-        });
+        // Teknisi CRUD — Owner manages Pegawai Teknisi accounts
+        Route::get('/admin/user-management/teknisi', [UserController::class, 'teknisiIndex'])->name('user-mgmt.teknisi');
+        Route::get('/admin/user-management/teknisi/show', [UserController::class, 'teknisiShow'])->name('user-mgmt.teknisi.show');
+        Route::post('/admin/user-management/teknisi/store', [UserController::class, 'teknisiStore'])->name('user-mgmt.teknisi.store');
+        Route::post('/admin/user-management/teknisi/update/{user}', [UserController::class, 'teknisiUpdate'])->name('user-mgmt.teknisi.update');
+        Route::post('/admin/user-management/teknisi/destroy/{user}', [UserController::class, 'teknisiDestroy'])->name('user-mgmt.teknisi.destroy');
 
-        //
+        // Admin Gudang — View + Edit only (single account, no create/delete)
+        Route::get('/admin/user-management/admin-gudang', [UserController::class, 'adminGudangIndex'])->name('user-mgmt.admin-gudang');
+        Route::post('/admin/user-management/admin-gudang/update/{user}', [UserController::class, 'adminGudangUpdate'])->name('user-mgmt.admin-gudang.update');
+
+        // Access Control Info page (informational only, no toggles)
+        Route::get('/admin/user-management/access-control', [UserController::class, 'accessControl'])->name('user-mgmt.access-control');
+
+        // Akses
+        Route::get('/admin/akses/{role}', [AksesController::class, 'index']);
+        Route::get('/admin/akses/addAkses/{idmenu}/{idrole}/{type}/{akses}', [AksesController::class, 'addAkses']);
+        Route::get('/admin/akses/removeAkses/{idmenu}/{idrole}/{type}/{akses}', [AksesController::class, 'removeAkses']);
+        Route::get('/admin/akses/setAll/{role}', [AksesController::class, 'setAllAkses']);
+        Route::get('/admin/akses/unsetAll/{role}', [AksesController::class, 'unsetAllAkses']);
     });
+
 });

@@ -38,9 +38,12 @@ class LapBarangMasukController extends Controller
     public function pdf(Request $request)
     {
         if ($request->tglawal) {
-            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])->orderBy('bm_id', 'DESC')->get();
+            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir])
+                ->orderBy('bm_id', 'DESC')->get();
         } else {
-            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')->leftJoin('tbl_customer', 'tbl_customer.customer_id', '=', 'tbl_barangmasuk.customer_id')->orderBy('bm_id', 'DESC')->get();
+            $data['data'] = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->orderBy('bm_id', 'DESC')->get();
         }
 
         $data["title"] = "PDF Barang Masuk";
@@ -74,11 +77,6 @@ class LapBarangMasukController extends Controller
                     $tgl = $row->bm_tanggal == '' ? '-' : Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y');
 
                     return $tgl;
-                })
-                ->addColumn('customer', function ($row) {
-                    $customer = $row->customer_id == '' ? '-' : $row->customer_nama;
-
-                    return $customer;
                 })
                 ->addColumn('barang', function ($row) {
                     return $row->barang_id == '' ? '-' : $row->barang_nama;

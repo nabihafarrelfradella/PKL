@@ -17,5 +17,6 @@ class UserModel extends Model
         'user_email',
         'user_password',
         'user_foto',
+        'user_phone',
     ];
 }

@@ -7,16 +7,13 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="jenisbarang" class="form-label">Jenis Barang <span class="text-danger">*</span></label>
-                    <input type="text" name="jenisbarang" class="form-control" placeholder="">
-                </div>
-                <div class="form-group">
-                    <label for="ket" class="form-label">Tipe Barang <span class="text-danger">*</span></label>
-                    <select name="ket" class="form-control">
-                        <option value="">-- Pilih --</option>
-                        <option value="Barang Kembali">Barang Kembali</option>
+                    <label for="jenisbarang" class="form-label">Jenis Barang (Nama) <span class="text-danger">*</span></label>
+                    <select name="jenisbarang" class="form-control">
+                        <option value="">-- Pilih Jenis Barang --</option>
                         <option value="Barang Habis Pakai">Barang Habis Pakai</option>
+                        <option value="Barang Kembali">Barang Kembali</option>
                     </select>
+                    <small class="text-muted">Jenis barang menentukan apakah barang perlu dikembalikan atau tidak.</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -34,19 +31,13 @@
 @section('formTambahJS')
 <script>
     function checkForm() {
-        const jenis = $("input[name='jenisbarang']").val();
-        const ket = $("select[name='ket']").val();
+        const jenis = $("select[name='jenisbarang']").val();
         setLoading(true);
         resetValid();
 
         if (jenis == "") {
-            validasi('Jenis Barang wajib di isi!', 'warning');
-            $("input[name='jenisbarang']").addClass('is-invalid');
-            setLoading(false);
-            return false;
-        } else if (ket == "") {
-            validasi('Tipe Barang wajib di isi!', 'warning');
-            $("select[name='ket']").addClass('is-invalid');
+            validasi('Jenis Barang wajib di pilih!', 'warning');
+            $("select[name='jenisbarang']").addClass('is-invalid');
             setLoading(false);
             return false;
         } else {
@@ -55,16 +46,14 @@
     }
 
     function submitForm() {
-        const jenis = $("input[name='jenisbarang']").val();
-        const ket = $("select[name='ket']").val();
+        const jenis = $("select[name='jenisbarang']").val();
 
         $.ajax({
             type: 'POST',
             url: "{{route('jenisbarang.store')}}",
             enctype: 'multipart/form-data',
             data: {
-                jenisbarang: jenis,
-                ket: ket
+                jenisbarang: jenis
             },
             success: function(data) {
                 $('#modaldemo8').modal('toggle');
@@ -80,14 +69,12 @@
     }
 
     function resetValid() {
-        $("input[name='jenisbarang']").removeClass('is-invalid');
-        $("select[name='ket']").removeClass('is-invalid');
+        $("select[name='jenisbarang']").removeClass('is-invalid');
     };
 
     function reset() {
         resetValid();
-        $("input[name='jenisbarang']").val('');
-        $("select[name='ket']").val('');
+        $("select[name='jenisbarang']").val('');
         setLoading(false);
     }
 

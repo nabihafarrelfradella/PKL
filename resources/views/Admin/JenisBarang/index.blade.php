@@ -34,7 +34,6 @@
                             <thead>
                                 <th class="border-bottom-0" width="1%">No</th>
                                 <th class="border-bottom-0">Jenis Barang</th>
-                                <th class="border-bottom-0">Keterangan</th>
                                 <th class="border-bottom-0" width="1%">Action</th>
                             </thead>
                             <tbody></tbody>
@@ -53,8 +52,7 @@
     <script>
         function update(data) {
             $("input[name='idjenisbarangU']").val(data.jenisbarang_id);
-            $("input[name='jenisbarangU']").val(data.jenisbarang_nama.replace(/_/g, ' '));
-            $("select[name='ketU']").val(data.jenisbarang_ket.replace(/_/g, ' '));
+            $("select[name='jenisbarangU']").val(data.jenisbarang_nama.replace(/_/g, ' '));
         }
 
         function hapus(data) {
@@ -110,10 +108,6 @@
                     {
                         data: 'jenisbarang_nama',
                         name: 'jenisbarang_nama',
-                    },
-                    {
-                        data: 'ket',
-                        name: 'jenisbarang_ket',
                     },
                     {
                         data: 'action',

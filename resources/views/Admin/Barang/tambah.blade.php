@@ -45,16 +45,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="serial_number" class="form-label">Serial Number</label>
-                            <input type="text" name="serial_number" class="form-control">
-                        </div>
-                        <div class="form-group">
                             <label for="stok" class="form-label">Stok Barang <span class="text-danger">*</span></label>
                             <input type="number" name="stok" class="form-control" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="harga" class="form-label">Harga Barang <span class="text-danger">*</span></label>
-                            <input type="text" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" name="harga" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-5">
@@ -86,7 +78,6 @@
         const kode = $("input[name='kode']").val();
         const nama = $("input[name='nama']").val();
         const stok = $("input[name='stok']").val();
-        const harga = $("input[name='harga']").val();
         setLoading(true);
         resetValid();
         if (kode == "") {
@@ -104,11 +95,6 @@
             $("input[name='stok']").addClass('is-invalid');
             setLoading(false);
             return false;
-        } else if (harga == "") {
-            validasi('Harga Barang wajib di isi!', 'warning');
-            $("input[name='harga']").addClass('is-invalid');
-            setLoading(false);
-            return false;
         } else {
             submitForm();
         }
@@ -121,8 +107,6 @@
         const satuan = $("select[name='satuan']").val();
         const merk = $("select[name='merk']").val();
         const stok = $("input[name='stok']").val();
-        const serial_number = $("input[name='serial_number']").val();
-        const harga = $("input[name='harga']").val();
         const foto = $('#GetFile')[0].files;
         var fd = new FormData();
         // Append data 
@@ -133,8 +117,6 @@
         fd.append('satuan', satuan);
         fd.append('merk', merk);
         fd.append('stok', stok);
-        fd.append('serial_number', serial_number);
-        fd.append('harga', harga);
         fd.append('_token', "{{csrf_token()}}");
         $.ajax({
             type: 'POST',
@@ -151,6 +133,10 @@
                 });
                 table.ajax.reload(null, false);
                 reset();
+            },
+            error: function(data) {
+                setLoading(false);
+                validasi('Gagal menyimpan data!', 'error');
             }
         });
     }
@@ -161,7 +147,6 @@
         $("select[name='satuan']").removeClass('is-invalid');
         $("select[name='merk']").removeClass('is-invalid');
         $("input[name='stok']").removeClass('is-invalid');
-        $("input[name='harga']").removeClass('is-invalid');
     };
     function reset() {
         resetValid();
@@ -170,9 +155,7 @@
         $("select[name='jenisbarang']").val('');
         $("select[name='satuan']").val('');
         $("select[name='merk']").val('');
-        $("input[name='serial_number']").val('');
         $("input[name='stok']").val('0');
-        $("input[name='harga']").val('');
         $("#outputImg").attr("src", "{{url('/assets/default/barang/image.png')}}");
         $("#GetFile").val('');
         setLoading(false);
