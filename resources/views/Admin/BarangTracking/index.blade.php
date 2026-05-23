@@ -60,7 +60,7 @@
                                 <th>Stok Saat Ini</th>
                                 <th>Tgl Masuk</th>
                                 <th>Tgl Keluar</th>
-                                <th>Teknisi / Ket</th>
+                                <th>Status / Teknisi / Ket</th>
                                 <th width="1%">QR Code</th>
                             </tr>
                         </thead>
@@ -111,6 +111,7 @@
         table = $('#table-tracking').DataTable({
             processing: true,
             serverSide: true,
+            searching: false, // Hapus search box bawaan
             scrollX: true,
             order: [],
             pageLength: 25,

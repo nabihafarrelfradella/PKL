@@ -1,7 +1,6 @@
 @extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
-<!-- PAGE-HEADER -->
 <div class="page-header">
     <h1 class="page-title">Laporan Stok Barang</h1>
     <div>
@@ -11,9 +10,6 @@
         </ol>
     </div>
 </div>
-<!-- PAGE-HEADER END -->
-
-<!-- ROW -->
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="card">
@@ -41,19 +37,20 @@
                         <button class="btn btn-success-light" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
                         <button class="btn btn-secondary-light" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
                         <button class="btn btn-primary-light" onclick="print()"><i class="fe fe-printer"></i> Print</button>
-                        <button class="btn btn-danger-light" onclick="pdf()"><i class="fa fa-file-pdf-o"></i> PDF</button>
                     </div>
                 </div>
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Barang</th>
-                            <th class="border-bottom-0">Stok Awal</th>
-                            <th class="border-bottom-0">Jumlah Masuk</th>
-                            <th class="border-bottom-0">Jumlah Keluar</th>
-                            <th class="border-bottom-0">Total Stok</th>
+                            <tr>
+                                <th class="border-bottom-0" width="1%">No</th>
+                                <th class="border-bottom-0">Kode Barang</th>
+                                <th class="border-bottom-0">Barang</th>
+                                <th class="border-bottom-0">Stok Awal</th>
+                                <th class="border-bottom-0">Jumlah Masuk</th>
+                                <th class="border-bottom-0">Jumlah Keluar</th>
+                                <th class="border-bottom-0">Total Stok</th>
+                            </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -62,8 +59,6 @@
         </div>
     </div>
 </div>
-<!-- END ROW -->
-
 @endsection
 
 @section('scripts')
@@ -74,14 +69,13 @@
         }
     });
 
+    var table;
     $(document).ready(function() {
         getData();
     });
 
     function getData() {
-        //datatables
         table = $('#table-1').DataTable({
-
             "processing": true,
             "serverSide": true,
             "info": true,
@@ -93,9 +87,7 @@
                 [5, 10, 25, 50, 100, 'Semua']
             ],
             "pageLength": 10,
-
-            lengthChange: true,
-
+            "lengthChange": true,
             "ajax": {
                 "url": "{{ route('lap-sb.getlap-sb') }}",
                 "data": function(d) {
@@ -103,43 +95,36 @@
                     d.tglakhir = $('input[name="tglakhir"]').val();
                 }
             },
+            "columns": [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'barang_kode', name: 'barang_kode' },
+                { data: 'barang_nama', name: 'barang_nama' },
+                { data: 'stokawal', name: 'barang_stok' },
+                { data: 'jmlmasuk', name: 'jmlmasuk', orderable: false },
+                { data: 'jmlkeluar', name: 'jmlkeluar', searchable: false, orderable: false },
+                { 
+                    data: 'totalstok', 
+                    name: 'totalstok', 
+                    searchable: false, 
+                    orderable: false,
+                    render: function (data, type, row) {
+                        // Bersihkan tag HTML (menghapus class text-success bawaan backend)
+                        let cleanNumber = String(data).replace(/<[^>]*>?/gm, '').trim();
+                        let stok = parseInt(cleanNumber);
+                        
+                        let color = "";
+                        if (stok < 5) {
+                            color = "#e82646"; // Merah
+                        } else if (stok <= 10) {
+                            color = "#f7b731"; // Oranye
+                        } else {
+                            color = "#09ad95"; // Hijau Default
+                        }
 
-            "columns": [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    searchable: false
-                },
-                {
-                    data: 'barang_kode',
-                    name: 'barang_kode',
-                },
-                {
-                    data: 'barang_nama',
-                    name: 'barang_nama',
-                },
-                {
-                    data: 'stokawal',
-                    name: 'barang_stok',
-                },
-                {
-                    data: 'jmlmasuk',
-                    name: 'barang_kode',
-                    orderable: false,
-                },
-                {
-                    data: 'jmlkeluar',
-                    name: 'barang_kode',
-                    searchable: false,
-                    orderable: false,
-                },
-                {
-                    data: 'totalstok',
-                    name: 'barang_kode',
-                    searchable: false,
-                    orderable: false,
+                        return `<span style="color: ${color} !important; font-weight: bold;">${stok}</span>`;
+                    }
                 },
             ],
-
         });
     }
 
@@ -156,11 +141,15 @@
     function print() {
         var tglawal = $('input[name="tglawal"]').val();
         var tglakhir = $('input[name="tglakhir"]').val();
-    }
+        
+        let url = "{{ route('lap-sb.print') }}";
+        
+        // Jika filter tanggal diisi, tambahkan parameter ke URL
+        if (tglawal != '' && tglakhir != '') {
+            url += "?tglawal=" + tglawal + "&tglakhir=" + tglakhir;
+        }
 
-    function pdf() {
-        var tglawal = $('input[name="tglawal"]').val();
-        var tglakhir = $('input[name="tglakhir"]').val();
+        window.open(url, '_blank');
     }
 
     function validasi(judul, status) {

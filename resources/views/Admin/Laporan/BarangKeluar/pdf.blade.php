@@ -43,10 +43,10 @@
                 <th>KODE BK</th>
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
-                <th>SERIAL NUMBER</th>
+                <th>SN.BARANG</th>
                 <th align="center">JML</th>
-                <th>TUJUAN / PEGAWAI</th>
-                <th>TEKNISI</th>
+                <th>NAMA TEKNISI</th>
+                <th>SN.TEKNISI</th>
                 <th>KETERANGAN</th>
             </tr>
         </thead>

@@ -20,7 +20,9 @@ class BarangController extends Controller
     {
         $data["title"] = "Barang";
         $data["hakTambah"] = (Session::get('user')->role_id == 1 || Session::get('user')->role_id == 2) ? 1 : 0;
-        $data["jenisbarang"] = JenisBarangModel::orderBy('jenisbarang_id', 'DESC')->get();
+        $data["jenisbarang"] = JenisBarangModel::whereIn('jenisbarang_nama', ['Barang Habis Pakai', 'Barang Kembali'])
+            ->get()
+            ->unique('jenisbarang_nama');
         $data["merk"] = MerkModel::orderBy('merk_id', 'DESC')->get();
         return view('Admin.Barang.index', $data);
     }
@@ -28,6 +30,20 @@ class BarangController extends Controller
     public function getbarang($id)
     {
         $data = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')->where('tbl_barang.barang_kode', '=', $id)->get();
+        return json_encode($data);
+    }
+
+    public function getunit($id)
+    {
+        // Cari di tbl_barangmasuk berdasarkan kode_barang_unik atau serial_number
+        $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+            ->where('tbl_barangmasuk.kode_barang_unik', '=', $id)
+            ->orWhere('tbl_barangmasuk.serial_number', '=', $id)
+            ->select('tbl_barangmasuk.*', 'tbl_barang.*', 'tbl_jenisbarang.jenisbarang_nama', 'tbl_merk.merk_nama')
+            ->get();
+            
         return json_encode($data);
     }
 
@@ -109,6 +125,7 @@ class BarangController extends Controller
                     $array = array(
                         "barang_id" => $row->barang_id,
                         "jenisbarang_id" => $row->jenisbarang_id,
+                        "jenisbarang_nama" => $row->jenisbarang_nama, // Tambahkan ini
                         "satuan_id" => $row->satuan_id,
                         "merk_id" => $row->merk_id,
                         "barang_kode" => $row->barang_kode,
@@ -238,6 +255,14 @@ class BarangController extends Controller
 
     public function proses_tambah(Request $request)
     {
+        $request->validate([
+            'nama'          => 'required',
+            'jenisbarang'   => 'required|in:bk,hp', 
+            'satuan'        => 'required',
+            'merk'          => 'required',
+            'stok'          => 'required|numeric',
+        ]);
+
         $img = "";
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->nama)));
 
@@ -250,20 +275,40 @@ class BarangController extends Controller
             $img = $image->hashName();
         }
 
+        // Generate KODE BARANG: [BK/HP]-[MMYY]-[001]
+        $prefix = strtoupper($request->jenisbarang);
+        $monthYear = now()->format('my'); // format MMYY
+        
+        $lastBarang = BarangModel::where('barang_kode', 'LIKE', $prefix . '-' . $monthYear . '-%')
+            ->orderBy('barang_kode', 'DESC')
+            ->first();
+
+        if ($lastBarang) {
+            $lastNo = intval(substr($lastBarang->barang_kode, -3));
+            $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $nextNo = '001';
+        }
+
+        $barang_kode = $prefix . '-' . $monthYear . '-' . $nextNo;
+
+        // Map "bk/hp" to jenisbarang_id
+        $jenisName = ($request->jenisbarang == 'bk') ? 'Barang Kembali' : 'Barang Habis Pakai';
+        $jenis = JenisBarangModel::where('jenisbarang_nama', $jenisName)->first();
+        $jenis_id = $jenis ? $jenis->jenisbarang_id : null;
 
         //create
         BarangModel::create([
-            'barang_gambar' => $img,
-            'jenisbarang_id' => $request->jenisbarang,
-            'satuan_id' => $request->satuan,
-            'merk_id' => $request->merk,
-            'barang_kode' => $request->kode,
-            'barang_nama' => $request->nama,
-            'barang_slug' => $slug,
-            'barang_stok' => $request->stok,
-            'barang_harga' => '0',
-            'serial_number' => '-',
-
+            'barang_gambar'  => $img,
+            'jenisbarang_id' => $jenis_id,
+            'satuan_id'      => $request->satuan,
+            'merk_id'        => $request->merk,
+            'barang_kode'    => $barang_kode,
+            'barang_nama'    => $request->nama,
+            'barang_slug'    => $slug,
+            'barang_stok'    => $request->stok,
+            'barang_harga'   => '0',
+            'serial_number'  => '-',
         ]);
 
         return response()->json(['success' => 'Berhasil']);
@@ -271,50 +316,44 @@ class BarangController extends Controller
 
     public function proses_ubah(Request $request, BarangModel $barang)
     {
+        $request->validate([
+            'nama'          => 'required',
+            'jenisbarang'   => 'required|in:bk,hp', 
+            'satuan'        => 'required',
+            'merk'          => 'required',
+            'stok'          => 'required|numeric',
+        ]);
 
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->nama)));
 
+        // Map "bk/hp" to jenisbarang_id
+        $jenisName = ($request->jenisbarang == 'bk') ? 'Barang Kembali' : 'Barang Habis Pakai';
+        $jenis = JenisBarangModel::where('jenisbarang_nama', $jenisName)->first();
+        $jenis_id = $jenis ? $jenis->jenisbarang_id : null;
+
+        $updateData = [
+            'jenisbarang_id' => $jenis_id,
+            'satuan_id'      => $request->satuan,
+            'merk_id'        => $request->merk,
+            'barang_nama'    => $request->nama,
+            'barang_slug'    => $slug,
+            'barang_stok'    => $request->stok,
+        ];
+
         //check if image is uploaded
         if ($request->hasFile('foto')) {
-
-            //upload new image
             $image = $request->file('foto');
             $image->storeAs('public/barang', $image->hashName());
-
-            //delete old image
-            Storage::delete('public/barang/' . $barang->barang_gambar);
-
-            //update data with new image
-            $barang->update([
-                'barang_gambar'  => $image->hashName(),
-                'jenisbarang_id' => $request->jenisbarang,
-                'satuan_id' => $request->satuan,
-                'merk_id' => $request->merk,
-                'barang_kode' => $request->kode,
-                'barang_nama' => $request->nama,
-                'barang_slug' => $slug,
-                'barang_stok' => $request->stok,
-                'barang_harga' => '0',
-                'serial_number' => '-',
-            ]);
-        } else {
-            //update data without image
-            $barang->update([
-                'jenisbarang_id' => $request->jenisbarang,
-                'satuan_id' => $request->satuan,
-                'merk_id' => $request->merk,
-                'barang_kode' => $request->kode,
-                'barang_nama' => $request->nama,
-                'barang_slug' => $slug,
-                'barang_stok' => $request->stok,
-                'barang_harga' => '0',
-                'serial_number' => '-',
-            ]);
+            if ($barang->barang_gambar != 'image.png') {
+                Storage::delete('public/barang/' . $barang->barang_gambar);
+            }
+            $updateData['barang_gambar'] = $image->hashName();
         }
+
+        $barang->update($updateData);
 
         return response()->json(['success' => 'Berhasil']);
     }
-
 
     public function proses_hapus(Request $request, $id)
     {

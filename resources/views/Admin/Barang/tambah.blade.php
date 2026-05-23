@@ -9,20 +9,19 @@
                 <div class="row">
                     <div class="col-md-7">
                         <div class="form-group">
-                            <label for="kode" class="form-label">Kode Barang <span class="text-danger">*</span></label>
-                            <input type="text" name="kode" readonly class="form-control">
+                            <label for="kode" class="form-label">Kode Barang</label>
+                            <input type="text" name="kode" readonly class="form-control" placeholder="Otomatis oleh sistem">
                         </div>
                         <div class="form-group">
                             <label for="nama" class="form-label">Nama Barang <span class="text-danger">*</span></label>
                             <input type="text" name="nama" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="jenisbarang" class="form-label">Jenis Barang</label>
+                            <label for="jenisbarang" class="form-label">Jenis Barang <span class="text-danger">*</span></label>
                             <select name="jenisbarang" class="form-control">
                                 <option value="">-- Pilih --</option>
-                                @foreach ($jenisbarang as $jb)
-                                    <option value="{{$jb->jenisbarang_id}}">{{$jb->jenisbarang_nama}}</option>
-                                @endforeach
+                                <option value="hp">Barang Habis Pakai (hp)</option>
+                                <option value="bk">Barang Kembali (bk)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -53,7 +52,7 @@
                         <div class="form-group">
                             <label for="title" class="form-label">Foto</label>
                             <center>
-                                <img src="{{url('/assets/default/barang/image.png')}}" width="80%" alt="profile-user" id="outputImg" class="">
+                                <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImg" class="">
                             </center>
                             <input class="form-control mt-5" id="GetFile" name="photo" type="file" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
                         </div>
@@ -75,19 +74,20 @@
 @section('formTambahJS')
 <script>
     function checkForm() {
-        const kode = $("input[name='kode']").val();
         const nama = $("input[name='nama']").val();
         const stok = $("input[name='stok']").val();
+        const jenis = $("select[name='jenisbarang']").val();
         setLoading(true);
         resetValid();
-        if (kode == "") {
-            validasi('Kode Barang wajib di isi!', 'warning');
-            $("input[name='kode']").addClass('is-invalid');
-            setLoading(false);
-            return false;
-        } else if (nama == "") {
+
+        if (nama == "") {
             validasi('Nama Barang wajib di isi!', 'warning');
             $("input[name='nama']").addClass('is-invalid');
+            setLoading(false);
+            return false;
+        } else if (jenis == "") {
+            validasi('Jenis Barang wajib di pilih!', 'warning');
+            $("select[name='jenisbarang']").addClass('is-invalid');
             setLoading(false);
             return false;
         } else if (stok == "") {
@@ -156,7 +156,7 @@
         $("select[name='satuan']").val('');
         $("select[name='merk']").val('');
         $("input[name='stok']").val('0');
-        $("#outputImg").attr("src", "{{url('/assets/default/barang/image.png')}}");
+        $("#outputImg").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFile").val('');
         setLoading(false);
     }

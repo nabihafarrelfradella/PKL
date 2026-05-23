@@ -19,8 +19,8 @@ class RoleTableSeeder extends Seeder
         DB::table('tbl_role')->insert(
             [
                 [
-                    'role_title' => 'Super Admin',
-                    'role_slug' => 'super-admin',
+                    'role_title' => 'Owner',
+                    'role_slug' => 'owner',
                     'role_desc' => '-',
                     'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                     'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
@@ -33,8 +33,8 @@ class RoleTableSeeder extends Seeder
                     'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
                 ],
                 [
-                    'role_title' => 'Operator',
-                    'role_slug' => 'operator',
+                    'role_title' => 'Staff Gudang',
+                    'role_slug' => 'staff-gudang',
                     'role_desc' => '-',
                     'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
                     'updated_at' => Carbon::now()->format('Y-m-d H:i:s')

@@ -59,7 +59,6 @@
                         <span class="side-menu__label">Master Barang</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
-                        <li><a href="{{url('/admin/jenisbarang')}}" class="slide-item {{$title == 'Jenis' ? 'active' : ''}}">Jenis Barang</a></li>
                         <li><a href="{{url('/admin/merk')}}" class="slide-item {{$title == 'Merk' ? 'active' : ''}}">Merk Barang</a></li>
                         <li><a href="{{url('/admin/barang')}}" class="slide-item {{$title == 'Barang' ? 'active' : ''}}">Data Barang</a></li>
                     </ul>
@@ -114,9 +113,8 @@
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{route('user-mgmt.teknisi')}}" class="slide-item {{$title == 'Daftar Teknisi' ? 'active' : ''}}">Daftar Teknisi</a></li>
-                        <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Admin Gudang</a></li>
+                        <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Staff Gudang</a></li>
                         <li><a href="{{route('user-mgmt.access-control')}}" class="slide-item {{$title == 'Access Control' ? 'active' : ''}}">Access Control</a></li>
-                        <li><a href="{{route('audit.index')}}" class="slide-item {{$title == 'Audit Trail' ? 'active' : ''}}">Audit Trail</a></li>
                     </ul>
                 </li>
                 @endif

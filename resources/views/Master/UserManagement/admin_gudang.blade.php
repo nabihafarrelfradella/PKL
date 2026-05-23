@@ -4,10 +4,10 @@
 <!-- PAGE-HEADER -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Admin Gudang</h1>
+        <h1 class="page-title">Staff Gudang</h1>
         <ol class="breadcrumb">
             <li class="breadcrumb-item text-gray">User Management</li>
-            <li class="breadcrumb-item active">Admin Gudang</li>
+            <li class="breadcrumb-item active">Staff Gudang</li>
         </ol>
     </div>
 </div>
@@ -18,9 +18,8 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
-                    <i class="fe fe-shield me-1 text-primary"></i> Akun Admin Gudang
+                    <i class="fe fe-shield me-1 text-primary"></i> Akun Staff Gudang
                 </h3>
-                <small class="text-muted">Hanya 1 akun Admin Gudang yang diperbolehkan dalam sistem</small>
             </div>
             <div class="card-body">
                 @if($adminGudang)
@@ -53,15 +52,12 @@
 
                 <hr>
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" href="#modalEditAdminGudang">
-                    <i class="fe fe-edit me-1"></i> Edit Akun Admin Gudang
+                    <i class="fe fe-edit me-1"></i> Edit Akun Staff Gudang
                 </button>
-                <small class="text-muted d-block mt-2">
-                    <i class="fe fe-info me-1"></i> Tidak tersedia tombol Hapus — akun ini bersifat tetap dalam sistem.
-                </small>
                 @else
                 <div class="alert alert-warning">
                     <i class="fe fe-alert-triangle me-1"></i>
-                    Belum ada akun Admin Gudang yang terdaftar di sistem. Hubungi developer untuk membuat akun awal.
+                    Belum ada akun Staff Gudang yang terdaftar di sistem. Hubungi developer untuk membuat akun awal.
                 </div>
                 @endif
             </div>
@@ -72,7 +68,7 @@
     <div class="col-md-4 col-lg-6">
         <div class="card bg-primary-transparent">
             <div class="card-body">
-                <h5 class="fw-bold mb-3"><i class="fe fe-info me-1"></i> Tentang Admin Gudang</h5>
+                <h5 class="fw-bold mb-3"><i class="fe fe-info me-1"></i> Tentang Staff Gudang</h5>
                 <ul class="list-unstyled mb-0">
                     <li class="mb-2"><i class="fe fe-check text-success me-2"></i> Akses hampir semua fitur</li>
                     <li class="mb-2"><i class="fe fe-check text-success me-2"></i> Kelola Master Barang</li>
@@ -93,12 +89,12 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title"><i class="fe fe-edit me-1"></i> Edit Akun Admin Gudang</h6>
+                <h6 class="modal-title"><i class="fe fe-edit me-1"></i> Edit Akun Staff Gudang</h6>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info mb-3">
-                    <i class="fe fe-info me-1"></i> Role Admin Gudang tidak dapat diubah.
+                    <i class="fe fe-info me-1"></i> Role Staff Gudang tidak dapat diubah.
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>

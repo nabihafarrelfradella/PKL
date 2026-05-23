@@ -18,20 +18,20 @@
                             <input type="text" name="tglkeluarU" class="form-control" readonly>
                         </div>
                         <div class="form-group">
-                            <label for="tujuanU" class="form-label">Tujuan Pegawai</label>
+                            <label for="tujuanU" class="form-label">Nama Teknisi</label>
                             <select name="tujuanU" class="form-control select2U" style="width: 100%;">
-                                <option value="">-- Pilih Pegawai --</option>
+                                <option value="">-- Pilih Teknisi --</option>
                                 @foreach($pegawai as $pgw)
                                     <option value="{{ $pgw->user_nmlengkap }}">{{ $pgw->user_nmlengkap }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="teknisiU" class="form-label">Teknisi (untuk Serial Number)</label>
+                            <label for="teknisiU" class="form-label">SN Teknisi</label>
                             <input type="text" name="teknisiU" class="form-control" placeholder="">
                         </div>
                         <div class="form-group">
-                            <label for="keteranganU" class="form-label">Keterangan (untuk Non-Serial Number)</label>
+                            <label for="keteranganU" class="form-label">Keterangan</label>
                             <input type="text" name="keteranganU" class="form-control" placeholder="">
                         </div>
                     </div>
@@ -68,7 +68,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="serial_numberU" class="form-label">Serial Number</label>
+                            <label for="serial_numberU" class="form-label">SN Barang</label>
                             <input type="text" name="serial_numberU" class="form-control" placeholder="">
                         </div>
                         <div class="form-group">

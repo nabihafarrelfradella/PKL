@@ -1,7 +1,6 @@
 @extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
-<!-- PAGE-HEADER -->
 <div class="page-header">
     <h1 class="page-title">Laporan Barang Keluar</h1>
     <div>
@@ -11,14 +10,12 @@
         </ol>
     </div>
 </div>
-<!-- PAGE-HEADER END -->
 
-<!-- ROW -->
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header justify-content-between">
-                <h3 class="card-title">Data</h3>
+                <h3 class="card-title">Data Barang Keluar</h3>
             </div>
             <div class="card-body">
                 <div class="row mb-4">
@@ -41,21 +38,22 @@
                         <button class="btn btn-success-light me-1" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
                         <button class="btn btn-secondary-light me-1" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
                         <button class="btn btn-primary-light me-1" onclick="print()"><i class="fe fe-printer"></i> Print</button>
-                        <button class="btn btn-danger-light" onclick="pdf()"><i class="fa fa-file-pdf-o"></i> PDF</button>
                     </div>
                 </div>
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Tanggal Keluar</th>
-                            <th class="border-bottom-0">Kode BK</th>
-                            <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Nama Barang</th>
-                            <th class="border-bottom-0">Serial Number</th>
-                            <th class="border-bottom-0">Jumlah Keluar</th>
-                            <th class="border-bottom-0">Status</th>
-                            <th class="border-bottom-0">Tujuan / Teknisi</th>
+                            <tr>
+                                <th class="border-bottom-0" width="1%">No</th>
+                                <th class="border-bottom-0">Tanggal Keluar</th>
+                                <th class="border-bottom-0">Kode BK</th>
+                                <th class="border-bottom-0">Nama Barang</th>
+                                <th class="border-bottom-0">Serial Number</th>
+                                <th class="border-bottom-0">Tujuan</th>
+                                <th class="border-bottom-0">Teknisi</th>
+                                <th class="border-bottom-0">Jumlah</th>
+                                <th class="border-bottom-0">Status</th>
+                            </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -64,8 +62,6 @@
         </div>
     </div>
 </div>
-<!-- END ROW -->
-
 @endsection
 
 @section('scripts')
@@ -76,8 +72,9 @@
         }
     });
 
+    var table;
+
     $(document).ready(function() {
-        // Auto-fill today's date
         const today = new Date().toISOString().split('T')[0];
         $('#tglawal').val(today);
         $('#tglakhir').val(today);
@@ -85,9 +82,7 @@
     });
 
     function getData() {
-        //datatables
         table = $('#table-1').DataTable({
-
             "processing": true,
             "serverSide": true,
             "info": true,
@@ -99,152 +94,62 @@
                 [5, 10, 25, 50, 100, 'Semua']
             ],
             "pageLength": 10,
-
-            lengthChange: true,
-
+            "lengthChange": true,
             "ajax": {
                 "url": "{{ route('lap-bk.getlap-bk') }}",
                 "data": function(d) {
-                    d.tglawal = $('input[name="tglawal"]').val();
-                    d.tglakhir = $('input[name="tglakhir"]').val();
+                    d.tglawal = $('#tglawal').val();
+                    d.tglakhir = $('#tglakhir').val();
                 }
             },
-
-            "columns": [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    searchable: false
-                },
-                {
-                    data: 'tgl',
-                    name: 'bk_tanggal',
-                },
-                {
-                    data: 'bk_kode',
-                    name: 'bk_kode',
-                },
-                {
-                    data: 'barang_kode',
-                    name: 'barang_kode',
-                },
-                {
-                    data: 'barang',
-                    name: 'barang_nama',
-                },
-                {
-                    data: 'serial_number',
-                    name: 'serial_number',
-                    defaultContent: '-'
-                },
-                {
-                    data: 'bk_jumlah',
-                    name: 'bk_jumlah',
-                },
-                {
-                    data: 'status_badge',
-                    name: 'bk_status',
-                    searchable: false,
-                    orderable: false
-                },
-                {
-                    data: 'tujuan',
-                    name: 'bk_tujuan',
-                },
+            "columns": [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'tgl', name: 'bk_tanggal' },
+                { data: 'bk_kode', name: 'bk_kode' },
+                { data: 'barang', name: 'barang_nama' },
+                { data: 'serial_number', name: 'serial_number', defaultContent: '-' },
+                { data: 'tujuan', name: 'bk_tujuan' },
+                { data: 'teknisi', name: 'teknisi' },
+                { data: 'bk_jumlah', name: 'bk_jumlah' },
+                { data: 'status_badge', name: 'bk_status', orderable: false, searchable: false }
             ],
-
         });
     }
 
     function filter() {
-        var tglawal = $('input[name="tglawal"]').val();
-        var tglakhir = $('input[name="tglakhir"]').val();
+        var tglawal = $('#tglawal').val();
+        var tglakhir = $('#tglakhir').val();
         if (tglawal != '' && tglakhir != '') {
             table.ajax.reload(null, false);
         } else {
-            validasi("Isi dulu Form Filter Tanggal!", 'warning');
+            validasi("Pilih range tanggal filter!", 'warning');
         }
-
     }
 
     function reset() {
-        $('input[name="tglawal"]').val('');
-        $('input[name="tglakhir"]').val('');
+        const today = new Date().toISOString().split('T')[0];
+        $('#tglawal').val(today);
+        $('#tglakhir').val(today);
         table.ajax.reload(null, false);
     }
 
     function print() {
-        var tglawal = $('input[name="tglawal"]').val();
-        var tglakhir = $('input[name="tglakhir"]').val();
+        var tglawal = $('#tglawal').val();
+        var tglakhir = $('#tglakhir').val();
+        
+        let url = "{{ route('lap-bk.print') }}";
         if (tglawal != '' && tglakhir != '') {
-            window.open(
-                "{{route('lap-bk.print')}}?tglawal=" + tglawal + "&tglakhir=" + tglakhir,
-                '_blank'
-            );
-        } else {
-            swal({
-                title: "Yakin Print Semua Data?",
-                type: "warning",
-                buttons: true,
-                dangerMode: true,
-                confirmButtonText: "Yakin",
-                cancelButtonText: 'Batal',
-                showCancelButton: true,
-                showConfirmButton: true,
-                closeOnConfirm: false,
-                confirmButtonColor: '#09ad95',
-            }, function(value) {
-                if (value == true) {
-                    window.open(
-                        "{{route('lap-bk.print')}}",
-                        '_blank'
-                    );
-                    swal.close();
-                }
-            });
-
+            url += "?tglawal=" + tglawal + "&tglakhir=" + tglakhir;
         }
-
-    }
-
-    function pdf() {
-        var tglawal = $('input[name="tglawal"]').val();
-        var tglakhir = $('input[name="tglakhir"]').val();
-        if (tglawal != '' && tglakhir != '') {
-            window.open(
-                "{{route('lap-bk.pdf')}}?tglawal=" + tglawal + "&tglakhir=" + tglakhir,
-                '_blank'
-            );
-        } else {
-            swal({
-                title: "Yakin export PDF Semua Data?",
-                type: "warning",
-                buttons: true,
-                dangerMode: true,
-                confirmButtonText: "Yakin",
-                cancelButtonText: 'Batal',
-                showCancelButton: true,
-                showConfirmButton: true,
-                closeOnConfirm: false,
-                confirmButtonColor: '#09ad95',
-            }, function(value) {
-                if (value == true) {
-                    window.open(
-                        "{{route('lap-bk.pdf')}}",
-                        '_blank'
-                    );
-                    swal.close();
-                }
-            });
-
-        }
-
+        
+        window.open(url, '_blank');
     }
 
     function validasi(judul, status) {
         swal({
             title: judul,
             type: status,
-            confirmButtonText: "Iya."
+            confirmButtonText: "OK"
         });
     }
 </script>

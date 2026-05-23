@@ -25,10 +25,9 @@ class BarangTrackingController extends Controller
             $query = DB::table('tbl_barangmasuk')
                 ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-                // Join ke tabel keluar untuk mendapatkan data transaksi terakhir barang tersebut
-                ->leftJoin('tbl_barangkeluar', function($join) {
-                    $join->on('tbl_barangkeluar.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
-                         ->whereRaw('tbl_barangkeluar.bk_id = (SELECT MAX(bk_id) FROM tbl_barangkeluar WHERE tbl_barangkeluar.barang_kode = tbl_barangmasuk.barang_kode)');
+                // Join ke subquery untuk mendapatkan transaksi terakhir saja
+                ->leftJoin(DB::raw('(SELECT * FROM tbl_barangkeluar WHERE bk_id IN (SELECT MAX(bk_id) FROM tbl_barangkeluar GROUP BY kode_barang_unik)) as tbl_barangkeluar'), function($join) {
+                    $join->on('tbl_barangkeluar.kode_barang_unik', '=', 'tbl_barangmasuk.kode_barang_unik');
                 })
                 ->select(
                     'tbl_barangmasuk.*',
@@ -38,8 +37,10 @@ class BarangTrackingController extends Controller
                     'tbl_jenisbarang.jenisbarang_nama',
                     'tbl_barangkeluar.jam_keluar as tgl_keluar_jam',
                     'tbl_barangkeluar.bk_tanggal as tgl_keluar_tgl',
-                    'tbl_barangkeluar.teknisi as teknisi_keluar',
-                    'tbl_barangkeluar.keterangan as ket_keluar'
+                    'tbl_barangkeluar.teknisi as teknisi_sn_keluar',
+                    'tbl_barangkeluar.bk_tujuan as nama_teknisi_keluar',
+                    'tbl_barangkeluar.keterangan as ket_keluar',
+                    'tbl_barangkeluar.bk_status'
                 )
                 ->orderBy('tbl_barangmasuk.bm_id', 'DESC');
 
@@ -73,26 +74,41 @@ class BarangTrackingController extends Controller
                 })
                 ->addColumn('teknisi_ket', function ($row) {
                     $info = [];
-                    if ($row->teknisi_keluar) $info[] = 'Teknisi: ' . $row->teknisi_keluar;
-                    if ($row->ket_keluar) $info[] = $row->ket_keluar;
+                    if ($row->nama_teknisi_keluar) $info[] = 'Oleh: ' . $row->nama_teknisi_keluar;
+                    if ($row->teknisi_sn_keluar) $info[] = 'SN-T: ' . $row->teknisi_sn_keluar;
+                    if ($row->ket_keluar) $info[] = 'Ket: ' . $row->ket_keluar;
                     
-                    return !empty($info) ? implode(' | ', $info) : '-';
+                    if ($row->bk_status == 'Dipinjam') {
+                        $status = '<br><span class="badge bg-warning mt-1"><i class="fe fe-clock me-1"></i>Sedang Dipinjam</span>';
+                    } else if ($row->bk_status == 'Selesai') {
+                        // Cek apakah ini barang habis pakai atau kembali
+                        if (str_contains(strtolower($row->jenisbarang_nama), 'habis')) {
+                            $status = '<br><span class="badge bg-danger mt-1"><i class="fe fe-x-circle me-1"></i>Habis Pakai</span>';
+                        } else {
+                            $status = '<br><span class="badge bg-success mt-1"><i class="fe fe-check-circle me-1"></i>Sudah Kembali</span>';
+                        }
+                    } else {
+                        $status = '<br><span class="badge bg-primary mt-1"><i class="fe fe-box me-1"></i>Tersedia (In Stock)</span>';
+                    }
+
+                    return !empty($info) ? implode('<br>', $info) . $status : $status;
                 })
                 ->addColumn('stok_real', function ($row) {
-                    // Mengambil stok master barang
-                    return $row->barang_stok ?? 0;
+                    // Jika barang dipinjam atau habis pakai, stok 0. Jika sudah kembali atau belum pernah keluar, stok 1.
+                    if ($row->bk_status == 'Dipinjam') return 0;
+                    if ($row->bk_status == 'Selesai' && str_contains(strtolower($row->jenisbarang_nama), 'habis')) return 0;
+                    return 1;
                 })
                 ->addColumn('qr_data', function ($row) {
                     $lines = [
                         'Barang: '   . $row->barang_nama,
-                        'Kode: '     . ($row->kode_barang_unik ?? $row->bm_kode),
-                        'Serial: '   . ($row->serial_number ?? '-'),
-                        'Satuan: '   . ($row->satuan_id ?? '-'),
-                        'Tgl Masuk: '. ($row->jam_masuk ?? $row->bm_tanggal ?? '-')
+                        'Kode Unik: '. ($row->kode_barang_unik ?? $row->bm_kode),
+                        'SN Barang: '. ($row->serial_number ?? '-'),
+                        'Jenis: '    . ($row->jenisbarang_nama ?? '-'),
                     ];
                     return implode("\n", $lines);
                 })
-                ->rawColumns(['tgl_masuk', 'tgl_keluar'])
+                ->rawColumns(['tgl_masuk', 'tgl_keluar', 'teknisi_ket'])
                 ->make(true);
         }
     }

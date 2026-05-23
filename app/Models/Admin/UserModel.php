@@ -18,5 +18,8 @@ class UserModel extends Model
         'user_password',
         'user_foto',
         'user_phone',
+        'jenis_kelamin',
+        'tanggal_lahir',
+        'teknisi_sn',
     ];
 }

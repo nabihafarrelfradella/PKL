@@ -63,19 +63,34 @@
 
 <script>
     function generateID(){
-        id = new Date().getTime();
-        $("input[name='kode']").val("BRG-"+id);
+        $("input[name='kode']").val("Otomatis");
     }
     function update(data){
         $("input[name='idbarangU']").val(data.barang_id);
         $("input[name='kodeU']").val(data.barang_kode);
         $("input[name='namaU']").val(data.barang_nama.replace(/_/g, ' '));
-        $("select[name='jenisbarangU']").val(data.jenisbarang_id);
+        
+        // Pilih Jenis Barang
+        let selectJ = $("select[name='jenisbarangU']");
+        let jName = (data.jenisbarang_nama || "").toLowerCase();
+        if (jName.includes('kembali')) {
+            selectJ.val('bk');
+        } else if (jName.includes('habis')) {
+            selectJ.val('hp');
+        } else {
+            selectJ.val(data.jenisbarang_id);
+        }
+
+        // Pilih Satuan & Merk
         $("select[name='satuanU']").val(data.satuan_id);
         $("select[name='merkU']").val(data.merk_id);
+        
         $("input[name='stokU']").val(data.barang_stok);
+        
         if(data.barang_gambar != 'image.png'){
-            $("#outputImgU").attr("src", "{{asset('storage/barang/')}}"+"/"+data.barang_gambar);    
+            $("#outputImgU").attr("src", "{{ asset('storage/barang') }}/" + data.barang_gambar);    
+        } else {
+            $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         }
     }
     function hapus(data) {
@@ -135,9 +150,23 @@
                 { data: 'barang_kode', name: 'barang_kode' },
                 { data: 'barang_nama', name: 'barang_nama' },
                 { data: 'jenisbarang', name: 'tbl_jenisbarang.jenisbarang_nama' },
-                // Kolom 'tipe' tetap dihapus dari sini agar tidak error
                 { data: 'merk', name: 'tbl_merk.merk_nama' },
-                { data: 'totalstok', name: 'totalstok', searchable: false, orderable: false },
+                { 
+                    data: 'totalstok', 
+                    render: function (data, type, row) {
+                        let cleanNumber = String(data).replace(/<[^>]*>?/gm, '').trim();
+                        let stok = parseInt(cleanNumber);
+                        
+                        let color = "#09ad95"; // default green
+                        if (stok < 0) {
+                            color = "#e82646"; // red for negative
+                        } else if (stok < 5) {
+                            color = "#f7b731"; // yellow for low stock (< 5)
+                        }
+                        
+                        return `<span style="color: ${color} !important; font-weight: bold;">${stok}</span>`;
+                    }
+                },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
         });

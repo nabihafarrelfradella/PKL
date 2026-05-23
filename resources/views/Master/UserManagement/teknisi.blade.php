@@ -44,6 +44,9 @@
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>No. Telepon</th>
+                                <th>Gender</th>
+                                <th>Tgl Lahir</th>
+                                <th>SN Teknisi</th>
                                 <th width="1%">Aksi</th>
                             </tr>
                         </thead>
@@ -79,6 +82,24 @@
                 <div class="form-group mb-3">
                     <label class="form-label">No. Telepon</label>
                     <input type="text" id="add_phone" class="form-control" placeholder="Nomor telepon (opsional)">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
+                            <select id="add_jenis_kelamin" class="form-control">
+                                <option value="">-- Pilih --</option>
+                                <option value="M">Laki-laki (M)</option>
+                                <option value="F">Perempuan (F)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
+                            <input type="date" id="add_tanggal_lahir" class="form-control">
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Password <span class="text-danger">*</span></label>
@@ -120,6 +141,23 @@
                 <div class="form-group mb-3">
                     <label class="form-label">No. Telepon</label>
                     <input type="text" id="edit_phone" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
+                            <select id="edit_jenis_kelamin" class="form-control">
+                                <option value="M">Laki-laki (M)</option>
+                                <option value="F">Perempuan (F)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
+                            <input type="date" id="edit_tanggal_lahir" class="form-control">
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Password Baru <span class="text-muted">(kosongkan jika tidak diganti)</span></label>
@@ -177,6 +215,9 @@
                 { data: 'user_nama' },
                 { data: 'user_email' },
                 { data: 'user_phone', defaultContent: '-' },
+                { data: 'jenis_kelamin', defaultContent: '-' },
+                { data: 'tanggal_lahir', defaultContent: '-' },
+                { data: 'teknisi_sn', defaultContent: '-' },
                 { data: 'action', searchable: false, orderable: false }
             ]
         });
@@ -188,6 +229,8 @@
         $('#edit_username').val(data.user_nama.replace(/_/g, ' '));
         $('#edit_email').val(data.user_email);
         $('#edit_phone').val(data.user_phone || '');
+        $('#edit_jenis_kelamin').val(data.jenis_kelamin || 'M');
+        $('#edit_tanggal_lahir').val(data.tanggal_lahir || '');
         $('#edit_pwd').val('');
     }
 
@@ -197,12 +240,14 @@
     }
 
     function submitTambahTeknisi() {
-        const nmlengkap = $('#add_nmlengkap').val();
-        const username  = $('#add_username').val();
-        const email     = $('#add_email').val();
-        const pwd       = $('#add_pwd').val();
+        const nmlengkap     = $('#add_nmlengkap').val();
+        const username      = $('#add_username').val();
+        const email         = $('#add_email').val();
+        const pwd           = $('#add_pwd').val();
+        const jenis_kelamin = $('#add_jenis_kelamin').val();
+        const tanggal_lahir = $('#add_tanggal_lahir').val();
 
-        if (!nmlengkap || !username || !email || !pwd) {
+        if (!nmlengkap || !username || !email || !pwd || !jenis_kelamin || !tanggal_lahir) {
             swal({ title: 'Form tidak lengkap!', type: 'warning' });
             return;
         }
@@ -211,17 +256,19 @@
             type: 'POST',
             url: "{{ route('user-mgmt.teknisi.store') }}",
             data: {
-                nmlengkap: nmlengkap,
-                username:  username,
-                email:     email,
-                phone:     $('#add_phone').val(),
-                pwd:       pwd
+                nmlengkap:     nmlengkap,
+                username:      username,
+                email:         email,
+                phone:         $('#add_phone').val(),
+                jenis_kelamin: jenis_kelamin,
+                tanggal_lahir: tanggal_lahir,
+                pwd:           pwd
             },
             success: function (res) {
                 $('#modalTambahTeknisi').modal('hide');
                 swal({ title: res.success, type: 'success' });
                 table.ajax.reload(null, false);
-                $('#add_nmlengkap, #add_username, #add_email, #add_phone, #add_pwd').val('');
+                $('#add_nmlengkap, #add_username, #add_email, #add_phone, #add_pwd, #add_jenis_kelamin, #add_tanggal_lahir').val('');
             },
             error: function (xhr) {
                 let msg = 'Terjadi kesalahan!';
@@ -239,11 +286,13 @@
             type: 'POST',
             url: "{{ url('/admin/user-management/teknisi/update') }}/" + userId,
             data: {
-                nmlengkap: $('#edit_nmlengkap').val(),
-                username:  $('#edit_username').val(),
-                email:     $('#edit_email').val(),
-                phone:     $('#edit_phone').val(),
-                pwd:       $('#edit_pwd').val()
+                nmlengkap:     $('#edit_nmlengkap').val(),
+                username:      $('#edit_username').val(),
+                email:         $('#edit_email').val(),
+                phone:         $('#edit_phone').val(),
+                jenis_kelamin: $('#edit_jenis_kelamin').val(),
+                tanggal_lahir: $('#edit_tanggal_lahir').val(),
+                pwd:           $('#edit_pwd').val()
             },
             success: function (res) {
                 $('#modalEditTeknisi').modal('hide');

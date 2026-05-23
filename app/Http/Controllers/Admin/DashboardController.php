@@ -56,7 +56,8 @@ class DashboardController extends Controller
             ->get();
 
         $keluar = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-            ->where('tbl_barangkeluar.serial_number', $resi)
+            ->where('tbl_barangkeluar.kode_barang_unik', $resi)
+            ->orWhere('tbl_barangkeluar.serial_number', $resi)
             ->orWhere('tbl_barangkeluar.bk_kode', $resi)
             ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama')
             ->get();

@@ -227,6 +227,9 @@ class UserController extends Controller
                         'user_nmlengkap' => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->user_nmlengkap)),
                         'user_email'     => $row->user_email,
                         'user_phone'     => $row->user_phone ?? '',
+                        'jenis_kelamin'  => $row->jenis_kelamin,
+                        'tanggal_lahir'  => $row->tanggal_lahir,
+                        'teknisi_sn'     => $row->teknisi_sn,
                     ];
                     return '
                     <div class="d-flex gap-1">
@@ -246,19 +249,29 @@ class UserController extends Controller
     public function teknisiStore(Request $request)
     {
         $request->validate([
-            'nmlengkap' => 'required|string|max:255',
-            'username'  => 'required|string|max:100|unique:tbl_user,user_nama',
-            'email'     => 'required|email|unique:tbl_user,user_email',
-            'pwd'       => 'required|min:6',
+            'nmlengkap'     => 'required|string|max:255',
+            'username'      => 'required|string|max:100|unique:tbl_user,user_nama',
+            'email'         => 'required|email|unique:tbl_user,user_email',
+            'pwd'           => 'required|min:6',
+            'jenis_kelamin' => 'required|in:M,F',
+            'tanggal_lahir' => 'required|date',
         ], [
-            'nmlengkap.required' => 'Nama Lengkap wajib diisi',
-            'username.required'  => 'Username wajib diisi',
-            'username.unique'    => 'Username sudah digunakan',
-            'email.required'     => 'Email wajib diisi',
-            'email.unique'       => 'Email sudah digunakan',
-            'pwd.required'       => 'Password wajib diisi',
-            'pwd.min'            => 'Password minimal 6 karakter',
+            'nmlengkap.required'     => 'Nama Lengkap wajib diisi',
+            'username.required'      => 'Username wajib diisi',
+            'username.unique'        => 'Username sudah digunakan',
+            'email.required'         => 'Email wajib diisi',
+            'email.unique'           => 'Email sudah digunakan',
+            'pwd.required'           => 'Password wajib diisi',
+            'pwd.min'                => 'Password minimal 6 karakter',
+            'jenis_kelamin.required' => 'Jenis Kelamin wajib diisi',
+            'jenis_kelamin.in'       => 'Jenis Kelamin harus M atau F',
+            'tanggal_lahir.required' => 'Tanggal Lahir wajib diisi',
+            'tanggal_lahir.date'     => 'Format Tanggal Lahir tidak valid',
         ]);
+
+        // Generate SN TEKNISI: [M/F]-[DD]-[YYYY]
+        $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
+        $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
 
         $user = UserModel::create([
             'user_foto'      => 'undraw_profile.svg',
@@ -266,11 +279,14 @@ class UserController extends Controller
             'user_nama'      => $request->username,
             'user_email'     => $request->email,
             'user_phone'     => $request->phone ?? null,
+            'jenis_kelamin'  => $request->jenis_kelamin,
+            'tanggal_lahir'  => $request->tanggal_lahir,
+            'teknisi_sn'     => $teknisi_sn,
             'role_id'        => 3, // Pegawai Teknisi — hardcoded
             'user_password'  => md5($request->pwd),
         ]);
 
-        $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email})");
+        $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email}) with SN: {$teknisi_sn}");
 
         return response()->json(['success' => 'Akun Teknisi berhasil ditambahkan!']);
     }
@@ -282,11 +298,26 @@ class UserController extends Controller
             return response()->json(['error' => 'Akun ini bukan Pegawai Teknisi!'], 403);
         }
 
+        $request->validate([
+            'nmlengkap'     => 'required|string|max:255',
+            'username'      => 'required|string|max:100|unique:tbl_user,user_nama,' . $user->user_id . ',user_id',
+            'email'         => 'required|email|unique:tbl_user,user_email,' . $user->user_id . ',user_id',
+            'jenis_kelamin' => 'required|in:M,F',
+            'tanggal_lahir' => 'required|date',
+        ]);
+
+        // Re-generate SN if gender or dob changed
+        $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
+        $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
+
         $updateData = [
             'user_nmlengkap' => $request->nmlengkap,
             'user_nama'      => $request->username,
             'user_email'     => $request->email,
             'user_phone'     => $request->phone ?? null,
+            'jenis_kelamin'  => $request->jenis_kelamin,
+            'tanggal_lahir'  => $request->tanggal_lahir,
+            'teknisi_sn'     => $teknisi_sn,
         ];
 
         if ($request->pwd && $request->pwd != '') {

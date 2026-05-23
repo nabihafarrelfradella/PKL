@@ -19,9 +19,9 @@ class UsersTableSeeder extends Seeder
         DB::table('tbl_user')->insert([
             [
                 'role_id' => 1,
-                'user_nmlengkap' => 'Super Administrator',
-                'user_nama' => 'superadmin',
-                'user_email' => 'superadmin@gmail.com',
+                'user_nmlengkap' => 'Owner',
+                'user_nama' => 'Owner',
+                'user_email' => 'owner@gmail.com',
                 'user_foto' => 'undraw_profile.svg',
                 'user_password' => md5('12345678'),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
@@ -39,9 +39,9 @@ class UsersTableSeeder extends Seeder
             ],
             [
                 'role_id' => 3,
-                'user_nmlengkap' => 'Operator',
-                'user_nama' => 'operator',
-                'user_email' => 'operator@gmail.com',
+                'user_nmlengkap' => 'Staff Gudang',
+                'user_nama' => 'staff',
+                'user_email' => 'staff@gmail.com',
                 'user_foto' => 'undraw_profile.svg',
                 'user_password' => md5('12345678'),
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),

@@ -78,8 +78,7 @@
 
 <script>
     function generateID() {
-        id = new Date().getTime();
-        $("input[name='bmkode']").val("BM-" + id);
+        $("input[name='bmkode']").val("Otomatis");
     }
 
     function update(data) {

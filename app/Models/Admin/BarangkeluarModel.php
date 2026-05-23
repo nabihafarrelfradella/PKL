@@ -8,21 +8,26 @@ use Illuminate\Database\Eloquent\Model;
 class BarangkeluarModel extends Model
 {
     use HasFactory;
-    protected $table = "tbl_barangkeluar";
+
+    protected $table = 'tbl_barangkeluar';
     protected $primaryKey = 'bk_id';
+
+    // Pastikan semua kolom ini ada agar tidak error 'Mass Assignment'
     protected $fillable = [
         'bk_kode',
         'barang_kode',
+        'kode_barang_unik',
         'bk_tanggal',
         'bk_tujuan',
         'bk_jumlah',
-        'bk_status',
-        'bk_tgl_kembali',
-        'bk_kondisi_kembali',
-        'bk_jumlah_kembali',
+        'bk_status', // 'Dipinjam' atau 'Selesai'
         'serial_number',
-        'jam_keluar',
         'teknisi',
         'keterangan',
-    ]; 
+        'jam_keluar',
+        // Kolom khusus pengembalian
+        'bk_tgl_kembali',
+        'bk_kondisi_kembali',
+        'bk_jumlah_kembali'
+    ];
 }

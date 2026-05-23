@@ -10,15 +10,15 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="bmkode" class="form-label">Kode Barang Masuk <span class="text-danger">*</span></label>
-                            <input type="text" name="bmkode" readonly class="form-control" placeholder="">
+                            <input type="text" name="bmkode" readonly class="form-control" placeholder="Otomatis">
                         </div>
                         <div class="form-group">
                             <label for="tglmasuk" class="form-label">Tanggal Masuk <span class="text-danger">*</span></label>
-                            <input type="text" name="tglmasuk" class="form-control" value="{{ \Carbon\Carbon::now()->format('Y-m-d H:i:s') }}" readonly>
+                            <input type="datetime-local" name="tglmasuk" class="form-control" value="{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group d-none">
                             <label for="serial_number" class="form-label">Serial Number</label>
-                            <input type="text" name="serial_number" class="form-control" placeholder="Contoh: SN-123456">
+                            <input type="text" name="serial_number" class="form-control" placeholder="Otomatis">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -109,7 +109,7 @@
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("true");
                     $("#nmbarang").val(data[0].barang_nama);
-                    $("#satuan").val(data[0].satuan_id);
+                    $("#satuan").val(data[0].satuan_id); // Mengambil nama satuan (sesuai field di DB)
                     $("#jenis").val(data[0].jenisbarang_nama);
                 } else {
                     $("#loaderkd").addClass('d-none');
@@ -160,7 +160,10 @@
         $.ajax({
             type: 'POST',
             url: "{{ route('barang-masuk.store') }}",
-            enctype: 'multipart/form-data',
+            // WAJIB Tambahkan CSRF Token agar Laravel tidak memblokir request
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             data: {
                 bmkode: bmkode,
                 tglmasuk: tglmasuk,
@@ -169,14 +172,24 @@
                 jml: jml
             },
             success: function(data) {
-                $('#modaldemo8').modal('toggle');
+                $('#modaldemo8').modal('hide'); // Gunakan 'hide' untuk menutup modal
                 swal({
-                    title: "Berhasil ditambah!",
+                    title: "Berhasil!",
+                    text: "Data barang masuk telah ditambahkan.",
                     type: "success"
                 });
                 table.ajax.reload(null, false);
                 reset();
-
+            },
+            error: function(xhr) {
+                // Jika gagal, tampilkan pesan error dari Controller
+                const pesan = xhr.responseJSON ? xhr.responseJSON.error : "Terjadi kesalahan sistem";
+                swal({
+                    title: "Gagal Simpan!",
+                    text: pesan,
+                    type: "error"
+                });
+                setLoading(false);
             }
         });
     }
@@ -190,8 +203,8 @@
 
     function reset() {
         resetValid();
-        $("input[name='bmkode']").val('');
-        $("input[name='tglmasuk']").val('');
+        $("input[name='bmkode']").val('Otomatis');
+        $("input[name='tglmasuk']").val("{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}");
         $("input[name='kdbarang']").val('');
         $("input[name='serial_number']").val('');
         $("input[name='jml']").val('0');

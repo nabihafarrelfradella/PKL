@@ -18,12 +18,11 @@
                             <input type="text" name="namaU" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="jenisbarangU" class="form-label">Jenis Barang</label>
+                            <label for="jenisbarangU" class="form-label">Jenis Barang <span class="text-danger">*</span></label>
                             <select name="jenisbarangU" class="form-control">
                                 <option value="">-- Pilih --</option>
-                                @foreach ($jenisbarang as $jb)
-                                    <option value="{{$jb->jenisbarang_id}}">{{$jb->jenisbarang_nama}}</option>
-                                @endforeach
+                                <option value="hp">Barang Habis Pakai (hp)</option>
+                                <option value="bk">Barang Kembali (bk)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -54,7 +53,7 @@
                         <div class="form-group">
                             <label for="title" class="form-label">Foto</label>
                             <center>
-                                <img src="{{url('/assets/default/barang/image.png')}}" width="80%" alt="profile-user" id="outputImgU" class="">
+                                <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImgU" class="">
                             </center>
                             <input class="form-control mt-5" id="GetFileU" name="photo" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
                         </div>
@@ -154,13 +153,13 @@
     function resetU() {
         resetValidU();
         $("input[name='idbarangU']").val('');
-        $("input[name='noU']").val('');
+        $("input[name='kodeU']").val('');
         $("input[name='namaU']").val('');
         $("select[name='jenisbarangU']").val('');
         $("select[name='satuanU']").val('');
         $("select[name='merkU']").val('');
-        $("input[name='stokU']").val('');
-        $("#outputImgU").attr("src", "{{url('/assets/default/barang/image.png')}}");
+        $("input[name='stokU']").val('0');
+        $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFileU").val('');
         setLoadingU(false);
     }

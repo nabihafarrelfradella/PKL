@@ -52,10 +52,10 @@
 @section('formKembaliJS')
 <script>
     function kembali(data) {
-        $("input[name='idbkK']").val(data.bk_id);
-        $("input[name='bkkodeK']").val(data.bk_kode);
-        $("#nmbarangK").val(data.barang_nama);
-        $("input[name='jmlK']").val(data.bk_jumlah);
+    $("input[name='idbkK']").val(data.bk_id);
+    $("input[name='bkkodeK']").val(data.bk_kode);
+    $("#nmbarangK").val(data.barang_nama);
+    $("input[name='jmlK']").val(data.bk_jumlah);
     }
 
     function checkFormK() {
