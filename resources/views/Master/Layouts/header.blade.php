@@ -9,19 +9,26 @@
                 <img src="../assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
             </a> -->
             <a class="logo-horizontal" href="{{url('/')}}">
+                {{-- Logo penuh: tampil saat sidebar terbuka --}}
                 <div class="header-brand-img desktop-logo">
                     <div class="d-flex justify-content-center align-items-center">
                         <img src="{{url('/assets/default/web/default.png')}}" height="180px" class="me-1" alt="logo">
                         <h4 class="fw-bold mt-4 text-white text-uppercase text-truncate">Manajemen Alfatindo</h4>
                     </div>
                 </div>
+                {{-- Logo icon kecil: tampil saat sidebar collapsed --}}
+                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img logo-icon" alt="logo-icon" style="max-height:36px;">
+                {{-- Light mode --}}
                 <div class="header-brand-img light-logo1">
                     <div class="d-flex justify-content-center align-items-center">
                         <img src="{{url('/assets/default/web/default.png')}}" height="180px" class="me-1" alt="logo">
                         <h4 class="fw-bold mt-4 text-black text-uppercase text-truncate">Manajemen Alfatindo</h4>
                     </div>
                 </div>
+                {{-- Logo icon kecil light mode --}}
+                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img logo-icon-light" alt="logo-icon" style="max-height:36px;">
             </a>
+
             <!-- LOGO -->
             <div class="d-flex order-lg-2 ms-auto header-right-icons">
                 <!-- SEARCH -->
@@ -37,63 +44,35 @@
                                     <i class="fe fe-minimize fullscreen-button"></i>
                                 </a>
                             </div>
-                            <!-- FULL-SCREEN -->
-                            <div class="dropdown d-none notifications">
-                                <a class="nav-link icon" data-bs-toggle="dropdown"><i class="fe fe-bell"></i><span class=" pulse-danger"></span>
+                            {{-- NOTIFIKASI BELL — hanya untuk Owner & Admin Gudang --}}
+                            @if(in_array(Session::get('user')->role_id, [1, 2]))
+                            <div class="dropdown d-flex notifications" id="notifDropdown">
+                                <a class="nav-link icon position-relative" data-bs-toggle="dropdown" href="javascript:void(0)" id="notifBell" onclick="markAllRead()">
+                                    <i class="fe fe-bell fs-18"></i>
+                                    <span id="notifBadge" class="d-none" style="position:absolute;top:6px;right:6px;background:#e84c4c;color:#fff;border-radius:50%;font-size:10px;font-weight:700;min-width:17px;height:17px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff;"></span>
                                 </a>
-                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                                    <div class="drop-heading border-bottom">
-                                        <div class="d-flex">
-                                            <h6 class="mt-1 mb-0 fs-16 fw-semibold text-dark">Notifications
-                                            </h6>
+                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" style="width:340px;max-height:480px;overflow-y:auto;">
+                                    <div class="drop-heading border-bottom px-3 py-2 d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fw-semibold fs-14">
+                                            <i class="fe fe-bell me-1 text-primary"></i>Notifikasi
+                                            <span id="notifCount" class="badge bg-danger ms-1 d-none">0</span>
+                                        </h6>
+                                        <small class="text-muted" id="notifTime">-</small>
+                                    </div>
+                                    <div class="notifications-menu" id="notifList">
+                                        <div class="text-center text-muted py-4">
+                                            <i class="fe fe-check-circle fs-24 d-block mb-1"></i>
+                                            <small>Tidak ada notifikasi baru</small>
                                         </div>
                                     </div>
-                                    <div class="notifications-menu">
-                                        <a class="dropdown-item d-flex" href="notify-list.html">
-                                            <div class="me-3 notifyimg  bg-primary brround box-shadow-primary">
-                                                <i class="fe fe-mail"></i>
-                                            </div>
-                                            <div class="mt-1 wd-80p">
-                                                <h5 class="notification-label mb-1">New Application received
-                                                </h5>
-                                                <span class="notification-subtext">3 days ago</span>
-                                            </div>
-                                        </a>
-                                        <a class="dropdown-item d-flex" href="notify-list.html">
-                                            <div class="me-3 notifyimg  bg-secondary brround box-shadow-secondary">
-                                                <i class="fe fe-check-circle"></i>
-                                            </div>
-                                            <div class="mt-1 wd-80p">
-                                                <h5 class="notification-label mb-1">Project has been
-                                                    approved</h5>
-                                                <span class="notification-subtext">2 hours ago</span>
-                                            </div>
-                                        </a>
-                                        <a class="dropdown-item d-flex" href="notify-list.html">
-                                            <div class="me-3 notifyimg  bg-success brround box-shadow-success">
-                                                <i class="fe fe-shopping-cart"></i>
-                                            </div>
-                                            <div class="mt-1 wd-80p">
-                                                <h5 class="notification-label mb-1">Your Product Delivered
-                                                </h5>
-                                                <span class="notification-subtext">30 min ago</span>
-                                            </div>
-                                        </a>
-                                        <a class="dropdown-item d-flex" href="notify-list.html">
-                                            <div class="me-3 notifyimg bg-pink brround box-shadow-pink">
-                                                <i class="fe fe-user-plus"></i>
-                                            </div>
-                                            <div class="mt-1 wd-80p">
-                                                <h5 class="notification-label mb-1">Friend Requests</h5>
-                                                <span class="notification-subtext">1 day ago</span>
-                                            </div>
-                                        </a>
-                                    </div>
                                     <div class="dropdown-divider m-0"></div>
-                                    <a href="notify-list.html" class="dropdown-item text-center p-3 text-muted">View all
-                                        Notification</a>
+                                    <a href="{{ url('admin/barang-keluar') }}" class="dropdown-item text-center p-2 text-primary fw-semibold">
+                                        <i class="fe fe-eye me-1"></i>Lihat Semua Barang Keluar
+                                    </a>
                                 </div>
                             </div>
+                            @endif
+
 
                             <!-- SIDE-MENU -->
                             <div class="dropdown d-flex profile-1">

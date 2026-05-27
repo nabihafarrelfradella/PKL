@@ -76,7 +76,7 @@ use Carbon\Carbon;
                 <td>{{$d->barang_kode}}</td>
                 <td>{{$d->barang_nama}}</td>
                 <td>{{$d->satuan_id ?? '-'}}</td>
-                <td>{{$d->jenisbarang_ket ?? '-'}}</td>
+                <td>{{$d->jenisbarang_keterangan ?? '-'}}</td>
                 <td align="center">{{$d->barang_stok}}</td>
                 <td align="center">{{$jmlmasuk}}</td>
                 <td align="center">{{$jmlkeluar}}</td>

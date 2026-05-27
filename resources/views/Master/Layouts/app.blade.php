@@ -82,6 +82,31 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
         ::-webkit-scrollbar-thumb {
             background-color: #777 !important;
         }
+
+        /* Logo collapsed */
+        .sidebar-mini.sidenav-toggled .header-brand-img.logo-collapsed {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 6px 0 2px !important;
+            transform: translateY(-4px);
+        }
+
+        .sidebar-mini.sidenav-toggled:hover .header-brand-img.logo-collapsed {
+            transform: translateY(-8px);
+        }
+
+        .sidebar-mini.sidenav-toggled .header-brand-img.toggle-logo,
+        .sidebar-mini.sidenav-toggled .header-brand-img.desktop-logo,
+        .sidebar-mini.sidenav-toggled .header-brand-img.light-logo,
+        .sidebar-mini.sidenav-toggled .header-brand-img.light-logo1 {
+            display: none !important;
+        }
+
+        .sidebar-mini:not(.sidenav-toggled) .header-brand-img.logo-collapsed {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -306,7 +331,93 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
 @yield('formTambahJS')
 @yield('formEditJS')
 @yield('formHapusJS')
+@yield('formKembaliJS')
 @yield('formOtherJS')
+
+@php $roleId = Session::get('user')->role_id ?? 0; @endphp
+@if(in_array($roleId, [1, 2]))
+<script>
+    // ── Notifikasi Bell Polling ──────────────────────────────────────────────
+    const NOTIF_URL       = "{{ route('notifikasi.get') }}";
+    const NOTIF_READ_ALL  = "{{ route('notifikasi.read-all') }}";
+    const CSRF_TOKEN      = "{{ csrf_token() }}";
+
+    function fetchNotifikasi() {
+        $.ajax({
+            type: 'GET',
+            url: NOTIF_URL,
+            success: function(res) {
+                const total = res.total || 0;
+                const items = res.items || [];
+
+                // Badge
+                const badge = $('#notifBadge');
+                const count = $('#notifCount');
+                if (total > 0) {
+                    badge.text(total > 99 ? '99+' : total).removeClass('d-none');
+                    count.text(total).removeClass('d-none');
+                    // Animasi bergetar
+                    $('#notifBell i').addClass('text-warning');
+                } else {
+                    badge.addClass('d-none');
+                    count.addClass('d-none');
+                    $('#notifBell i').removeClass('text-warning');
+                }
+
+                // Waktu update
+                const now = new Date();
+                $('#notifTime').text(now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0'));
+
+                // List
+                const list = $('#notifList');
+                if (items.length === 0) {
+                    list.html('<div class="text-center text-muted py-4"><i class="fe fe-check-circle fs-24 d-block mb-1"></i><small>Tidak ada notifikasi baru</small></div>');
+                    return;
+                }
+
+                let html = '';
+                items.forEach(function(n) {
+                    const typeLabel = n.notif_type === 'peminjaman' ? 'Peminjaman' : (n.notif_type === 'pengembalian' ? 'Dikembalikan' : 'Habis Pakai');
+                    const bgColor  = n.notif_type === 'peminjaman' ? '#fff3cd' : (n.notif_type === 'pengembalian' ? '#d1fae5' : '#e0e7ff');
+                    const iconColor= n.notif_type === 'peminjaman' ? '#f0a500' : (n.notif_type === 'pengembalian' ? '#10b981' : '#6366f1');
+                    const feIcon   = n.notif_type === 'peminjaman' ? 'fe-arrow-up-circle' : (n.notif_type === 'pengembalian' ? 'fe-corner-up-left' : 'fe-package');
+                    html += `
+                    <div class="dropdown-item d-flex align-items-start py-2 px-3 border-bottom" style="white-space:normal;cursor:default;">
+                        <div class="me-2 flex-shrink-0 rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:${bgColor};">
+                            <i class="fe ${feIcon}" style="color:${iconColor};font-size:16px;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="fw-semibold text-dark" style="font-size:12px;line-height:1.3;">${n.notif_pesan}</div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="badge" style="background:${bgColor};color:${iconColor};font-size:10px;">${typeLabel}</span>
+                                <small class="text-muted">${n.waktu}</small>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                list.html(html);
+            }
+        });
+    }
+
+    function markAllRead() {
+        $.ajax({
+            type: 'POST',
+            url: NOTIF_READ_ALL,
+            data: { _token: CSRF_TOKEN },
+            success: function() {
+                setTimeout(fetchNotifikasi, 400);
+            }
+        });
+    }
+
+    // Pertama kali load + polling setiap 30 detik
+    $(document).ready(function() {
+        fetchNotifikasi();
+        setInterval(fetchNotifikasi, 30000);
+    });
+</script>
+@endif
 
 </body>
 

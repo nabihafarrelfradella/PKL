@@ -163,6 +163,81 @@
         </div>
     </div>
 
+    {{-- PANEL BARANG DIPINJAM — hanya untuk Owner & Admin Gudang --}}
+    @php $userRole = Session::get('user')->role_id ?? 0; @endphp
+    @if(in_array($userRole, [1, 2]))
+    <div class="row row-sm mb-4">
+        <div class="col-lg-12">
+            <div class="card" style="border-top: 3px solid #e84c4c;">
+                <div class="card-header justify-content-between" style="background: linear-gradient(135deg,#fff5f5,#fff);">
+                    <h3 class="card-title">
+                        <i class="fe fe-alert-circle text-danger me-2"></i>Barang Sedang Dipinjam
+                        <span class="badge bg-danger ms-2">{{ $bk_dipinjam }}</span>
+                    </h3>
+                    <a href="{{ url('admin/barang-keluar') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="fe fe-eye me-1"></i>Lihat Semua
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    @if($bk_dipinjam == 0)
+                        <div class="text-center py-5 text-muted">
+                            <i class="fe fe-check-circle d-block mb-2 text-success" style="font-size:2.5rem;"></i>
+                            <p class="mb-0 fw-semibold">Semua barang sudah dikembalikan!</p>
+                        </div>
+                    @else
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Kode BK</th>
+                                    <th>Barang</th>
+                                    <th>Teknisi</th>
+                                    <th>Customer / Lokasi</th>
+                                    <th>Jam Keluar</th>
+                                    <th>Jml</th>
+                                    <th>SN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $dipinjamList = \App\Models\Admin\BarangkeluarModel::leftJoin('tbl_barang','tbl_barang.barang_kode','=','tbl_barangkeluar.barang_kode')
+                                        ->leftJoin('tbl_user','tbl_user.teknisi_sn','=','tbl_barangkeluar.teknisi')
+                                        ->where('tbl_barangkeluar.bk_status','Dipinjam')
+                                        ->select('tbl_barangkeluar.*','tbl_barang.barang_nama','tbl_user.user_nmlengkap as nm_teknisi')
+                                        ->orderBy('tbl_barangkeluar.jam_keluar','DESC')
+                                        ->get();
+                                @endphp
+                                @foreach($dipinjamList as $dp)
+                                @php
+                                    $jamKeluar = $dp->jam_keluar ? \Carbon\Carbon::parse($dp->jam_keluar) : null;
+                                    $durasi    = $jamKeluar ? $jamKeluar->diffForHumans() : '-';
+                                    $rowBg     = ($jamKeluar && $jamKeluar->diffInHours() > 24) ? '#fff0f0' : '#fffef0';
+                                @endphp
+                                <tr style="background:{{ $rowBg }};">
+                                    <td class="ps-3"><strong class="text-danger">{{ $dp->bk_kode }}</strong></td>
+                                    <td>{{ $dp->barang_nama ?? '-' }}</td>
+                                    <td>
+                                        <span class="badge" style="background:#e0e7ff;color:#3730a3;">
+                                            <i class="fe fe-tool me-1"></i>{{ $dp->nm_teknisi ?? $dp->teknisi ?? '-' }}
+                                        </span>
+                                    </td>
+                                    <td><i class="fe fe-map-pin text-muted me-1"></i><strong>{{ $dp->bk_tujuan ?? '-' }}</strong></td>
+                                    <td><span title="{{ $jamKeluar ? $jamKeluar->format('d/m/Y H:i') : '-' }}">{{ $durasi }}</span></td>
+                                    <td>{{ $dp->bk_jumlah }}</td>
+                                    <td><small class="text-muted">{{ Str::limit($dp->serial_number ?? '-', 15) }}</small></td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+
     <div class="modal fade" data-bs-backdrop="static" id="modalTracking">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content modal-content-demo">

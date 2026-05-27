@@ -85,9 +85,13 @@ class BarangmasukController extends Controller
                 return response()->json(['error' => 'Data Barang tidak ditemukan!'], 404);
             }
 
-            // 2. Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
+            // 2. Prefix SN dari kode barang (BK / HP)
+            $prefix_sn = strtoupper(substr($barang->barang_kode, 0, 2));
+            $date_now  = now()->format('Ymd');
+
+            // 3. Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
             for ($i = 1; $i <= $jml; $i++) {
-                // Generate Kode Barang Masuk Unik untuk setiap baris (BM-MMYY-001)
+                // Generate Kode Barang Masuk Unik (BM-MMYY-001)
                 $monthYear = now()->format('my');
                 $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
                     ->orderBy('bm_kode', 'DESC')
@@ -101,12 +105,12 @@ class BarangmasukController extends Controller
                 }
                 $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
-                $loop_index = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $serial_number = "{$date_now}-{$random_code}-{$prefix_sn}-{$loop_index}";
-                
+                $loop_index   = str_pad($i, 2, '0', STR_PAD_LEFT);
+                $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
+                $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
+
                 // Generate Kode Barang Unik (Timestamp + Urutan)
-                $timestamp = now()->timestamp;
-                $kode_barang_unik = 'BRG-' . $timestamp . '-' . $loop_index;
+                $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
 
                 BarangmasukModel::create([
                     'bm_tanggal'       => $request->tglmasuk,
@@ -115,8 +119,8 @@ class BarangmasukController extends Controller
                     'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
                     'serial_number'    => $serial_number,
                     'kode_barang_unik' => $kode_barang_unik,
-                    'jam_masuk'        => now(), 
-                    'customer_id'      => $request->customer_id ?? null,
+                    'jam_masuk'        => now(),
+                    'customer_id'      => $request->customer_id ?? 0,
                 ]);
             }
 

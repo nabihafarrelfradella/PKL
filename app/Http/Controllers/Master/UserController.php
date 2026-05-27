@@ -346,13 +346,13 @@ class UserController extends Controller
     }
 
     // =========================================================
-    // NEW: Admin Gudang (role_id=2) — View + Edit only
+    // Admin Gudang (role_id=2) — View + Edit only (1 akun)
     // =========================================================
     public function adminGudangIndex()
     {
         $data['title']       = 'Admin Gudang';
         $data['adminGudang'] = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
-            ->where('tbl_user.role_id', 2) // Staff Gudang
+            ->where('tbl_user.role_id', 2)
             ->select('tbl_user.*', 'tbl_role.role_title')
             ->first();
         return view('Master.UserManagement.admin_gudang', $data);
@@ -363,6 +363,12 @@ class UserController extends Controller
         if ($user->role_id != 2) {
             return response()->json(['error' => 'Akun ini bukan Admin Gudang!'], 403);
         }
+
+        $request->validate([
+            'nmlengkap' => 'required|string|max:255',
+            'username'  => 'required|string|max:100|unique:tbl_user,user_nama,' . $user->user_id . ',user_id',
+            'email'     => 'required|email|unique:tbl_user,user_email,' . $user->user_id . ',user_id',
+        ]);
 
         $updateData = [
             'user_nmlengkap' => $request->nmlengkap,
@@ -375,17 +381,131 @@ class UserController extends Controller
         }
 
         $user->update($updateData);
-        $this->logActivity('UPDATE_ADMIN_GUDANG', "Owner updated Admin Gudang account: {$user->user_nama} (user_id: {$user->user_id})");
+        $this->logActivity('UPDATE_ADMIN_GUDANG', "Owner updated Admin Gudang: {$user->user_nama} (user_id: {$user->user_id})");
 
-        return response()->json(['success' => 'Akun Admin Gudang berhasil diperbarui!']);
+        return response()->json(['success' => 'Akun Staff Gudang berhasil diperbarui!']);
     }
 
     // =========================================================
-    // NEW: Access Control Info (informational, read-only)
+    // NEW: Access Control — Interactive Toggle RBAC
     // =========================================================
     public function accessControl()
     {
         $data['title'] = 'Access Control';
+
+        // Definisi fitur/modul yang bisa di-toggle
+        // key = identifier unik, type = 'menu'|'submenu', redirect = path yang digunakan di middleware
+        $data['modules'] = $this->getModuleDefinitions();
+
+        // Ambil semua akses yang ada untuk role 2 dan 3
+        $data['aksesRole2'] = DB::table('tbl_akses')
+            ->where('role_id', 2)
+            ->get()
+            ->groupBy(function ($r) {
+                return ($r->menu_id ? 'menu_' . $r->menu_id : 'sub_' . $r->submenu_id) . '_' . $r->akses_type;
+            });
+
+        $data['aksesRole3'] = DB::table('tbl_akses')
+            ->where('role_id', 3)
+            ->get()
+            ->groupBy(function ($r) {
+                return ($r->menu_id ? 'menu_' . $r->menu_id : 'sub_' . $r->submenu_id) . '_' . $r->akses_type;
+            });
+
+        // Ambil submenu_id dan menu_id untuk setiap modul
+        $submenus = DB::table('tbl_submenu')->get()->keyBy('submenu_redirect');
+        $menus    = DB::table('tbl_menu')->get()->keyBy('menu_slug');
+        $data['submenus'] = $submenus;
+        $data['menus']    = $menus;
+
         return view('Master.UserManagement.access_control', $data);
     }
+
+    /**
+     * AJAX: Toggle satu permission ON/OFF untuk satu role.
+     * Body: { role_id, ref_type (menu|submenu), ref_id, akses_type, enabled (bool) }
+     */
+    public function accessControlToggle(Request $request)
+    {
+        $roleId    = (int) $request->role_id;
+        $refType   = $request->ref_type;   // 'menu' atau 'submenu'
+        $refId     = $request->ref_id;
+        $aksesType = $request->akses_type;
+        $enabled   = (bool) $request->enabled;
+
+        // Proteksi: Owner tidak bisa diubah
+        if ($roleId == 1) {
+            return response()->json(['error' => 'Akses Owner tidak dapat diubah.'], 403);
+        }
+
+        // Validasi role yang ada
+        if (!in_array($roleId, [2, 3])) {
+            return response()->json(['error' => 'Role tidak valid.'], 400);
+        }
+
+        $where = ['role_id' => $roleId, 'akses_type' => $aksesType];
+        if ($refType === 'menu') {
+            $where['menu_id'] = $refId;
+        } else {
+            $where['submenu_id'] = $refId;
+        }
+
+        if ($enabled) {
+            // Aktifkan: insert jika belum ada
+            $exists = DB::table('tbl_akses')->where($where)->exists();
+            if (!$exists) {
+                DB::table('tbl_akses')->insert(array_merge($where, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]));
+            }
+        } else {
+            // Nonaktifkan: hapus entry
+            DB::table('tbl_akses')->where($where)->delete();
+        }
+
+        $roleName = $roleId == 2 ? 'Admin Gudang' : 'Pegawai Teknisi';
+        $action   = $enabled ? 'GRANT' : 'REVOKE';
+        $this->logActivity(
+            "ACCESS_CONTROL_{$action}",
+            "Owner {$action} [{$aksesType}] on [{$refType}:{$refId}] for role [{$roleName}]"
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $enabled ? 'Akses diberikan.' : 'Akses dicabut.',
+        ]);
+    }
+
+    /**
+     * Helper: definisi semua modul yang bisa dikontrol.
+     * Mengembalikan array dengan struktur:
+     *   [ label, ref_type, ref_slug (menu_slug atau submenu_redirect), akses_types[] ]
+     */
+    private function getModuleDefinitions(): array
+    {
+        return [
+            // Dashboard
+            ['label' => 'Dashboard', 'group' => 'Dashboard', 'ref_type' => 'menu', 'ref_slug' => 'dashboard', 'types' => ['view', 'create', 'update', 'delete']],
+
+            // Master Barang
+            ['label' => 'Master Barang (menu)', 'group' => 'Master Barang', 'ref_type' => 'menu', 'ref_slug' => 'master-barang', 'types' => ['view']],
+            ['label' => 'Jenis Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/jenisbarang', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Merk Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/merk', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Data Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/barang', 'types' => ['view', 'create', 'update', 'delete']],
+
+            // Transaksi
+            ['label' => 'Transaksi (menu)', 'group' => 'Transaksi', 'ref_type' => 'menu', 'ref_slug' => 'transaksi', 'types' => ['view']],
+            ['label' => 'Barang Masuk', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-masuk', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Barang Keluar', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-keluar', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Barang Tracking', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-tracking', 'types' => ['view', 'create', 'update', 'delete']],
+
+            // Laporan
+            ['label' => 'Laporan (menu)', 'group' => 'Laporan', 'ref_type' => 'menu', 'ref_slug' => 'laporan', 'types' => ['view']],
+            ['label' => 'Lap. Barang Masuk', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-masuk', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Lap. Barang Keluar', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-keluar', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Lap. Stok Barang', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-stok-barang', 'types' => ['view', 'create', 'update', 'delete']],
+        ];
+    }
 }
+

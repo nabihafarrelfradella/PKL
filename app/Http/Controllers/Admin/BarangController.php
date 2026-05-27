@@ -117,7 +117,7 @@ class BarangController extends Controller
                     return $result;
                 })
                 ->addColumn('tipe', function ($row) {
-                    $tipe = $row->jenisbarang_ket == '' ? '-' : $row->jenisbarang_ket;
+                    $tipe = $row->jenisbarang_keterangan == '' ? '-' : $row->jenisbarang_keterangan;
 
                     return $tipe;
                 })
@@ -132,7 +132,7 @@ class BarangController extends Controller
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
                         "barang_stok" => $row->barang_stok,
                         "barang_gambar" => $row->barang_gambar,
-                        "tipe_barang" => $row->jenisbarang_ket,
+                        "tipe_barang" => $row->jenisbarang_keterangan,
                     );
                     $button = '';
                     $roleId = Session::get('user')->role_id;
@@ -220,7 +220,7 @@ class BarangController extends Controller
                     return $result;
                 })
                 ->addColumn('tipe', function ($row) {
-                    $tipe = $row->jenisbarang_ket == '' ? '-' : $row->jenisbarang_ket;
+                    $tipe = $row->jenisbarang_keterangan == '' ? '-' : $row->jenisbarang_keterangan;
 
                     return $tipe;
                 })
@@ -230,7 +230,7 @@ class BarangController extends Controller
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
                         "satuan_nama" => $row->satuan_id,
                         "jenisbarang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->jenisbarang_nama)),
-                        "tipe_barang" => $row->jenisbarang_ket,
+                        "tipe_barang" => $row->jenisbarang_keterangan,
                     );
                     $button = '';
                     if ($request->get('param') == 'tambah') {
@@ -292,9 +292,9 @@ class BarangController extends Controller
 
         $barang_kode = $prefix . '-' . $monthYear . '-' . $nextNo;
 
-        // Map "bk/hp" to jenisbarang_id
+        // Map "bk/hp" to jenisbarang_id via jenisbarang_keterangan
         $jenisName = ($request->jenisbarang == 'bk') ? 'Barang Kembali' : 'Barang Habis Pakai';
-        $jenis = JenisBarangModel::where('jenisbarang_nama', $jenisName)->first();
+        $jenis = JenisBarangModel::where('jenisbarang_keterangan', $jenisName)->first();
         $jenis_id = $jenis ? $jenis->jenisbarang_id : null;
 
         //create
@@ -307,6 +307,7 @@ class BarangController extends Controller
             'barang_nama'    => $request->nama,
             'barang_slug'    => $slug,
             'barang_stok'    => $request->stok,
+            'tipe_barang'    => $jenisName,
             'barang_harga'   => '0',
             'serial_number'  => '-',
         ]);
@@ -326,9 +327,9 @@ class BarangController extends Controller
 
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->nama)));
 
-        // Map "bk/hp" to jenisbarang_id
+        // Map "bk/hp" to jenisbarang_id via jenisbarang_keterangan
         $jenisName = ($request->jenisbarang == 'bk') ? 'Barang Kembali' : 'Barang Habis Pakai';
-        $jenis = JenisBarangModel::where('jenisbarang_nama', $jenisName)->first();
+        $jenis = JenisBarangModel::where('jenisbarang_keterangan', $jenisName)->first();
         $jenis_id = $jenis ? $jenis->jenisbarang_id : null;
 
         $updateData = [
@@ -338,6 +339,7 @@ class BarangController extends Controller
             'barang_nama'    => $request->nama,
             'barang_slug'    => $slug,
             'barang_stok'    => $request->stok,
+            'tipe_barang'    => $jenisName,
         ];
 
         //check if image is uploaded

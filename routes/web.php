@@ -53,14 +53,14 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/dashboard/cekResi', [DashboardController::class, 'cekResi'])->name('dashboard.cekResi');
     });
 
-    // Route::middleware(['checkRoleUser:/jenisbarang,submenu'])->group(function () {
-    //     // Jenis Barang
-    //     Route::get('/admin/jenisbarang', [JenisBarangController::class, 'index']);
-    //     Route::get('/admin/jenisbarang/show/', [JenisBarangController::class, 'show'])->name('jenisbarang.getjenisbarang');
-    //     Route::post('/admin/jenisbarang/proses_tambah/', [JenisBarangController::class, 'proses_tambah'])->name('jenisbarang.store');
-    //     Route::post('/admin/jenisbarang/proses_ubah/{jenisbarang}', [JenisBarangController::class, 'proses_ubah']);
-    //     Route::post('/admin/jenisbarang/proses_hapus/{jenisbarang}', [JenisBarangController::class, 'proses_hapus']);
-    // });
+    Route::middleware(['checkRoleUser:/jenisbarang,submenu'])->group(function () {
+        // Jenis Barang
+        Route::get('/admin/jenisbarang', [JenisBarangController::class, 'index']);
+        Route::get('/admin/jenisbarang/show/', [JenisBarangController::class, 'show'])->name('jenisbarang.getjenisbarang');
+        Route::post('/admin/jenisbarang/proses_tambah/', [JenisBarangController::class, 'proses_tambah'])->name('jenisbarang.store');
+        Route::post('/admin/jenisbarang/proses_ubah/{jenisbarang}', [JenisBarangController::class, 'proses_ubah']);
+        Route::post('/admin/jenisbarang/proses_hapus/{jenisbarang}', [JenisBarangController::class, 'proses_hapus']);
+    });
 
 
     Route::middleware(['checkRoleUser:/merk,submenu'])->group(function () {
@@ -103,7 +103,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/barang/listbarang/{param}', [BarangController::class, 'listbarang']);
     });
 
-    Route::middleware(['checkRoleUser:/lap-barang-masuk,submenu'])->group(function () {
+    Route::middleware(['checkRoleUser:/barang-keluar,submenu'])->group(function () {
         // Barang Keluar
         Route::resource('/admin/barang-keluar', \App\Http\Controllers\Admin\BarangkeluarController::class);
         Route::get('/admin/barang-keluar/show/', [BarangkeluarController::class, 'show'])->name('barang-keluar.getbarang-keluar');
@@ -137,9 +137,11 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/lap-stok-barang/show/', [LapStokBarangController::class, 'show'])->name('lap-sb.getlap-sb');
     });
 
-    // Barang Tracking (open to all authenticated users)
-    Route::get('/admin/barang-tracking', [BarangTrackingController::class, 'index'])->name('barang-tracking.index');
-    Route::get('/admin/barang-tracking/show', [BarangTrackingController::class, 'show'])->name('barang-tracking.show');
+    // Barang Tracking — Owner & Admin Gudang saja (role_id 1 & 2)
+    Route::middleware(['checkRoleUser:/barang-tracking,submenu'])->group(function () {
+        Route::get('/admin/barang-tracking', [BarangTrackingController::class, 'index'])->name('barang-tracking.index');
+        Route::get('/admin/barang-tracking/show', [BarangTrackingController::class, 'show'])->name('barang-tracking.show');
+    });
 
 
     // =========================================================
@@ -150,11 +152,6 @@ Route::group(['middleware' => 'userlogin'], function () {
         // Audit Trail
         #Route::get('/admin/audit', [AuditController::class, 'index'])->name('audit.index');
         #Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('audit.getaudit');
-
-        // Legacy menu redirect
-        Route::get('/admin/menu', function () {
-            return redirect()->route('audit.index');
-        });
 
         // Role Management
         Route::resource('/admin/role', \App\Http\Controllers\Master\RoleController::class);
@@ -174,12 +171,18 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/user-management/teknisi/destroy/{user}', [UserController::class, 'teknisiDestroy'])->name('user-mgmt.teknisi.destroy');
         Route::get('/admin/user-management/teknisi/get/{id}', [BarangkeluarController::class, 'getTeknisi']);
 
-        // Admin Gudang — View + Edit only (single account, no create/delete)
+        // Admin Gudang — View + Edit only (1 akun, tidak bisa ditambah/dihapus)
         Route::get('/admin/user-management/admin-gudang', [UserController::class, 'adminGudangIndex'])->name('user-mgmt.admin-gudang');
         Route::post('/admin/user-management/admin-gudang/update/{user}', [UserController::class, 'adminGudangUpdate'])->name('user-mgmt.admin-gudang.update');
 
-        // Access Control Info page (informational only, no toggles)
+        // Access Control — Interactive toggle RBAC
         Route::get('/admin/user-management/access-control', [UserController::class, 'accessControl'])->name('user-mgmt.access-control');
+        Route::post('/admin/user-management/access-control/toggle', [UserController::class, 'accessControlToggle'])->name('user-mgmt.access-control.toggle');
+
+        // Notifikasi (untuk Owner & Admin Gudang)
+        Route::get('/admin/notifikasi', [\App\Http\Controllers\Admin\NotifikasiController::class, 'getNotifikasi'])->name('notifikasi.get');
+        Route::post('/admin/notifikasi/read/{id}', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markRead'])->name('notifikasi.read');
+        Route::post('/admin/notifikasi/read-all', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
 
         // Akses
         Route::get('/admin/akses/{role}', [AksesController::class, 'index']);

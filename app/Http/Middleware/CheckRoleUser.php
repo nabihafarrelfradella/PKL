@@ -5,104 +5,104 @@ namespace App\Http\Middleware;
 use App\Models\Admin\AksesModel;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class CheckRoleUser
 {
     /**
      * Handle an incoming request.
+     * Memeriksa hak akses user berdasarkan role dan tipe menu (menu/submenu).
+     * Owner (role_id=1) selalu bypass — akses penuh ke semua fitur.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  string  $menu     — redirect path atau ID menu
+     * @param  string  $type     — 'menu' | 'submenu'
      */
     public function handle(Request $request, Closure $next, $menu, $type)
-    {   
-        $getMenu = 0;
+    {
         $user = Session::get('user');
-        
-        // Define access type based on HTTP method
-        $method = $request->method();
-        $akses_type = 'view'; // Default
-        if ($method == 'POST') $akses_type = 'create';
-        if (in_array($method, ['PUT', 'PATCH'])) $akses_type = 'update';
-        if ($method == 'DELETE') $akses_type = 'delete';
 
-        // Superadmin Bypass: Admin (Role 1) always has full access to everything
+        // Pastikan user sudah login
+        if (!$user) {
+            return redirect('/admin/login');
+        }
+
+        // Tentukan tipe akses berdasarkan HTTP method
+        $method     = $request->method();
+        $akses_type = 'view';
+        if ($method === 'POST')                        $akses_type = 'create';
+        if (in_array($method, ['PUT', 'PATCH']))       $akses_type = 'update';
+        if ($method === 'DELETE')                      $akses_type = 'delete';
+
+        // ─── Owner (role_id=1) — full bypass ───────────────────────────────
         if ($user->role_id == 1) {
-            // Audit Logging for Authorized Activity (Admin)
-            if ($akses_type != 'view') {
-                \Illuminate\Support\Facades\DB::table('tbl_audit_log')->insert([
-                    'user_id' => $user->user_id,
-                    'role_slug' => $user->role_slug,
-                    'activity' => strtoupper($akses_type),
-                    'module' => $menu,
-                    'details' => "Superadmin performed {$akses_type} action in {$menu}",
-                    'ip_address' => $request->ip(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
+            $this->auditLog($user, $akses_type, $menu, "Owner performed {$akses_type} on [{$menu}]");
             return $next($request);
         }
 
-        // Non-Admin: Deny access to User Management (othermenu 1-5)
-        if ($type == 'othermenu' && in_array($menu, [1, 2, 3, 4, 5])) {
-            \Illuminate\Support\Facades\DB::table('tbl_audit_log')->insert([
-                'user_id' => $user->user_id,
-                'role_slug' => $user->role_slug,
-                'activity' => 'UNAUTHORIZED_ACCESS_ATTEMPT',
-                'module' => 'User Management',
-                'details' => "Non-Admin role {$user->role_title} tried to access Superadmin module {$menu}",
-                'ip_address' => $request->ip(),
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-            return abort(403, 'Hanya Superadmin yang dapat mengakses fitur ini.');
+        // ─── Cek permission di database untuk role lain ─────────────────────
+        $hasAccess = false;
+
+        if ($type === 'menu') {
+            $hasAccess = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')
+                ->where('tbl_akses.role_id', $user->role_id)
+                ->where('tbl_menu.menu_redirect', $menu)
+                ->where('tbl_akses.akses_type', $akses_type)
+                ->exists();
+
+        } elseif ($type === 'submenu') {
+            $hasAccess = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')
+                ->where('tbl_akses.role_id', $user->role_id)
+                ->where('tbl_submenu.submenu_redirect', $menu)
+                ->where('tbl_akses.akses_type', $akses_type)
+                ->exists();
         }
 
-        // Check explicit permissions in database for other roles
-        if($type == 'othermenu'){
-            $getMenu = AksesModel::where(array('role_id' => $user->role_id, 'othermenu_id' => $menu, 'akses_type' => $akses_type))->count();
-        }else if($type == 'menu'){
-            $getMenu = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')
-                ->where(array('tbl_akses.role_id' => $user->role_id, 'tbl_menu.menu_redirect' => $menu, 'tbl_akses.akses_type' => $akses_type))
-                ->count();
-        }else if($type == 'submenu'){
-            $getMenu = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')
-                ->where(array('tbl_akses.role_id' => $user->role_id, 'tbl_submenu.submenu_redirect' => $menu, 'tbl_akses.akses_type' => $akses_type))
-                ->count();
-        }
-
-        if($getMenu == 0){
-            // Audit Logging for Unauthorized Access Attempt
-            \Illuminate\Support\Facades\DB::table('tbl_audit_log')->insert([
-                'user_id' => $user->user_id,
-                'role_slug' => $user->role_slug,
-                'activity' => 'Unauthorized Access Attempt',
-                'module' => $menu,
-                'details' => "Role {$user->role_title} tried to {$akses_type} in {$menu}",
+        if (!$hasAccess) {
+            // Log percobaan akses tidak sah
+            DB::table('tbl_audit_log')->insert([
+                'user_id'    => $user->user_id,
+                'role_slug'  => $user->role_slug,
+                'activity'   => 'UNAUTHORIZED_ACCESS',
+                'module'     => $menu,
+                'details'    => "Role [{$user->role_title}] attempted [{$akses_type}] on [{$menu}] — ditolak",
                 'ip_address' => $request->ip(),
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
+
             return abort(403, 'Anda tidak memiliki hak akses untuk fitur ini.');
         }
 
-        // Audit Logging for Authorized Activity
-        if ($akses_type != 'view') {
-            \Illuminate\Support\Facades\DB::table('tbl_audit_log')->insert([
-                'user_id' => $user->user_id,
-                'role_slug' => $user->role_slug,
-                'activity' => strtoupper($akses_type),
-                'module' => $menu,
-                'details' => "User performed {$akses_type} action in {$menu}",
-                'ip_address' => $request->ip(),
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
+        // Log aktivitas yang berhasil (hanya untuk operasi non-view)
+        $this->auditLog($user, $akses_type, $menu, "Role [{$user->role_title}] performed [{$akses_type}] on [{$menu}]");
 
         return $next($request);
+    }
+
+    /**
+     * Simpan audit log — hanya untuk aksi yang mengubah data (bukan view).
+     */
+    private function auditLog($user, string $akses_type, string $module, string $details): void
+    {
+        if ($akses_type === 'view') {
+            return;
+        }
+
+        try {
+            DB::table('tbl_audit_log')->insert([
+                'user_id'    => $user->user_id,
+                'role_slug'  => $user->role_slug,
+                'activity'   => strtoupper($akses_type),
+                'module'     => $module,
+                'details'    => $details,
+                'ip_address' => request()->ip(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Jangan biarkan error audit log menghentikan request
+        }
     }
 }

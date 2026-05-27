@@ -92,132 +92,68 @@ class AksesController extends Controller
 
     public function setAllAkses($idrole)
     {
-
-        AksesModel::where(array('role_id' => $idrole))->delete();
-        $object1 = [];
-        $object2 = [];
-        $object3 = [];
-
-        $menu = MenuModel::orderBy('menu_sort', 'ASC')->get();
-        foreach($menu as $m){
-            $object1[] = [
-                'menu_id' => $m->menu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'view',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object1[] = [
-                'menu_id' => $m->menu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'create',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object1[] = [
-                'menu_id' => $m->menu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'update',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object1[] = [
-                'menu_id' => $m->menu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'delete',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
+        // Proteksi: akses Owner tidak bisa diubah via UI (Owner selalu bypass middleware)
+        if ($idrole == 1) {
+            return redirect(url('admin/akses/' . $idrole))
+                ->with('status', 'error')
+                ->with('msg', 'Akses Owner tidak dapat diubah.');
         }
 
-        $submenu = SubmenuModel::orderBy('submenu_sort', 'ASC')->get();
-        foreach($submenu as $sb){
-            $object2[] = [
-                'submenu_id' => $sb->submenu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'view',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object2[] = [
-                'submenu_id' => $sb->submenu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'create',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object2[] = [
-                'submenu_id' => $sb->submenu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'update',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            $object2[] = [
-                'submenu_id' => $sb->submenu_id,
-                'role_id' => $idrole,
-                'akses_type' => 'delete',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-        }
-        
-        for ($i = 1; $i <= 6; $i++) {
-            $object3[] = [
-                'othermenu_id' => $i,
-                'role_id' => $idrole,
-                'akses_type' => 'view',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-        }
-        for ($i = 1; $i <= 6; $i++) {
-            $object3[] = [
-                'othermenu_id' => $i,
-                'role_id' => $idrole,
-                'akses_type' => 'create',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-        }
-        for ($i = 1; $i <= 6; $i++) {
-            $object3[] = [
-                'othermenu_id' => $i,
-                'role_id' => $idrole,
-                'akses_type' => 'update',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-        }
-        for ($i = 1; $i <= 6; $i++) {
-            $object3[] = [
-                'othermenu_id' => $i,
-                'role_id' => $idrole,
-                'akses_type' => 'delete',
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
+        AksesModel::where('role_id', $idrole)->delete();
+        $rows = [];
+
+        // Grant all access untuk semua menu
+        $menus = MenuModel::orderBy('menu_sort', 'ASC')->get();
+        foreach ($menus as $m) {
+            foreach (['view', 'create', 'update', 'delete'] as $type) {
+                $rows[] = [
+                    'menu_id'    => $m->menu_id,
+                    'role_id'    => $idrole,
+                    'akses_type' => $type,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
         }
 
-        AksesModel::insert($object1);
-        AksesModel::insert($object2);
-        AksesModel::insert($object3);
+        // Grant all access untuk semua submenu
+        $submenus = SubmenuModel::orderBy('submenu_sort', 'ASC')->get();
+        foreach ($submenus as $sb) {
+            foreach (['view', 'create', 'update', 'delete'] as $type) {
+                $rows[] = [
+                    'submenu_id' => $sb->submenu_id,
+                    'role_id'    => $idrole,
+                    'akses_type' => $type,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        if (!empty($rows)) {
+            AksesModel::insert($rows);
+        }
 
         $this->logActivity('GRANT_ALL_ACCESS', "Granted ALL access to role_id: {$idrole}");
 
         $data['title'] = "Akses";
-        //redirect to index
         return redirect(url('admin/akses/' . $idrole))->with($data);
     }
 
     public function unsetAllAkses($idrole)
     {
-        AksesModel::where(array('role_id' => $idrole))->delete();
+        // Proteksi: akses Owner tidak dapat dicabut
+        if ($idrole == 1) {
+            return redirect(url('admin/akses/' . $idrole))
+                ->with('status', 'error')
+                ->with('msg', 'Akses Owner tidak dapat diubah.');
+        }
+
+        AksesModel::where('role_id', $idrole)->delete();
 
         $this->logActivity('REVOKE_ALL_ACCESS', "Revoked ALL access from role_id: {$idrole}");
 
         $data['title'] = "Akses";
-        //redirect to index
         return redirect(url('admin/akses/' . $idrole))->with($data);
     }
 }

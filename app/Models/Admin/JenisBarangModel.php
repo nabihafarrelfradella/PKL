@@ -13,6 +13,6 @@ class JenisBarangModel extends Model
     protected $fillable = [
         'jenisbarang_nama',
         'jenisbarang_slug',
-        'jenisbarang_ket'
+        'jenisbarang_keterangan'
     ]; 
 }
