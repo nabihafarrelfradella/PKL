@@ -111,6 +111,10 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);
         Route::post('/admin/barang-keluar/proses_kembali/{barangkeluar}', [BarangkeluarController::class, 'proses_kembali']);
+        Route::post('/admin/barang-keluar/terima_pinjam/{barangkeluar}', [BarangkeluarController::class, 'terima_pinjam']);
+        Route::post('/admin/barang-keluar/tolak_pinjam/{barangkeluar}', [BarangkeluarController::class, 'tolak_pinjam']);
+        Route::post('/admin/barang-keluar/terima_kembali/{barangkeluar}', [BarangkeluarController::class, 'terima_kembali']);
+        Route::post('/admin/barang-keluar/tolak_kembali/{barangkeluar}', [BarangkeluarController::class, 'tolak_kembali']);
         Route::get('/admin/barang/get-available-sn/{barang_kode}', [BarangkeluarController::class, 'getAvailableSN']);
         // Teknisi lookup (needed for form dropdowns by Owner & Admin Gudang)
         Route::get('/admin/user-management/teknisi/get/{id}', [BarangkeluarController::class, 'getTeknisi']);
@@ -186,11 +190,6 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/user-management/access-control', [UserController::class, 'accessControl'])->name('user-mgmt.access-control');
         Route::post('/admin/user-management/access-control/toggle', [UserController::class, 'accessControlToggle'])->name('user-mgmt.access-control.toggle');
 
-        // Notifikasi (untuk Owner & Admin Gudang)
-        Route::get('/admin/notifikasi', [\App\Http\Controllers\Admin\NotifikasiController::class, 'getNotifikasi'])->name('notifikasi.get');
-        Route::post('/admin/notifikasi/read/{id}', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markRead'])->name('notifikasi.read');
-        Route::post('/admin/notifikasi/read-all', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
-
         // Akses
         Route::get('/admin/akses/{role}', [AksesController::class, 'index']);
         Route::get('/admin/akses/addAkses/{idmenu}/{idrole}/{type}/{akses}', [AksesController::class, 'addAkses']);
@@ -198,5 +197,10 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/akses/setAll/{role}', [AksesController::class, 'setAllAkses']);
         Route::get('/admin/akses/unsetAll/{role}', [AksesController::class, 'unsetAllAkses']);
     });
+
+    // Notifikasi (untuk Owner & Admin Gudang, tidak dibatasi checkOwnerOnly)
+    Route::get('/admin/notifikasi', [\App\Http\Controllers\Admin\NotifikasiController::class, 'getNotifikasi'])->name('notifikasi.get');
+    Route::post('/admin/notifikasi/read/{id}', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markRead'])->name('notifikasi.read');
+    Route::post('/admin/notifikasi/read-all', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
 
 });

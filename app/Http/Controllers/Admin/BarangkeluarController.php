@@ -75,8 +75,16 @@ class BarangkeluarController extends Controller
                 ->addColumn('status', function ($row) {
                     if ($row->bk_status == 'Dipinjam') {
                         return '<span class="badge bg-warning text-dark"><i class="fe fe-clock me-1"></i>Dipinjam</span>';
+                    } elseif ($row->bk_status == 'Selesai') {
+                        return '<span class="badge bg-success"><i class="fe fe-check me-1"></i>Selesai</span>';
+                    } elseif ($row->bk_status == 'Ditolak') {
+                        return '<span class="badge bg-danger"><i class="fe fe-x me-1"></i>Ditolak</span>';
+                    } elseif ($row->bk_status == 'Menunggu Persetujuan Pinjam') {
+                        return '<span class="badge bg-info"><i class="fe fe-loader me-1"></i>Menunggu Pinjam</span>';
+                    } elseif ($row->bk_status == 'Menunggu Persetujuan Kembali') {
+                        return '<span class="badge bg-info"><i class="fe fe-loader me-1"></i>Menunggu Kembali</span>';
                     }
-                    return '<span class="badge bg-success"><i class="fe fe-check me-1"></i>Selesai</span>';
+                    return '<span class="badge bg-secondary">' . $row->bk_status . '</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $roleId         = Session::get('user')->role_id ?? 0;
@@ -102,15 +110,30 @@ class BarangkeluarController extends Controller
 
                     $button = '';
 
-                    // Tombol Kembalikan: hanya Owner & Admin Gudang, hanya jika status Dipinjam
-                    if (($roleId == 1 || $roleId == 2) && $row->bk_status == 'Dipinjam') {
-                        $button .= '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Kmodaldemo8" onclick=\'kembali(' . json_encode($array) . ')\' title="Kembalikan"><span class="fe fe-corner-up-left fs-14"></span></a>';
+                    // Tombol Approval (Hanya Owner & Admin Gudang)
+                    if (in_array($roleId, [1, 2])) {
+                        if ($row->bk_status == 'Menunggu Persetujuan Pinjam') {
+                            $button .= '<a class="btn text-success btn-sm" href="javascript:void(0)" onclick=\'terimaPinjam(' . $row->bk_id . ')\' title="Setujui Pinjaman"><span class="fe fe-check-circle fs-14"></span></a>';
+                            $button .= '<a class="btn text-danger btn-sm" href="javascript:void(0)" onclick=\'tolakPinjam(' . $row->bk_id . ')\' title="Tolak Pinjaman"><span class="fe fe-x-circle fs-14"></span></a>';
+                        } elseif ($row->bk_status == 'Menunggu Persetujuan Kembali') {
+                            $button .= '<a class="btn text-success btn-sm" href="javascript:void(0)" onclick=\'terimaKembali(' . $row->bk_id . ')\' title="Setujui Pengembalian"><span class="fe fe-check-circle fs-14"></span></a>';
+                            $button .= '<a class="btn text-danger btn-sm" href="javascript:void(0)" onclick=\'tolakKembali(' . $row->bk_id . ')\' title="Tolak Pengembalian"><span class="fe fe-x-circle fs-14"></span></a>';
+                        }
                     }
 
-                    // Teknisi hanya lihat, tidak bisa edit/hapus setelah submit
-                    if ($roleId == 1 || $roleId == 2) {
-                        $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick=\'update(' . json_encode($array) . ')\' title="Ubah"><span class="fe fe-edit text-success fs-14"></span></a>';
-                        $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick=\'hapus(' . json_encode($array) . ')\' title="Hapus"><span class="fe fe-trash-2 fs-14"></span></a>';
+                    // Tombol Kembalikan: Owner, Admin Gudang, dan Teknisi
+                    if (in_array($roleId, [1, 2, 3])) {
+                        if ($row->bk_status == 'Dipinjam') {
+                            $button .= '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Kmodaldemo8" onclick=\'kembali(' . json_encode($array) . ')\' title="Kembalikan"><span class="fe fe-corner-up-left fs-14"></span></a>';
+                        }
+                    }
+
+                    // Tombol Edit/Hapus
+                    if (in_array($roleId, [1, 2])) {
+                        if (!in_array($row->bk_status, ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])) {
+                            $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . json_encode($array) . ')"><span class="fe fe-edit text-success fs-14"></span></a>';
+                            $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . json_encode($array) . ')"><span class="fe fe-trash-2 fs-14"></span></a>';
+                        }
                     }
 
                     return $button;
@@ -203,10 +226,13 @@ class BarangkeluarController extends Controller
                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
                 ->where('tbl_barangkeluar.barang_kode', '=', $request->barang);
 
-            $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
-                       + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
-                           ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
-                           ->sum('tbl_barangkeluar.bk_jumlah');
+            $jmlkeluar = (clone $baseQuery)
+                ->whereIn('tbl_barangkeluar.bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
+                ->sum('tbl_barangkeluar.bk_jumlah')
+                + (clone $baseQuery)
+                    ->where('tbl_barangkeluar.bk_status', 'Selesai')
+                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                    ->sum('tbl_barangkeluar.bk_jumlah');
 
             $current_stok = intval($barang->barang_stok) + ($jmlmasuk - $jmlkeluar);
 
@@ -237,12 +263,12 @@ class BarangkeluarController extends Controller
             // Validasi ketersediaan Serial Number (SN)
             foreach ($sns as $sn) {
                 if ($sn && $sn !== '-') {
-                    // 1. Cek apakah SN tersebut sedang dipinjam (bk_status = 'Dipinjam')
+                    // 1. Cek apakah SN tersebut sedang dipinjam atau menunggu persetujuan
                     $isBorrowed = BarangkeluarModel::where('serial_number', $sn)
-                        ->where('bk_status', 'Dipinjam')
+                        ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
                         ->exists();
                     if ($isBorrowed) {
-                        return response()->json(['error' => "Serial Number {$sn} sedang dipinjam dan belum dikembalikan!"], 400);
+                        return response()->json(['error' => "Serial Number {$sn} sedang dipinjam/menunggu persetujuan dan belum dikembalikan!"], 400);
                     }
 
                     // 2. Cek apakah SN tersebut adalah barang habis pakai yang sudah pernah digunakan
@@ -257,14 +283,19 @@ class BarangkeluarController extends Controller
                 }
             }
 
-            // Status otomatis: Habis Pakai = Selesai, Kembali = Dipinjam
-            $status = (str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
-
             // Tentukan teknisi: jika login sebagai teknisi, pakai dari session
             $user      = Session::get('user');
             $roleId    = $user->role_id ?? 0;
             $teknisiSN = ($roleId == 3) ? ($user->teknisi_sn ?? '') : $request->teknisi;
             $teknisiNm = ($roleId == 3) ? $user->user_nmlengkap : ($request->tujuan ?? '');
+
+            // Status otomatis: Habis Pakai = Selesai, Kembali = Dipinjam
+            $status = (str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
+            
+            // Jika teknisi, butuh persetujuan pinjam
+            if ($roleId == 3) {
+                $status = 'Menunggu Persetujuan Pinjam';
+            }
 
             // Customer/lokasi: dari request
             $customer  = $request->customer ?? $request->tujuan ?? '';
@@ -300,7 +331,6 @@ class BarangkeluarController extends Controller
                         'bk_status'        => $status,
                         'serial_number'    => $sn,
                         'teknisi'          => $teknisiSN,
-                        'teknisi_nama'     => $teknisiNm,
                         'keterangan'       => $request->keterangan,
                         'jam_keluar'       => $tglkeluar,
                     ]);
@@ -327,7 +357,6 @@ class BarangkeluarController extends Controller
                     'bk_status'        => $status,
                     'serial_number'    => '-',
                     'teknisi'          => $teknisiSN,
-                    'teknisi_nama'     => $teknisiNm,
                     'keterangan'       => $request->keterangan,
                     'jam_keluar'       => $tglkeluar,
                 ]);
@@ -363,9 +392,7 @@ class BarangkeluarController extends Controller
     public function proses_kembali(Request $request, $id)
     {
         $user = Session::get('user');
-        if ($user && $user->role_id == 3) {
-            return response()->json(['error' => 'Akses ditolak! Teknisi tidak berhak memproses pengembalian.'], 403);
-        }
+        
         $bk = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
             ->where('tbl_barangkeluar.bk_id', $id)
             ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama')
@@ -375,8 +402,10 @@ class BarangkeluarController extends Controller
             return response()->json(['error' => 'Data tidak ditemukan'], 404);
         }
 
+        $status = ($user && $user->role_id == 3) ? 'Menunggu Persetujuan Kembali' : 'Selesai';
+
         BarangkeluarModel::find($id)->update([
-            'bk_status'          => 'Selesai',
+            'bk_status'          => $status,
             'bk_tgl_kembali'     => $request->tglkembali,
             'bk_kondisi_kembali' => $request->kondisi,
             'bk_jumlah_kembali'  => $request->jml,
@@ -386,9 +415,13 @@ class BarangkeluarController extends Controller
         $teknisi = UserModel::where('teknisi_sn', $bk->teknisi)->first();
         $nmTeknisi = $teknisi ? $teknisi->user_nmlengkap : ($bk->teknisi_nama ?? $bk->teknisi ?? 'Teknisi');
 
+        $pesanNotif = ($status == 'Menunggu Persetujuan Kembali') 
+            ? "Teknisi {$nmTeknisi} mengajukan pengembalian untuk barang {$bk->barang_nama}. Kondisi: {$request->kondisi}" 
+            : "Barang {$bk->barang_nama} dari {$nmTeknisi} sudah dikembalikan. Kondisi: {$request->kondisi}";
+
         NotifikasiModel::create([
             'notif_type'        => 'pengembalian',
-            'notif_pesan'       => "Barang {$bk->barang_nama} dari {$nmTeknisi} sudah dikembalikan. Kondisi: {$request->kondisi}",
+            'notif_pesan'       => $pesanNotif,
             'notif_dari'        => $teknisi->user_id ?? 0,
             'notif_nama_teknisi'=> $nmTeknisi,
             'notif_barang'      => $bk->barang_nama ?? '-',
@@ -545,5 +578,44 @@ class BarangkeluarController extends Controller
         }
 
         return response()->json($available);
+    }
+
+    public function terima_pinjam(Request $request, $id)
+    {
+        $bk = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->where('tbl_barangkeluar.bk_id', $id)
+            ->first();
+        if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+        $status = (str_contains(strtolower($bk->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
+        BarangkeluarModel::find($id)->update(['bk_status' => $status]);
+        return response()->json(['success' => 'Peminjaman disetujui!']);
+    }
+
+    public function tolak_pinjam(Request $request, $id)
+    {
+        $bk = BarangkeluarModel::find($id);
+        if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+        $bk->update(['bk_status' => 'Ditolak']);
+        return response()->json(['success' => 'Peminjaman ditolak!']);
+    }
+
+    public function terima_kembali(Request $request, $id)
+    {
+        $bk = BarangkeluarModel::find($id);
+        if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+        $bk->update(['bk_status' => 'Selesai']);
+        return response()->json(['success' => 'Pengembalian disetujui!']);
+    }
+
+    public function tolak_kembali(Request $request, $id)
+    {
+        $bk = BarangkeluarModel::find($id);
+        if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+        $bk->update(['bk_status' => 'Dipinjam']);
+        return response()->json(['success' => 'Pengembalian ditolak! Status dikembalikan ke Dipinjam.']);
     }
 }

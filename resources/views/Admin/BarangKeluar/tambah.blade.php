@@ -369,9 +369,10 @@
                 // Add available SNs that are NOT already selected
                 data.forEach(function(item) {
                     if (!previousSelected.includes(item.serial_number)) {
+                        var unikText = item.kode_barang_unik ? ` (Unik: ${item.kode_barang_unik})` : '';
                         var $opt = $('<option></option>')
                             .val(item.serial_number)
-                            .text(item.serial_number)
+                            .text(item.serial_number + unikText)
                             .attr('data-kbu', item.kode_barang_unik);
                         $sel.append($opt);
                     }
@@ -380,9 +381,10 @@
                 previousSelected.forEach(function(sn) {
                     if (sn) {
                         var matched = data.find(function(d) { return d.serial_number === sn; });
+                        var unikText = matched && matched.kode_barang_unik ? ` (Unik: ${matched.kode_barang_unik})` : '';
                         var $opt = $('<option selected></option>')
                             .val(sn)
-                            .text(sn)
+                            .text(sn + unikText)
                             .attr('data-kbu', matched ? matched.kode_barang_unik : '');
                         $sel.append($opt);
                     }

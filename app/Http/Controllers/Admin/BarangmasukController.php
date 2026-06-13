@@ -16,7 +16,7 @@ class BarangmasukController extends Controller
     {
         $data["title"] = "Barang Masuk";
         $user = Session::get('user');
-        $data["hakTambah"] = ($user && in_array($user->role_id, [1, 2, 3])) ? 1 : 0;
+        $data["hakTambah"] = ($user && in_array($user->role_id, [1, 2])) ? 1 : 0;
         return view('Admin.BarangMasuk.index', $data);
     }
 

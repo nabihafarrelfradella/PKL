@@ -254,5 +254,89 @@
             ],
         });
     });
+
+    function terimaPinjam(id) {
+        swal({
+            title: "Setujui Pinjaman?",
+            text: "Barang akan resmi dipinjam oleh Teknisi.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#28a745",
+            confirmButtonText: "Ya, Setujui!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.post(`/admin/barang-keluar/terima_pinjam/${id}`, function(res) {
+                    swal("Disetujui!", res.success, "success");
+                    table.ajax.reload();
+                }).fail(function(err) {
+                    swal("Gagal!", err.responseJSON.error || "Terjadi kesalahan", "error");
+                });
+            }
+        });
+    }
+
+    function tolakPinjam(id) {
+        swal({
+            title: "Tolak Pinjaman?",
+            text: "Pengajuan pinjaman ini akan ditolak.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Ya, Tolak!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.post(`/admin/barang-keluar/tolak_pinjam/${id}`, function(res) {
+                    swal("Ditolak!", res.success, "success");
+                    table.ajax.reload();
+                }).fail(function(err) {
+                    swal("Gagal!", err.responseJSON.error || "Terjadi kesalahan", "error");
+                });
+            }
+        });
+    }
+
+    function terimaKembali(id) {
+        swal({
+            title: "Setujui Pengembalian?",
+            text: "Barang akan dinyatakan selesai dikembalikan dan stok diperbarui.",
+            type: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#28a745",
+            confirmButtonText: "Ya, Setujui!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.post(`/admin/barang-keluar/terima_kembali/${id}`, function(res) {
+                    swal("Berhasil!", res.success, "success");
+                    table.ajax.reload();
+                }).fail(function(err) {
+                    swal("Gagal!", err.responseJSON.error || "Terjadi kesalahan", "error");
+                });
+            }
+        });
+    }
+
+    function tolakKembali(id) {
+        swal({
+            title: "Tolak Pengembalian?",
+            text: "Status barang akan dikembalikan menjadi 'Dipinjam'.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Ya, Tolak!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.post(`/admin/barang-keluar/tolak_kembali/${id}`, function(res) {
+                    swal("Ditolak!", res.success, "success");
+                    table.ajax.reload();
+                }).fail(function(err) {
+                    swal("Gagal!", err.responseJSON.error || "Terjadi kesalahan", "error");
+                });
+            }
+        });
+    }
 </script>
 @endsection
