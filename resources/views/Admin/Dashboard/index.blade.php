@@ -218,7 +218,7 @@
                                     <td>{{ $dp->barang_nama ?? '-' }}</td>
                                     <td>
                                         <span class="badge" style="background:#e0e7ff;color:#3730a3;">
-                                            <i class="fe fe-tool me-1"></i>{{ $dp->nm_teknisi ?? $dp->teknisi ?? '-' }}
+                                            <i class="fe fe-tool me-1"></i>{{ $dp->nm_teknisi ?? $dp->teknisi_nama ?? $dp->teknisi ?? '-' }}
                                         </span>
                                     </td>
                                     <td><i class="fe fe-map-pin text-muted me-1"></i><strong>{{ $dp->bk_tujuan ?? '-' }}</strong></td>
@@ -323,16 +323,27 @@
             url: "{{route('barang.checkStok')}}",
             success: function (data) {
                 if (data.length > 0) {
-                    let htmlList = '<ul style="text-align: left;">';
+                    let htmlList = '<div class="text-start mt-2" style="font-family: inherit;">' +
+                        '<p class="text-muted mb-3" style="margin-bottom: 15px; font-size: 13px; color: #6e7687; text-align: left;">Beberapa barang berikut memiliki jumlah stok kritis (kurang dari 5 unit):</p>' +
+                        '<div style="max-height: 220px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">';
+                    
                     data.forEach(item => {
-                        htmlList += `<li><b>${item.nama}</b> (Stok: ${item.stok})</li>`;
+                        htmlList += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffe2e2; border-left: 4px solid #e84c4c; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+                                <span style="font-size: 14px; color: #e84c4c; display: inline-flex; align-items: center;"><i class="fe fe-package"></i></span>
+                                <span style="font-weight: 600; color: #2d3748; font-size: 13px; word-break: break-word;">${item.nama}</span>
+                            </div>
+                            <span style="background: #ffe2e2; color: #e84c4c; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 20px; white-space: nowrap;">Stok: ${item.stok}</span>
+                        </div>`;
                     });
-                    htmlList += '</ul>';
+                    
+                    htmlList += '</div></div>';
 
                     swal({
                         title: "Peringatan Stok Menipis!",
                         html: true,
-                        text: "Beberapa barang memiliki stok kurang dari 5:<br><br>" + htmlList,
+                        text: htmlList,
                         type: "warning",
                         confirmButtonText: "Tutup"
                     });

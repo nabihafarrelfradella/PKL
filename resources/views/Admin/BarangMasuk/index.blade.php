@@ -32,8 +32,7 @@
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
                             <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Jam Masuk</th>
-                            <th class="border-bottom-0">Tanggal Masuk</th>
+                            <th class="border-bottom-0">Tanggal & Jam Masuk</th>
                             <th class="border-bottom-0">Kode Barang Masuk</th>
                             <th class="border-bottom-0">Kode Barang</th>
                             <th class="border-bottom-0">Barang</th>
@@ -87,7 +86,12 @@
         $("input[name='kdbarangU']").val(data.barang_kode);
         $("input[name='serial_numberU']").val(data.serial_number);
         $("input[name='jmlU']").val(data.bm_jumlah);
-
+        // Pre-fill barang details immediately from action data (no AJAX wait)
+        if (data.barang_nama) {
+            $("#nmbarangU").val(data.barang_nama);
+            $("#statusU").val("true");
+        }
+        // Also fire AJAX to fill satuan/jenis (async)
         getbarangbyidU(data.barang_kode);
 
         let datetime = data.bm_tanggal;
@@ -95,6 +99,29 @@
             datetime = data.jam_masuk;
         }
         $("input[name='tglmasukU']").val(datetime);
+        fetchAvailableSNsU(data.barang_kode, data.serial_number);
+    }
+
+    function fetchAvailableSNsU(barang_kode, currentSN) {
+        if (!barang_kode) {
+            $("#sn_listU").empty();
+            return;
+        }
+        $.ajax({
+            type: 'GET',
+            url: "/admin/barang/get-available-sn/" + barang_kode,
+            dataType: 'json',
+            success: function(data) {
+                var list = $("#sn_listU");
+                list.empty();
+                if (currentSN && currentSN !== '-' && !data.find(item => item.serial_number === currentSN)) {
+                    list.append(`<option value="${currentSN}">${currentSN} (Saat ini)</option>`);
+                }
+                data.forEach(function(item) {
+                    list.append(`<option value="${item.serial_number}">${item.serial_number} (Unik: ${item.kode_barang_unik})</option>`);
+                });
+            }
+        });
     }
 
     function hapus(data) {
@@ -167,12 +194,8 @@
                     searchable: false
                 },
                 {
-                    data: 'jam_masuk',
-                    name: 'jam_masuk',
-                },
-                {
                     data: 'tgl',
-                    name: 'bm_tanggal',
+                    name: 'jam_masuk',
                 },
                 {
                     data: 'bm_kode',

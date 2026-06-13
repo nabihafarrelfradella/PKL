@@ -88,7 +88,7 @@
             resetValid();
             $("input[name='customer']").val('');
             $("input[name='notelp']").val('');
-            $("textarea[name='ket']").val('');
+            $("textarea[name='alamat']").val('');
             setLoading(false);
         }
 

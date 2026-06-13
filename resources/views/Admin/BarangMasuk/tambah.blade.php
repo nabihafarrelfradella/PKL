@@ -14,7 +14,7 @@
                         </div>
                         <div class="form-group">
                             <label for="tglmasuk" class="form-label">Tanggal Masuk <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="tglmasuk" class="form-control" value="{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}">
+                            <input type="datetime-local" name="tglmasuk" id="tglmasuk_input" class="form-control">
                         </div>
                         <div class="form-group d-none">
                             <label for="serial_number" class="form-label">Serial Number</label>
@@ -76,6 +76,20 @@
 
 @section('formTambahJS')
 <script>
+    function getLocalDateTimeString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    $(document).ready(function() {
+        $("input[name='tglmasuk']").val(getLocalDateTimeString());
+    });
+
     $('input[name="kdbarang"]').keypress(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '13') {
@@ -100,7 +114,7 @@
         $("#loaderkd").removeClass('d-none');
         $.ajax({
             type: 'GET',
-            url: "{{ url('admin/barang/getbarang') }}/" + id,
+            url: "/admin/barang/getbarang/" + id,
             processData: false,
             contentType: false,
             dataType: 'json',
@@ -204,7 +218,7 @@
     function reset() {
         resetValid();
         $("input[name='bmkode']").val('Otomatis');
-        $("input[name='tglmasuk']").val("{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}");
+        $("input[name='tglmasuk']").val(getLocalDateTimeString());
         $("input[name='kdbarang']").val('');
         $("input[name='serial_number']").val('');
         $("input[name='jml']").val('0');

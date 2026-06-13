@@ -35,10 +35,7 @@ class CheckOwnerOnly
                 'updated_at' => now(),
             ]);
 
-            return redirect('/admin/dashboard')->with([
-                'status' => 'error',
-                'msg'    => 'Akses Ditolak! Hanya Owner yang dapat mengakses User Management.',
-            ]);
+            return abort(403, 'Akses Ditolak! Hanya Owner yang dapat mengakses User Management.');
         }
 
         return $next($request);

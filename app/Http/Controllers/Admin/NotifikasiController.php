@@ -22,15 +22,31 @@ class NotifikasiController extends Controller
         $query = NotifikasiModel::orderBy('created_at', 'DESC');
 
         if ($roleId == 1) {
-            $query->where('is_read_owner', 0);
+            $query->where(function($q) {
+                $q->where('is_read_owner', 0)
+                  ->orWhere(function($sub) {
+                      $sub->where('is_read_owner', 1)
+                          ->where('updated_at', '>=', now()->subMinutes(5));
+                  });
+            });
         } elseif ($roleId == 2) {
-            $query->where('is_read_gudang', 0);
+            $query->where(function($q) {
+                $q->where('is_read_gudang', 0)
+                  ->orWhere(function($sub) {
+                      $sub->where('is_read_gudang', 1)
+                          ->where('updated_at', '>=', now()->subMinutes(5));
+                  });
+            });
         } else {
             return response()->json(['total' => 0, 'items' => []]);
         }
 
         $notifs = $query->limit(20)->get();
-        $total  = $notifs->count();
+        
+        // Hanya hitung yang benar-benar belum dibaca untuk badge
+        $total = $notifs->filter(function ($n) use ($roleId) {
+            return $roleId == 1 ? $n->is_read_owner == 0 : $n->is_read_gudang == 0;
+        })->count();
 
         $items = $notifs->map(function ($n) {
             $icon  = $n->notif_type === 'peminjaman' ? 'fe-arrow-up-circle' : 'fe-corner-up-left';

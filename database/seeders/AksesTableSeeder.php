@@ -21,6 +21,7 @@ class AksesTableSeeder extends Seeder
 {
     public function run()
     {
+        DB::table('tbl_akses')->truncate();
         $menus    = DB::table('tbl_menu')->get()->keyBy('menu_slug');
         $submenus = DB::table('tbl_submenu')->get()->keyBy('submenu_redirect');
         $rows     = [];
@@ -32,11 +33,13 @@ class AksesTableSeeder extends Seeder
             if (!$m) return;
             foreach ($types as $type) {
                 $rows[] = [
-                    'menu_id'    => $m->menu_id,
-                    'role_id'    => $roleId,
-                    'akses_type' => $type,
-                    'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'menu_id'      => $m->menu_id,
+                    'submenu_id'   => null,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => Carbon::now()->format('Y-m-d H:i:s'),
+                    'updated_at'   => Carbon::now()->format('Y-m-d H:i:s'),
                 ];
             }
         };
@@ -46,11 +49,13 @@ class AksesTableSeeder extends Seeder
             if (!$s) return;
             foreach ($types as $type) {
                 $rows[] = [
-                    'submenu_id' => $s->submenu_id,
-                    'role_id'    => $roleId,
-                    'akses_type' => $type,
-                    'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'menu_id'      => null,
+                    'submenu_id'   => $s->submenu_id,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => Carbon::now()->format('Y-m-d H:i:s'),
+                    'updated_at'   => Carbon::now()->format('Y-m-d H:i:s'),
                 ];
             }
         };

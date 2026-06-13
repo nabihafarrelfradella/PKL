@@ -19,7 +19,8 @@
                         </div>
                         <div class="form-group">
                             <label for="serial_numberU" class="form-label">Serial Number</label>
-                            <input type="text" name="serial_numberU" class="form-control" placeholder="Contoh: SN-123456">
+                            <input type="text" name="serial_numberU" id="serial_number_inputU" list="sn_listU" class="form-control" placeholder="Pilih SN atau isi manual...">
+                            <datalist id="sn_listU"></datalist>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -56,7 +57,8 @@
                         </div>
                         <div class="form-group">
                             <label for="jmlU" class="form-label">Jumlah Masuk <span class="text-danger">*</span></label>
-                            <input type="text" name="jmlU" class="form-control" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" placeholder="">
+                            <input type="text" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
+                            <small class="text-muted">Jumlah tidak dapat diubah (setiap baris = 1 unit)</small>
                         </div>
                     </div>
                 </div>

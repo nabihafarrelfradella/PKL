@@ -46,7 +46,7 @@
                                 <th>No. Telepon</th>
                                 <th>Gender</th>
                                 <th>Tgl Lahir</th>
-                                <th>SN Teknisi</th>
+                                <th>ID Teknisi</th>
                                 <th width="1%">Aksi</th>
                             </tr>
                         </thead>
@@ -73,7 +73,7 @@
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Username <span class="text-danger">*</span></label>
-                    <input type="text" id="add_username" class="form-control" placeholder="Username untuk login">
+                    <input type="text" id="add_username" class="form-control" placeholder="Username untuk login" autocomplete="off">
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Email <span class="text-danger">*</span></label>
@@ -103,7 +103,7 @@
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Password <span class="text-danger">*</span></label>
-                    <input type="password" id="add_pwd" class="form-control" placeholder="Minimal 6 karakter">
+                    <input type="password" id="add_pwd" class="form-control" placeholder="Minimal 6 karakter" autocomplete="new-password">
                 </div>
             </div>
             <div class="modal-footer">
@@ -132,7 +132,7 @@
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Username <span class="text-danger">*</span></label>
-                    <input type="text" id="edit_username" class="form-control">
+                    <input type="text" id="edit_username" class="form-control" autocomplete="off">
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Email <span class="text-danger">*</span></label>
@@ -161,7 +161,7 @@
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">Password Baru <span class="text-muted">(kosongkan jika tidak diganti)</span></label>
-                    <input type="password" id="edit_pwd" class="form-control" placeholder="Masukkan password baru">
+                    <input type="password" id="edit_pwd" class="form-control" placeholder="Masukkan password baru" autocomplete="new-password">
                 </div>
             </div>
             <div class="modal-footer">
@@ -240,9 +240,9 @@
     }
 
     function submitTambahTeknisi() {
-        const nmlengkap     = $('#add_nmlengkap').val();
-        const username      = $('#add_username').val();
-        const email         = $('#add_email').val();
+        const nmlengkap     = $('#add_nmlengkap').val().trim();
+        const username      = $('#add_username').val().trim();
+        const email         = $('#add_email').val().trim();
         const pwd           = $('#add_pwd').val();
         const jenis_kelamin = $('#add_jenis_kelamin').val();
         const tanggal_lahir = $('#add_tanggal_lahir').val();
@@ -252,10 +252,16 @@
             return;
         }
 
+        // Cegah double submit
+        const btn = $('#btnTambahTeknisi');
+        if (btn.prop('disabled')) return;
+        btn.prop('disabled', true).text('Menyimpan...');
+
         $.ajax({
             type: 'POST',
             url: "{{ route('user-mgmt.teknisi.store') }}",
             data: {
+                _token:        "{{ csrf_token() }}",
                 nmlengkap:     nmlengkap,
                 username:      username,
                 email:         email,
@@ -268,7 +274,9 @@
                 $('#modalTambahTeknisi').modal('hide');
                 swal({ title: res.success, type: 'success' });
                 table.ajax.reload(null, false);
-                $('#add_nmlengkap, #add_username, #add_email, #add_phone, #add_pwd, #add_jenis_kelamin, #add_tanggal_lahir').val('');
+                $('#add_nmlengkap, #add_username, #add_email, #add_phone, #add_pwd').val('');
+                $('#add_jenis_kelamin').val('');
+                $('#add_tanggal_lahir').val('');
             },
             error: function (xhr) {
                 let msg = 'Terjadi kesalahan!';
@@ -276,6 +284,9 @@
                     msg = Object.values(xhr.responseJSON.errors)[0][0];
                 }
                 swal({ title: msg, type: 'error' });
+            },
+            complete: function () {
+                btn.prop('disabled', false).html('<i class="fe fe-check me-1"></i> Simpan');
             }
         });
     }

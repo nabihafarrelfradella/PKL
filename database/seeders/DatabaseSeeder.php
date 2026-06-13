@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             MenuTableSeeder::class,
             UsersTableSeeder::class,
             AksesTableSeeder::class,
+            JenisBarangTableSeeder::class,
+            MerkTableSeeder::class,
             // WebTableSeeder::class
         ]);
     }

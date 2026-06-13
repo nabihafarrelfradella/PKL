@@ -45,8 +45,8 @@
                 <th>NAMA BARANG</th>
                 <th>SN.BARANG</th>
                 <th align="center">JML</th>
-                <th>NAMA TEKNISI</th>
-                <th>SN.TEKNISI</th>
+                <th>TUJUAN / CUSTOMER</th>
+                <th>TEKNISI (ID)</th>
                 <th>KETERANGAN</th>
             </tr>
         </thead>
@@ -62,7 +62,7 @@
                 <td>{{$d->serial_number ?? '-'}}</td>
                 <td align="center">{{$d->bk_jumlah}}</td>
                 <td>{{$d->bk_tujuan ?? '-'}}</td>
-                <td>{{$d->teknisi ?? '-'}}</td>
+                <td>{{$d->teknisi_nama ? $d->teknisi_nama . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
                 <td>{{$d->keterangan ?? '-'}}</td>
             </tr>
             @endforeach

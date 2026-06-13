@@ -31,7 +31,8 @@ class BarangmasukController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
-                    return $row->bm_tanggal ? Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y H:i:s') : '-';
+                    $datetime = $row->jam_masuk ?? $row->bm_tanggal;
+                    return $datetime ? Carbon::parse($datetime)->translatedFormat('d F Y H:i:s') : '-';
                 })
                 ->addColumn('barang', function ($row) {
                     return $row->barang_nama ?? '-';
@@ -41,8 +42,9 @@ class BarangmasukController extends Controller
                         "bm_id"            => $row->bm_id,
                         "bm_kode"          => $row->bm_kode,
                         "barang_kode"      => $row->barang_kode,
-                        "barang_nama"      => $row->barang_nama,
+                        "barang_nama"      => str_replace(["'", '"'], "", $row->barang_nama),
                         "bm_tanggal"       => $row->bm_tanggal,
+                        "jam_masuk"        => $row->jam_masuk,
                         "bm_jumlah"        => $row->bm_jumlah,
                         "serial_number"    => $row->serial_number,
                         "kode_barang_unik" => $row->kode_barang_unik,
@@ -112,14 +114,19 @@ class BarangmasukController extends Controller
                 // Generate Kode Barang Unik (Timestamp + Urutan)
                 $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
 
+                // Gunakan datetime dari form (waktu device lokal), fallback ke now() jika kosong
+                $tglmasuk = $request->tglmasuk
+                    ? \Carbon\Carbon::parse($request->tglmasuk)
+                    : now();
+
                 BarangmasukModel::create([
-                    'bm_tanggal'       => $request->tglmasuk,
+                    'bm_tanggal'       => $tglmasuk->toDateString(),
                     'bm_kode'          => $bm_kode,
                     'barang_kode'      => $request->barang,
                     'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
                     'serial_number'    => $serial_number,
                     'kode_barang_unik' => $kode_barang_unik,
-                    'jam_masuk'        => now(),
+                    'jam_masuk'        => $tglmasuk,
                     'customer_id'      => $request->customer_id ?? 0,
                 ]);
             }
@@ -135,6 +142,8 @@ class BarangmasukController extends Controller
     {
         try {
             $barangmasuk = BarangmasukModel::findOrFail($id);
+            $oldSN = $barangmasuk->serial_number;
+
             $barangmasuk->update([
                 'bm_tanggal'    => $request->tglmasuk,
                 'bm_kode'       => $request->bmkode,
@@ -143,6 +152,13 @@ class BarangmasukController extends Controller
                 'serial_number' => $request->serial_number,
                 // kode_barang_unik & jam_masuk biasanya tidak diubah saat edit
             ]);
+
+            // Cascade update to tbl_barangkeluar if the SN changed
+            if ($oldSN && $oldSN !== $request->serial_number) {
+                \App\Models\Admin\BarangkeluarModel::where('barang_kode', $barangmasuk->barang_kode)
+                    ->where('serial_number', $oldSN)
+                    ->update(['serial_number' => $request->serial_number]);
+            }
 
             return response()->json(['success' => 'Berhasil']);
         } catch (\Exception $e) {

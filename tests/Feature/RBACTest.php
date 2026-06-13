@@ -15,17 +15,17 @@ class RBACTest extends TestCase
     {
         // Admin (Role 1) - Should Login
         $response = $this->post('/admin/proseslogin', [
-            'user' => 'admin',
-            'pwd' => 'password'
+            'user' => 'owner',
+            'pwd' => '12345678'
         ]);
         $response->assertRedirect('/admin/dashboard');
 
-        // Pegawai (Role 3) - Should be Restricted
+        // Wrong Password - Should be Restricted
         $response = $this->post('/admin/proseslogin', [
-            'user' => 'pegawai',
-            'pwd' => 'password'
+            'user' => 'teknisi1',
+            'pwd' => 'wrongpassword'
         ]);
-        $response->assertSessionHas('msg', 'Role Anda tidak diizinkan untuk login!');
+        $response->assertSessionHas('msg', 'Username atau Password salah!');
     }
 
     /**

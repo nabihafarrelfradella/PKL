@@ -46,7 +46,7 @@
                         </div>
                         <div class="form-group">
                             <label for="stokU" class="form-label">Stok Awal <span class="text-danger">*</span></label>
-                            <input type="text" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" name="stokU" class="form-control">
+                            <input type="text" readonly name="stokU" class="form-control" style="background:#f0f8ff;">
                         </div>
                     </div>
                     <div class="col-md-5">

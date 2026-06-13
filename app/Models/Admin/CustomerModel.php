@@ -12,6 +12,7 @@ class CustomerModel extends Model
     protected $primaryKey = 'customer_id';
     protected $fillable = [
         'customer_nama',
+        'customer_kode',
         'customer_slug',
         'customer_alamat',
         'customer_notelp',

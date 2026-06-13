@@ -16,6 +16,7 @@ class RoleTableSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('tbl_role')->truncate();
         DB::table('tbl_role')->insert([
             [
                 'role_id'    => 1,

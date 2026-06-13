@@ -111,6 +111,14 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);
         Route::post('/admin/barang-keluar/proses_kembali/{barangkeluar}', [BarangkeluarController::class, 'proses_kembali']);
+        Route::get('/admin/barang/get-available-sn/{barang_kode}', [BarangkeluarController::class, 'getAvailableSN']);
+        // Teknisi lookup (needed for form dropdowns by Owner & Admin Gudang)
+        Route::get('/admin/user-management/teknisi/get/{id}', [BarangkeluarController::class, 'getTeknisi']);
+        Route::get('/admin/user-management/teknisi/get-by-sn/{sn}', [BarangkeluarController::class, 'getTeknisiBySn']);
+        // Barang lookup routes (also needed here for Teknisi who may not have barang-masuk access)
+        Route::get('/admin/barang/getbarang/{id}', [BarangController::class, 'getbarang']);
+        Route::get('/admin/barang/getunit/{id}', [BarangController::class, 'getunit']);
+        Route::get('/admin/barang/listbarang/{param}', [BarangController::class, 'listbarang']);
     });
 
     Route::middleware(['checkRoleUser:/lap-barang-masuk,submenu'])->group(function () {
@@ -169,7 +177,6 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/user-management/teknisi/store', [UserController::class, 'teknisiStore'])->name('user-mgmt.teknisi.store');
         Route::post('/admin/user-management/teknisi/update/{user}', [UserController::class, 'teknisiUpdate'])->name('user-mgmt.teknisi.update');
         Route::post('/admin/user-management/teknisi/destroy/{user}', [UserController::class, 'teknisiDestroy'])->name('user-mgmt.teknisi.destroy');
-        Route::get('/admin/user-management/teknisi/get/{id}', [BarangkeluarController::class, 'getTeknisi']);
 
         // Admin Gudang — View + Edit only (1 akun, tidak bisa ditambah/dihapus)
         Route::get('/admin/user-management/admin-gudang', [UserController::class, 'adminGudangIndex'])->name('user-mgmt.admin-gudang');

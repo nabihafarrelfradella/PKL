@@ -22,4 +22,22 @@ class UserModel extends Model
         'tanggal_lahir',
         'teknisi_sn',
     ];
+
+    public function getRoleSlugAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+        $role = \Illuminate\Support\Facades\DB::table('tbl_role')->where('role_id', $this->role_id)->first();
+        return $role ? $role->role_slug : 'unknown';
+    }
+
+    public function getRoleTitleAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+        $role = \Illuminate\Support\Facades\DB::table('tbl_role')->where('role_id', $this->role_id)->first();
+        return $role ? $role->role_title : 'Unknown';
+    }
 }

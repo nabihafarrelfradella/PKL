@@ -98,7 +98,15 @@ return new class extends Migration
             $m = $menus->get($slug);
             if (!$m) return;
             foreach ($types as $type) {
-                $rows[] = ['menu_id' => $m->menu_id, 'role_id' => $roleId, 'akses_type' => $type, 'created_at' => now(), 'updated_at' => now()];
+                $rows[] = [
+                    'menu_id'      => $m->menu_id,
+                    'submenu_id'   => null,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ];
             }
         };
 
@@ -106,7 +114,15 @@ return new class extends Migration
             $s = $submenus->get($redirect);
             if (!$s) return;
             foreach ($types as $type) {
-                $rows[] = ['submenu_id' => $s->submenu_id, 'role_id' => $roleId, 'akses_type' => $type, 'created_at' => now(), 'updated_at' => now()];
+                $rows[] = [
+                    'menu_id'      => null,
+                    'submenu_id'   => $s->submenu_id,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ];
             }
         };
 

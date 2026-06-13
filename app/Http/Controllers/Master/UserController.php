@@ -286,7 +286,7 @@ class UserController extends Controller
             'user_password'  => md5($request->pwd),
         ]);
 
-        $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email}) with SN: {$teknisi_sn}");
+        $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email}) with ID: {$teknisi_sn}");
 
         return response()->json(['success' => 'Akun Teknisi berhasil ditambahkan!']);
     }
@@ -306,7 +306,8 @@ class UserController extends Controller
             'tanggal_lahir' => 'required|date',
         ]);
 
-        // Re-generate SN if gender or dob changed
+        $oldSn = $user->teknisi_sn;
+        // Re-generate SN jika gender atau dob berubah
         $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
         $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
 
@@ -325,6 +326,12 @@ class UserController extends Controller
         }
 
         $user->update($updateData);
+
+        // Update associated records in tbl_barangkeluar
+        if ($oldSn && $oldSn !== $teknisi_sn) {
+            DB::table('tbl_barangkeluar')->where('teknisi', $oldSn)->update(['teknisi' => $teknisi_sn]);
+        }
+
         $this->logActivity('UPDATE_TEKNISI', "Owner updated Teknisi account: {$user->user_nama} (user_id: {$user->user_id})");
 
         return response()->json(['success' => 'Akun Teknisi berhasil diperbarui!']);

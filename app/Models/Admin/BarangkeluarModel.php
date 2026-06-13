@@ -23,6 +23,7 @@ class BarangkeluarModel extends Model
         'bk_status', // 'Dipinjam' atau 'Selesai'
         'serial_number',
         'teknisi',
+        'teknisi_nama',
         'keterangan',
         'jam_keluar',
         // Kolom khusus pengembalian

@@ -16,3 +16,8 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/scratch/
+/env.development
+.gemini/
+*.gemini
+

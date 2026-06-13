@@ -8,7 +8,7 @@
         <div class="login-wrapper">
 
             <div class="logo-section mb-5 text-start">
-                <img src="{{url('/assets/default/web/default1.png')}}" height="120px" alt="logo">
+                <img src="{{url('/assets/default/web/default.png')}}" height="120px" alt="logo">
             </div>
 
             <div class="login-header mb-5 text-start">

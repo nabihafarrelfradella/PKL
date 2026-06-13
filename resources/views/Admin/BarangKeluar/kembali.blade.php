@@ -23,7 +23,7 @@
                         </div>
                         <div class="form-group">
                             <label for="jmlK" class="form-label">Jumlah Kembali <span class="text-danger">*</span></label>
-                            <input type="number" name="jmlK" class="form-control">
+                            <input type="number" name="jmlK" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="kondisi" class="form-label">Kondisi Barang <span class="text-danger">*</span></label>

@@ -55,11 +55,13 @@ return new class extends Migration
             if (!$menu) return;
             foreach ($types as $type) {
                 $rows[] = [
-                    'menu_id'    => $menu->menu_id,
-                    'role_id'    => $roleId,
-                    'akses_type' => $type,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'menu_id'      => $menu->menu_id,
+                    'submenu_id'   => null,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ];
             }
         };
@@ -70,11 +72,13 @@ return new class extends Migration
             if (!$sub) return;
             foreach ($types as $type) {
                 $rows[] = [
-                    'submenu_id' => $sub->submenu_id,
-                    'role_id'    => $roleId,
-                    'akses_type' => $type,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'menu_id'      => null,
+                    'submenu_id'   => $sub->submenu_id,
+                    'othermenu_id' => null,
+                    'role_id'      => $roleId,
+                    'akses_type'   => $type,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ];
             }
         };

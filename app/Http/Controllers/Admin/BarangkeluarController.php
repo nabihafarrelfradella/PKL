@@ -38,6 +38,12 @@ class BarangkeluarController extends Controller
         return response()->json($user);
     }
 
+    public function getTeknisiBySn($sn)
+    {
+        $user = UserModel::where('teknisi_sn', $sn)->where('role_id', 3)->first();
+        return response()->json($user);
+    }
+
     public function show(Request $request)
     {
         if ($request->ajax()) {
@@ -77,6 +83,7 @@ class BarangkeluarController extends Controller
                     $barangNamaClean = str_replace(["'", '"'], "", $row->barang_nama);
                     $tujuanClean    = str_replace(["'", '"', "\r", "\n"], "", $row->bk_tujuan);
 
+                    $teknisiUser = UserModel::where('teknisi_sn', $row->teknisi)->first();
                     $array = [
                         "bk_id"         => $row->bk_id,
                         "bk_kode"       => $row->bk_kode,
@@ -88,7 +95,9 @@ class BarangkeluarController extends Controller
                         "bk_status"     => $row->bk_status,
                         "serial_number" => $row->serial_number,
                         "teknisi"       => $row->teknisi,
+                        "teknisi_nama"  => $teknisiUser ? $teknisiUser->user_nmlengkap : ($row->teknisi_nama ?? ''),
                         "keterangan"    => $row->keterangan,
+                        "created_at"    => $row->jam_keluar ? Carbon::parse($row->jam_keluar)->format('Y-m-d H:i:s') : ($row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d H:i:s') : null),
                     ];
 
                     $button = '';
@@ -106,7 +115,65 @@ class BarangkeluarController extends Controller
 
                     return $button;
                 })
-                ->rawColumns(['action', 'tgl', 'status'])
+                ->addColumn('teknisi', function ($row) {
+                    $teknisiUser = UserModel::where('teknisi_sn', $row->teknisi)->first();
+                    if ($teknisiUser) {
+                        $genderText = $teknisiUser->jenis_kelamin == 'M' ? 'Laki-laki' : ($teknisiUser->jenis_kelamin == 'F' ? 'Perempuan' : '-');
+                        
+                        $popoverContent = '<div style="font-size: 11px; min-width: 180px;">' .
+                                          '<div class="d-flex justify-content-between mb-1" style="border-bottom: 1px solid #f1f1f9; padding-bottom: 4px;">' .
+                                          '<span class="text-muted" style="font-weight: 500;">Nama Lengkap:</span>' .
+                                          '<span class="text-dark fw-semibold text-end">' . htmlspecialchars($teknisiUser->user_nmlengkap) . '</span>' .
+                                          '</div>' .
+                                          '<div class="d-flex justify-content-between mb-1" style="border-bottom: 1px solid #f1f1f9; padding-bottom: 4px;">' .
+                                          '<span class="text-muted" style="font-weight: 500;">Gender:</span>' .
+                                          '<span class="text-dark fw-semibold text-end">' . $genderText . '</span>' .
+                                          '</div>' .
+                                          '<div class="d-flex justify-content-between align-items-center">' .
+                                          '<span class="text-muted" style="font-weight: 500;">ID Teknisi:</span>' .
+                                          '<span class="badge bg-primary-light text-primary fw-bold fs-10" style="letter-spacing: 0.5px;">' . htmlspecialchars($row->teknisi) . '</span>' .
+                                          '</div>' .
+                                          '</div>';
+                        
+                        $popoverTitle = '<span class="text-primary fw-bold fs-13"><i class="fe fe-user me-1"></i>Detail Teknisi</span>';
+                        
+                        return htmlspecialchars($teknisiUser->user_nmlengkap) . ' ' .
+                            '<span class="text-primary ms-1" style="cursor: pointer;" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" data-bs-placement="top" ' .
+                            'title="' . htmlspecialchars($popoverTitle, ENT_QUOTES, 'UTF-8') . '" ' .
+                            'data-bs-content="' . htmlspecialchars($popoverContent, ENT_QUOTES, 'UTF-8') . '">' .
+                            '<i class="fe fe-info fs-13"></i>' .
+                            '</span>';
+                    }
+                    
+                    if ($row->teknisi_nama) {
+                        $popoverContent = '<div style="font-size: 11px; min-width: 180px;">' .
+                                          '<div class="d-flex justify-content-between mb-1" style="border-bottom: 1px solid #f1f1f9; padding-bottom: 4px;">' .
+                                          '<span class="text-muted" style="font-weight: 500;">Nama Lengkap:</span>' .
+                                          '<span class="text-dark fw-semibold text-end">' . htmlspecialchars($row->teknisi_nama) . '</span>' .
+                                          '</div>' .
+                                          '<div class="d-flex justify-content-between mb-1" style="border-bottom: 1px solid #f1f1f9; padding-bottom: 4px;">' .
+                                          '<span class="text-muted" style="font-weight: 500;">Status:</span>' .
+                                          '<span class="text-danger fw-semibold text-end">Akun Dihapus</span>' .
+                                          '</div>' .
+                                          '<div class="d-flex justify-content-between align-items-center">' .
+                                          '<span class="text-muted" style="font-weight: 500;">ID Teknisi:</span>' .
+                                          '<span class="badge bg-secondary text-white fw-bold fs-10" style="letter-spacing: 0.5px;">' . htmlspecialchars($row->teknisi) . '</span>' .
+                                          '</div>' .
+                                          '</div>';
+                                          
+                        $popoverTitle = '<span class="text-muted fw-bold fs-13"><i class="fe fe-user me-1"></i>Detail Teknisi (Dihapus)</span>';
+                        
+                        return htmlspecialchars($row->teknisi_nama) . ' ' .
+                            '<span class="text-muted ms-1" style="cursor: pointer;" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" data-bs-placement="top" ' .
+                            'title="' . htmlspecialchars($popoverTitle, ENT_QUOTES, 'UTF-8') . '" ' .
+                            'data-bs-content="' . htmlspecialchars($popoverContent, ENT_QUOTES, 'UTF-8') . '">' .
+                            '<i class="fe fe-info fs-13"></i>' .
+                            '</span>';
+                    }
+                    
+                    return $row->teknisi ? htmlspecialchars($row->teknisi) : '-';
+                })
+                ->rawColumns(['action', 'tgl', 'status', 'teknisi'])
                 ->make(true);
         }
     }
@@ -128,15 +195,65 @@ class BarangkeluarController extends Controller
                 return response()->json(['error' => 'Barang tidak ditemukan'], 404);
             }
 
+            // Validasi stok barang
+            $jmlmasuk = \App\Models\Admin\BarangmasukModel::where('barang_kode', $request->barang)
+                ->sum('bm_jumlah');
+
+            $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->where('tbl_barangkeluar.barang_kode', '=', $request->barang);
+
+            $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
+                       + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                           ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                           ->sum('tbl_barangkeluar.bk_jumlah');
+
+            $current_stok = intval($barang->barang_stok) + ($jmlmasuk - $jmlkeluar);
+
+            if ($current_stok <= 0) {
+                return response()->json(['error' => 'Stok barang ini sudah habis (0)!'], 400);
+            }
+
+            if ($jml > $current_stok) {
+                return response()->json(['error' => "Jumlah keluar ({$jml}) melebihi stok yang tersedia ({$current_stok})!"], 400);
+            }
+
+            // Parse serial_number from request (can be array or string)
+            $sns = $request->serial_number;
+            if (is_string($sns)) {
+                $sns = array_filter(explode(',', $sns));
+            }
+            if (!is_array($sns)) {
+                $sns = [];
+            }
+            $sns = array_map('trim', $sns);
+            $sns = array_filter($sns);
+
+            // Validasi ketersediaan Serial Number (SN)
+            foreach ($sns as $sn) {
+                if ($sn && $sn !== '-') {
+                    // 1. Cek apakah SN tersebut sedang dipinjam (bk_status = 'Dipinjam')
+                    $isBorrowed = BarangkeluarModel::where('serial_number', $sn)
+                        ->where('bk_status', 'Dipinjam')
+                        ->exists();
+                    if ($isBorrowed) {
+                        return response()->json(['error' => "Serial Number {$sn} sedang dipinjam dan belum dikembalikan!"], 400);
+                    }
+
+                    // 2. Cek apakah SN tersebut adalah barang habis pakai yang sudah pernah digunakan
+                    $isConsumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                        ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                        ->where('tbl_barangkeluar.serial_number', $sn)
+                        ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                        ->exists();
+                    if ($isConsumed) {
+                        return response()->json(['error' => "Serial Number {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
+                    }
+                }
+            }
+
             // Status otomatis: Habis Pakai = Selesai, Kembali = Dipinjam
             $status = (str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
-
-            // Generate kode BK-MMYY-001
-            $monthYear = now()->format('my');
-            $lastBK    = BarangkeluarModel::where('bk_kode', 'LIKE', 'BK-' . $monthYear . '-%')
-                ->orderBy('bk_kode', 'DESC')->first();
-            $nextNo    = $lastBK ? str_pad(intval(substr($lastBK->bk_kode, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001';
-            $bk_kode   = "BK-{$monthYear}-{$nextNo}";
 
             // Tentukan teknisi: jika login sebagai teknisi, pakai dari session
             $user      = Session::get('user');
@@ -147,25 +264,76 @@ class BarangkeluarController extends Controller
             // Customer/lokasi: dari request
             $customer  = $request->customer ?? $request->tujuan ?? '';
 
-            $bk = BarangkeluarModel::create([
-                'bk_kode'          => $bk_kode,
-                'barang_kode'      => $request->barang,
-                'kode_barang_unik' => $request->kode_barang_unik,
-                'bk_tanggal'       => now()->toDateString(),
-                'bk_tujuan'        => $customer,    // nama customer / lokasi
-                'bk_jumlah'        => $jml,
-                'bk_status'        => $status,
-                'serial_number'    => $request->serial_number,
-                'teknisi'          => $teknisiSN,
-                'keterangan'       => $request->keterangan,
-                'jam_keluar'       => now(),
-            ]);
+            // Gunakan datetime dari form (waktu device lokal), fallback ke now() jika kosong
+            $tglkeluar = $request->tglkeluar
+                ? \Carbon\Carbon::parse($request->tglkeluar)
+                : now();
+
+            $bk_id_for_notif = null;
+
+            if (!empty($sns)) {
+                foreach ($sns as $sn) {
+                    // Generate kode BK-MMYY-001 baru untuk setiap SN (karena bk_kode unique per baris)
+                    $monthYear = now()->format('my');
+                    $lastBK    = BarangkeluarModel::where('bk_kode', 'LIKE', 'BK-' . $monthYear . '-%')
+                        ->orderBy('bk_kode', 'DESC')->first();
+                    $nextNo    = $lastBK ? str_pad(intval(substr($lastBK->bk_kode, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001';
+                    $bk_kode   = "BK-{$monthYear}-{$nextNo}";
+
+                    $bmRow = \App\Models\Admin\BarangmasukModel::where('barang_kode', $request->barang)
+                        ->where('serial_number', $sn)
+                        ->first();
+                    $kbu = $bmRow ? $bmRow->kode_barang_unik : null;
+
+                    $bk = BarangkeluarModel::create([
+                        'bk_kode'          => $bk_kode,
+                        'barang_kode'      => $request->barang,
+                        'kode_barang_unik' => $kbu,
+                        'bk_tanggal'       => $tglkeluar->toDateString(),
+                        'bk_tujuan'        => $customer,    // nama customer / lokasi
+                        'bk_jumlah'        => 1,
+                        'bk_status'        => $status,
+                        'serial_number'    => $sn,
+                        'teknisi'          => $teknisiSN,
+                        'teknisi_nama'     => $teknisiNm,
+                        'keterangan'       => $request->keterangan,
+                        'jam_keluar'       => $tglkeluar,
+                    ]);
+
+                    if (!$bk_id_for_notif) {
+                        $bk_id_for_notif = $bk->bk_id;
+                    }
+                }
+            } else {
+                // Barang tanpa SN: generate kode sekali, simpan satu baris dengan jumlah total
+                $monthYear = now()->format('my');
+                $lastBK    = BarangkeluarModel::where('bk_kode', 'LIKE', 'BK-' . $monthYear . '-%')
+                    ->orderBy('bk_kode', 'DESC')->first();
+                $nextNo    = $lastBK ? str_pad(intval(substr($lastBK->bk_kode, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001';
+                $bk_kode   = "BK-{$monthYear}-{$nextNo}";
+
+                $bk = BarangkeluarModel::create([
+                    'bk_kode'          => $bk_kode,
+                    'barang_kode'      => $request->barang,
+                    'kode_barang_unik' => null,
+                    'bk_tanggal'       => $tglkeluar->toDateString(),
+                    'bk_tujuan'        => $customer,    // nama customer / lokasi
+                    'bk_jumlah'        => $jml,
+                    'bk_status'        => $status,
+                    'serial_number'    => '-',
+                    'teknisi'          => $teknisiSN,
+                    'teknisi_nama'     => $teknisiNm,
+                    'keterangan'       => $request->keterangan,
+                    'jam_keluar'       => $tglkeluar,
+                ]);
+                $bk_id_for_notif = $bk->bk_id;
+            }
 
             // Kirim notifikasi ke Owner & Admin Gudang
             if ($roleId == 3) {
                 $pesan = $status === 'Dipinjam'
-                    ? "🔧 {$user->user_nmlengkap} meminjam {$jml} {$barang->barang_nama} untuk customer: {$customer}"
-                    : "📦 {$user->user_nmlengkap} mengambil {$jml} {$barang->barang_nama} (habis pakai) untuk customer: {$customer}";
+                    ? "{$user->user_nmlengkap} meminjam {$jml} {$barang->barang_nama} untuk customer: {$customer}"
+                    : "{$user->user_nmlengkap} mengambil {$jml} {$barang->barang_nama} (habis pakai) untuk customer: {$customer}";
 
                 NotifikasiModel::create([
                     'notif_type'        => ($status === 'Dipinjam') ? 'peminjaman' : 'habis_pakai',
@@ -174,7 +342,7 @@ class BarangkeluarController extends Controller
                     'notif_nama_teknisi'=> $user->user_nmlengkap,
                     'notif_barang'      => $barang->barang_nama,
                     'notif_customer'    => $customer,
-                    'bk_id'             => $bk->bk_id,
+                    'bk_id'             => $bk_id_for_notif,
                     'is_read_owner'     => 0,
                     'is_read_gudang'    => 0,
                 ]);
@@ -207,11 +375,11 @@ class BarangkeluarController extends Controller
 
         // Notifikasi pengembalian ke Owner & Admin Gudang
         $teknisi = UserModel::where('teknisi_sn', $bk->teknisi)->first();
-        $nmTeknisi = $teknisi ? $teknisi->user_nmlengkap : ($bk->teknisi ?? 'Teknisi');
+        $nmTeknisi = $teknisi ? $teknisi->user_nmlengkap : ($bk->teknisi_nama ?? $bk->teknisi ?? 'Teknisi');
 
         NotifikasiModel::create([
             'notif_type'        => 'pengembalian',
-            'notif_pesan'       => "✅ Barang {$bk->barang_nama} dari {$nmTeknisi} sudah dikembalikan. Kondisi: {$request->kondisi}",
+            'notif_pesan'       => "Barang {$bk->barang_nama} dari {$nmTeknisi} sudah dikembalikan. Kondisi: {$request->kondisi}",
             'notif_dari'        => $teknisi->user_id ?? 0,
             'notif_nama_teknisi'=> $nmTeknisi,
             'notif_barang'      => $bk->barang_nama ?? '-',
@@ -228,15 +396,82 @@ class BarangkeluarController extends Controller
     {
         $bk = BarangkeluarModel::find($id);
         if ($bk) {
+            $jml = intval($request->jml);
+            if ($jml <= 0) {
+                return response()->json(['error' => 'Jumlah keluar harus lebih dari 0'], 400);
+            }
+
+            // Ambil data barang
+            $barang = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->where('barang_kode', $request->barang)
+                ->first();
+
+            if (!$barang) {
+                return response()->json(['error' => 'Barang tidak ditemukan'], 404);
+            }
+
+            // Validasi stok barang (kecuali transaksi ini sendiri)
+            $jmlmasuk = \App\Models\Admin\BarangmasukModel::where('barang_kode', $request->barang)
+                ->sum('bm_jumlah');
+
+            $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->where('tbl_barangkeluar.barang_kode', '=', $request->barang)
+                ->where('tbl_barangkeluar.bk_id', '!=', $id);
+
+            $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
+                       + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                           ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                           ->sum('tbl_barangkeluar.bk_jumlah');
+
+            $current_stok = intval($barang->barang_stok) + ($jmlmasuk - $jmlkeluar);
+
+            if ($current_stok <= 0) {
+                return response()->json(['error' => 'Stok barang ini sudah habis (0)!'], 400);
+            }
+
+            if ($jml > $current_stok) {
+                return response()->json(['error' => "Jumlah keluar ({$jml}) melebihi stok yang tersedia ({$current_stok})!"], 400);
+            }
+
+            // Validasi ketersediaan Serial Number (SN) saat ubah
+            $sn = trim($request->serial_number);
+            if ($sn && $sn !== '-') {
+                $isBorrowed = BarangkeluarModel::where('serial_number', $sn)
+                    ->where('bk_status', 'Dipinjam')
+                    ->where('bk_id', '!=', $id)
+                    ->exists();
+                if ($isBorrowed) {
+                    return response()->json(['error' => "Serial Number {$sn} sedang dipinjam dan belum dikembalikan!"], 400);
+                }
+
+                $isConsumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                    ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                    ->where('tbl_barangkeluar.serial_number', $sn)
+                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                    ->where('tbl_barangkeluar.bk_id', '!=', $id)
+                    ->exists();
+                if ($isConsumed) {
+                    return response()->json(['error' => "Serial Number {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
+                }
+            }
+
+            $tglkeluar = $request->tglkeluar ? Carbon::parse($request->tglkeluar) : now();
+
+            $teknisiUser = UserModel::where('teknisi_sn', $request->teknisi)->first();
+            $teknisiNama = $teknisiUser ? $teknisiUser->user_nmlengkap : null;
+
             $bk->update([
                 'bk_kode'       => $request->bkkode,
                 'barang_kode'   => $request->barang,
-                'bk_tanggal'    => $request->tglkeluar,
+                'bk_tanggal'    => $tglkeluar->toDateString(),
                 'bk_tujuan'     => $request->tujuan,
                 'bk_jumlah'     => $request->jml,
                 'serial_number' => $request->serial_number,
                 'teknisi'       => $request->teknisi,
+                'teknisi_nama'  => $teknisiNama,
                 'keterangan'    => $request->keterangan,
+                'jam_keluar'    => $tglkeluar,
             ]);
             return response()->json(['success' => 'Berhasil']);
         }
@@ -251,5 +486,47 @@ class BarangkeluarController extends Controller
             return response()->json(['success' => 'Berhasil']);
         }
         return response()->json(['error' => 'Gagal'], 404);
+    }
+
+    public function getAvailableSN($barang_kode)
+    {
+        // 1. Ambil semua serial number dari tbl_barangmasuk untuk barang_kode ini
+        $incomings = \App\Models\Admin\BarangmasukModel::where('barang_kode', $barang_kode)
+            ->whereNotNull('serial_number')
+            ->where('serial_number', '!=', '')
+            ->where('serial_number', '!=', '-')
+            ->select('serial_number', 'kode_barang_unik')
+            ->get();
+
+        // 2. Cari serial number yang tidak tersedia (sedang dipinjam / habis pakai sudah dipakai)
+        $borrowedSNs = BarangkeluarModel::where('barang_kode', $barang_kode)
+            ->where('bk_status', 'Dipinjam')
+            ->whereNotNull('serial_number')
+            ->pluck('serial_number')
+            ->toArray();
+
+        $consumedSNs = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->where('tbl_barangkeluar.barang_kode', $barang_kode)
+            ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+            ->whereNotNull('tbl_barangkeluar.serial_number')
+            ->pluck('tbl_barangkeluar.serial_number')
+            ->toArray();
+
+        $unavailableSNs = array_merge($borrowedSNs, $consumedSNs);
+
+        // 3. Filter data ketersediaan
+        $available = [];
+        foreach ($incomings as $incoming) {
+            $sn = $incoming->serial_number;
+            if (!in_array($sn, $unavailableSNs)) {
+                $available[] = [
+                    'serial_number' => $sn,
+                    'kode_barang_unik' => $incoming->kode_barang_unik
+                ];
+            }
+        }
+
+        return response()->json($available);
     }
 }

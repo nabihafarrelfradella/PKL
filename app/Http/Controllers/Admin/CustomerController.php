@@ -14,7 +14,8 @@ class CustomerController extends Controller
     public function index()
     {
         $data["title"] = "Customer";
-        $data["hakTambah"] = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'create'))->count();
+        $roleId = Session::get('user')->role_id;
+        $data["hakTambah"] = ($roleId == 1) ? 1 : AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => $roleId, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'create'))->count();
         return view('Admin.Customer.index', $data);
     }
 
@@ -37,13 +38,15 @@ class CustomerController extends Controller
                 ->addColumn('action', function ($row) {
                     $array = array(
                         "customer_id" => $row->customer_id,
+                        "customer_kode" => $row->customer_kode,
                         "customer_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->customer_nama)),
                         "customer_alamat" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->customer_alamat)),
                         "customer_notelp" => $row->customer_notelp
                     );
                     $button = '';
-                    $hakEdit = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'update'))->count();
-                    $hakDelete = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => Session::get('user')->role_id, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'delete'))->count();
+                    $roleId = Session::get('user')->role_id;
+                    $hakEdit = ($roleId == 1) ? 1 : AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => $roleId, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'update'))->count();
+                    $hakDelete = ($roleId == 1) ? 1 : AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')->where(array('tbl_akses.role_id' => $roleId, 'tbl_menu.menu_judul' => 'Customer', 'tbl_akses.akses_type' => 'delete'))->count();
                     if ($hakEdit > 0 && $hakDelete > 0) {
                         $button .= '
                         <div class="g-2">
@@ -76,9 +79,17 @@ class CustomerController extends Controller
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->customer)));
 
+        $count = CustomerModel::count();
+        $code = 'CUST-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+        while (CustomerModel::where('customer_kode', $code)->exists()) {
+            $count++;
+            $code = 'CUST-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+        }
+
         //insert data
         CustomerModel::create([
             'customer_nama' => $request->customer,
+            'customer_kode' => $code,
             'customer_slug' => $slug,
             'customer_notelp'   => $request->notelp,
             'customer_alamat'   => $request->alamat,

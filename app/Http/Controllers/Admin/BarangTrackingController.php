@@ -38,7 +38,8 @@ class BarangTrackingController extends Controller
                     'tbl_barangkeluar.jam_keluar as tgl_keluar_jam',
                     'tbl_barangkeluar.bk_tanggal as tgl_keluar_tgl',
                     'tbl_barangkeluar.teknisi as teknisi_sn_keluar',
-                    'tbl_barangkeluar.bk_tujuan as nama_teknisi_keluar',
+                    'tbl_barangkeluar.teknisi_nama as nama_teknisi_keluar',
+                    'tbl_barangkeluar.bk_tujuan as customer_keluar',
                     'tbl_barangkeluar.keterangan as ket_keluar',
                     'tbl_barangkeluar.bk_status'
                 )
@@ -74,9 +75,10 @@ class BarangTrackingController extends Controller
                 })
                 ->addColumn('teknisi_ket', function ($row) {
                     $info = [];
-                    if ($row->nama_teknisi_keluar) $info[] = 'Oleh: ' . $row->nama_teknisi_keluar;
-                    if ($row->teknisi_sn_keluar) $info[] = 'SN-T: ' . $row->teknisi_sn_keluar;
-                    if ($row->ket_keluar) $info[] = 'Ket: ' . $row->ket_keluar;
+                    if ($row->nama_teknisi_keluar) $info[] = 'Oleh: ' . htmlspecialchars($row->nama_teknisi_keluar);
+                    if ($row->teknisi_sn_keluar) $info[] = 'ID Teknisi: ' . htmlspecialchars($row->teknisi_sn_keluar);
+                    if ($row->customer_keluar) $info[] = 'Tujuan: ' . htmlspecialchars($row->customer_keluar);
+                    if ($row->ket_keluar) $info[] = 'Ket: ' . htmlspecialchars($row->ket_keluar);
                     
                     if ($row->bk_status == 'Dipinjam') {
                         $status = '<br><span class="badge bg-warning mt-1"><i class="fe fe-clock me-1"></i>Sedang Dipinjam</span>';

@@ -54,11 +54,10 @@ class LapBarangKeluarController extends Controller
                     return $row->bk_tanggal == '' ? '-' : Carbon::parse($row->bk_tanggal)->translatedFormat('d F Y');
                 })
                 ->addColumn('tujuan', function ($row) {
-                    $tujuan = $row->bk_tujuan ?? '-';
-                    if ($row->teknisi) {
-                        $tujuan .= '<br><small class="text-muted">Teknisi: ' . $row->teknisi . '</small>';
-                    }
-                    return $tujuan;
+                    return $row->bk_tujuan ?? '-';
+                })
+                ->addColumn('teknisi', function ($row) {
+                    return $row->teknisi_nama ? htmlspecialchars($row->teknisi_nama) . ' (' . htmlspecialchars($row->teknisi) . ')' : ($row->teknisi ?? '-');
                 })
                 ->addColumn('barang', function ($row) {
                     return $row->barang_nama ?? '-';
@@ -74,8 +73,32 @@ class LapBarangKeluarController extends Controller
                     return '<span class="badge bg-success">Selesai</span>';
                 })
                 // Tambahkan 'serial_number' ke rawColumns jika mengandung karakter khusus
-                ->rawColumns(['tgl', 'tujuan', 'barang', 'status_badge', 'serial_number'])
+                ->rawColumns(['tgl', 'tujuan', 'teknisi', 'barang', 'status_badge', 'serial_number'])
                 ->make(true);
+        }
+    }
+
+    public function pdf(Request $request)
+    {
+        $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama');
+
+        if ($request->tglawal) {
+            $query->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir]);
+        }
+
+        $data['data'] = $query->orderBy('bk_id', 'DESC')->get();
+        $data['title']    = 'PDF Laporan Barang Keluar';
+        $data['web']      = WebModel::first();
+        $data['tglawal']  = $request->tglawal;
+        $data['tglakhir'] = $request->tglakhir;
+        
+        $pdf = PDF::loadView('Admin.Laporan.BarangKeluar.pdf', $data);
+        
+        if ($request->tglawal) {
+            return $pdf->download('lap-bk-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
+        } else {
+            return $pdf->download('lap-bk-semua-tanggal.pdf');
         }
     }
 }

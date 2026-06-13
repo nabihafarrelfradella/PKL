@@ -11,9 +11,14 @@ class AuditLogHelper
     {
         $user = Session::get('user');
         if ($user) {
+            $roleSlug = $user->role_slug;
+            if (!$roleSlug) {
+                $role = DB::table('tbl_role')->where('role_id', $user->role_id)->first();
+                $roleSlug = $role ? $role->role_slug : 'unknown';
+            }
             DB::table('tbl_audit_log')->insert([
                 'user_id' => $user->user_id,
-                'role_slug' => $user->role_slug,
+                'role_slug' => $roleSlug,
                 'activity' => $activity,
                 'module' => $module,
                 'details' => $details,

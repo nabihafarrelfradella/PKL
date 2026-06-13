@@ -74,11 +74,19 @@ use Carbon\Carbon;
 
                 // Hitung Jumlah Keluar
                 if ($tglawal == '') {
-                    $jmlkeluar = BarangkeluarModel::where('barang_kode', $d->barang_kode)->sum('bk_jumlah');
+                    $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                        ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                        ->where('tbl_barangkeluar.barang_kode', $d->barang_kode);
                 } else {
-                    $jmlkeluar = BarangkeluarModel::where('barang_kode', $d->barang_kode)
-                        ->whereBetween('bk_tanggal', [$tglawal, $tglakhir])->sum('bk_jumlah');
+                    $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                        ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                        ->where('tbl_barangkeluar.barang_kode', $d->barang_kode)
+                        ->whereBetween('bk_tanggal', [$tglawal, $tglakhir]);
                 }
+                $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
+                           + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                               ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                               ->sum('tbl_barangkeluar.bk_jumlah');
 
                 $totalStok = $d->barang_stok + ($jmlmasuk - $jmlkeluar);
 

@@ -73,10 +73,9 @@
     var table;
 
     $(document).ready(function() {
-        // Auto-fill today's date
-        const today = new Date().toISOString().split('T')[0];
-        $('#tglawal').val(today);
-        $('#tglakhir').val(today);
+        // Leave date blank to show all data by default
+        $('#tglawal').val('');
+        $('#tglakhir').val('');
         getData();
     });
 
@@ -141,19 +140,12 @@
     }
 
     function filter() {
-        var tglawal = $('#tglawal').val();
-        var tglakhir = $('#tglakhir').val();
-        if (tglawal != '' && tglakhir != '') {
-            table.ajax.reload(null, false);
-        } else {
-            validasi("Isi dulu Form Filter Tanggal!", 'warning');
-        }
+        table.ajax.reload(null, false);
     }
 
     function reset() {
-        const today = new Date().toISOString().split('T')[0];
-        $('#tglawal').val(today);
-        $('#tglakhir').val(today);
+        $('#tglawal').val('');
+        $('#tglakhir').val('');
         table.ajax.reload(null, false);
     }
 

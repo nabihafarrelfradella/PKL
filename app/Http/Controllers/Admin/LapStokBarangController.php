@@ -82,12 +82,19 @@ class LapStokBarangController extends Controller
                 })
                 ->addColumn('jmlkeluar', function ($row) use ($request) {
                     if ($request->tglawal) {
-                        $jmlkeluar = BarangkeluarModel::whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir])
-                            ->where('barang_kode', '=', $row->barang_kode)
-                            ->sum('bk_jumlah');
+                        $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                            ->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir])
+                            ->where('tbl_barangkeluar.barang_kode', '=', $row->barang_kode);
                     } else {
-                        $jmlkeluar = BarangkeluarModel::where('barang_kode', '=', $row->barang_kode)->sum('bk_jumlah');
+                        $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                            ->where('tbl_barangkeluar.barang_kode', '=', $row->barang_kode);
                     }
+                    $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah');
                     return '<span>'.$jmlkeluar.'</span>';
                 })
                 ->addColumn('totalstok', function ($row) use ($request) {
@@ -102,12 +109,19 @@ class LapStokBarangController extends Controller
 
                     // Hitung jmlkeluar untuk kalkulasi total
                     if ($request->tglawal) {
-                        $jmlkeluar = BarangkeluarModel::whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir])
-                            ->where('barang_kode', '=', $row->barang_kode)
-                            ->sum('bk_jumlah');
+                        $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                            ->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir])
+                            ->where('tbl_barangkeluar.barang_kode', '=', $row->barang_kode);
                     } else {
-                        $jmlkeluar = BarangkeluarModel::where('barang_kode', '=', $row->barang_kode)->sum('bk_jumlah');
+                        $baseQuery = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                            ->where('tbl_barangkeluar.barang_kode', '=', $row->barang_kode);
                     }
+                    $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah');
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
                     

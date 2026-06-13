@@ -154,6 +154,13 @@
         });
     });
 
+    $(document).on('hidden.bs.modal', '#modalBarang', function () {
+        if (($('#modaldemo8').length && !$('#modaldemo8').hasClass('d-none')) || 
+            ($('#Umodaldemo8').length && !$('#Umodaldemo8').hasClass('d-none'))) {
+            $('body').addClass('modal-open');
+        }
+    });
+
     function makeid(length) {
         var result = '';
         var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

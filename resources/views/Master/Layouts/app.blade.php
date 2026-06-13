@@ -327,6 +327,42 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
     </script>
 @endif
 
+{{-- ── GLOBAL FIX: Select2 + Bootstrap Modal scroll freeze ──────────────── --}}
+<style>
+    /* Fix Select2 dropdown z-index inside Bootstrap modals */
+    .select2-container--open .select2-dropdown { z-index: 9999 !important; }
+    /* Hide already-selected options in multi-select dropdowns */
+    .select2-results__option[aria-selected="true"] { display: none !important; }
+</style>
+<script>
+    // Auto-focus Select2 search field when dropdown opens (prevents focus trap)
+    $(document).on('select2:open', function () {
+        setTimeout(function () {
+            var field = document.querySelector('.select2-container--open .select2-search__field');
+            if (field) field.focus();
+        }, 0);
+    });
+
+    // Restore modal scroll after Select2 closes (main freeze fix)
+    $(document).on('select2:close', function () {
+        setTimeout(function () {
+            var modal = document.querySelector('.modal.show');
+            if (modal) {
+                modal.style.overflow  = '';
+                modal.style.overflowY = 'auto';
+            }
+        }, 50);
+    });
+
+    // Restore modal scroll after any native select change (secondary freeze fix)
+    $(document).on('change', 'select:not(.select2-hidden-accessible)', function () {
+        setTimeout(function () {
+            var modal = document.querySelector('.modal.show');
+            if (modal) modal.style.overflowY = 'auto';
+        }, 50);
+    });
+</script>
+
 @yield('scripts')
 @yield('formTambahJS')
 @yield('formEditJS')

@@ -81,7 +81,7 @@
     <div class="ti-icon"><i class="fe fe-tool"></i></div>
     <div>
         <div class="fw-bold" style="font-size:1rem;">Halo, {{ Session::get('user')->user_nmlengkap }}!</div>
-        <div style="font-size:0.82rem; opacity:0.85;">Anda hanya dapat melihat & membuat peminjaman atas nama sendiri. SN Teknisi: <strong>{{ Session::get('user')->teknisi_sn ?? '-' }}</strong></div>
+        <div style="font-size:0.82rem; opacity:0.85;">Anda hanya dapat melihat & membuat peminjaman atas nama sendiri. ID Teknisi: <strong>{{ Session::get('user')->teknisi_sn ?? '-' }}</strong></div>
     </div>
     <div class="ms-auto">
         <a class="btn btn-light btn-sm" data-bs-toggle="modal" href="#modaldemo8" onclick="generateID()">
@@ -150,13 +150,48 @@
         $("input[name='idbkU']").val(data.bk_id);
         $("input[name='bkkodeU']").val(data.bk_kode);
         $("input[name='kdbarangU']").val(data.barang_kode);
-        $("input[name='tujuanU']").val(data.bk_tujuan ? data.bk_tujuan.replace(/_/g, ' ') : '');
-        $("input[name='jmlU']").val(data.bk_jumlah);
-        $("input[name='serial_numberU']").val(data.serial_number);
+        $("select[name='tujuanU']").val(data.teknisi_nama || '').trigger('change');
         $("input[name='teknisiU']").val(data.teknisi);
-        $("textarea[name='keteranganU']").val(data.keterangan);
+        $("input[name='jmlU']").val(data.bk_jumlah);
+        $("#serial_number_inputU").val(data.serial_number);
+        $("input[name='keteranganU']").val(data.keterangan);
+        $("input[name='customerU']").val(data.bk_tujuan || '');
         $("input[name='tglkeluarU']").val(data.created_at);
+        // Pre-fill barang nama immediately from action data (no AJAX wait)
+        if (data.barang_nama) {
+            $("#nmbarangU").val(data.barang_nama);
+            $("#statusU").val("true");
+        }
+        // Async fill satuan/jenis
         getbarangbyidU(data.barang_kode);
+        fetchAvailableSNsU(data.barang_kode, data.serial_number);
+        if (data.teknisi) {
+            if (typeof getTeknisiInfoU === 'function') {
+                getTeknisiInfoU(data.teknisi);
+            }
+        }
+    }
+
+    function fetchAvailableSNsU(barang_kode, currentSN) {
+        if (!barang_kode) {
+            $("#sn_listU").empty();
+            return;
+        }
+        $.ajax({
+            type: 'GET',
+            url: "/admin/barang/get-available-sn/" + barang_kode,
+            dataType: 'json',
+            success: function(data) {
+                var list = $("#sn_listU");
+                list.empty();
+                if (currentSN && currentSN !== '-' && !data.find(item => item.serial_number === currentSN)) {
+                    list.append(`<option value="${currentSN}">${currentSN} (Saat ini)</option>`);
+                }
+                data.forEach(function(item) {
+                    list.append(`<option value="${item.serial_number}">${item.serial_number} (Unik: ${item.kode_barang_unik})</option>`);
+                });
+            }
+        });
     }
 
     function hapus(data) {
@@ -191,6 +226,20 @@
             "pageLength": 10,
             lengthChange: true,
             "ajax": { "url": "{{ route('barang-keluar.getbarang-keluar') }}" },
+            "drawCallback": function(settings) {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+
+                var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+                var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                    return new bootstrap.Popover(popoverTriggerEl, {
+                        html: true,
+                        sanitize: false
+                    })
+                });
+            },
             "columns": [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
                 { data: 'tgl',          name: 'created_at' },

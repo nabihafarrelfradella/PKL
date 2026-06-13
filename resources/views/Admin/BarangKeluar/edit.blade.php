@@ -18,17 +18,22 @@
                             <input type="text" name="tglkeluarU" class="form-control" readonly>
                         </div>
                         <div class="form-group">
-                            <label for="tujuanU" class="form-label">Nama Teknisi</label>
-                            <select name="tujuanU" class="form-control select2U" style="width: 100%;">
+                            <label for="tujuanU" class="form-label">Nama Teknisi <span class="text-danger">*</span></label>
+                            <select name="tujuanU" id="tujuanU" class="form-control select2U" style="width: 100%;" onchange="getTeknisiInfoU(this)">
                                 <option value="">-- Pilih Teknisi --</option>
                                 @foreach($pegawai as $pgw)
-                                    <option value="{{ $pgw->user_nmlengkap }}">{{ $pgw->user_nmlengkap }}</option>
+                                    <option value="{{ $pgw->user_nmlengkap }}" data-sn="{{ $pgw->teknisi_sn }}">{{ $pgw->user_nmlengkap }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="teknisiU" class="form-label">SN Teknisi</label>
-                            <input type="text" name="teknisiU" class="form-control" placeholder="">
+                            <label for="teknisiU" class="form-label">ID Teknisi</label>
+                            <input type="text" name="teknisiU" readonly class="form-control" placeholder="Otomatis">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customerU" class="form-label">Customer / Lokasi <span class="text-danger">*</span></label>
+                            <input type="text" name="customerU" id="customerU" class="form-control" placeholder="Nama customer atau lokasi instalasi">
                         </div>
                         <div class="form-group">
                             <label for="keteranganU" class="form-label">Keterangan</label>
@@ -69,11 +74,12 @@
                         </div>
                         <div class="form-group">
                             <label for="serial_numberU" class="form-label">SN Barang</label>
-                            <input type="text" name="serial_numberU" class="form-control" placeholder="">
+                            <input type="text" name="serial_numberU" id="serial_number_inputU" readonly class="form-control" style="background:#f0f8ff;">
                         </div>
                         <div class="form-group">
                             <label for="jmlU" class="form-label">Jumlah Keluar <span class="text-danger">*</span></label>
-                            <input type="text" name="jmlU" class="form-control" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" placeholder="">
+                            <input type="text" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
+                            <small class="text-muted">Jumlah tidak dapat diubah (setiap baris = 1 unit)</small>
                         </div>
                     </div>
                 </div>
@@ -121,6 +127,10 @@
     });
 
     function getbarangbyidU(id) {
+        if (!id || !id.trim()) {
+            validasi('Masukkan kode barang terlebih dahulu!', 'warning');
+            return;
+        }
         $("#loaderkdU").removeClass('d-none');
         $.ajax({
             type: 'GET',
@@ -141,7 +151,12 @@
                     $("#nmbarangU").val('');
                     $("#satuanU").val('');
                     $("#jenisU").val('');
+                    validasi('Barang dengan kode "' + id + '" tidak ditemukan!', 'warning');
                 }
+            },
+            error: function() {
+                $("#loaderkdU").addClass('d-none');
+                validasi('Terjadi kesalahan saat mencari barang. Coba lagi!', 'error');
             }
         });
     }
@@ -149,8 +164,9 @@
     function checkFormU() {
         const tglkeluar = $("input[name='tglkeluarU']").val();
         const status = $("#statusU").val();
-        const kdbarang = $("input[name='kdbarangU").val();
-        const tujuan = $("input[name='tujuanU']").val();
+        const kdbarang = $("input[name='kdbarangU']").val();
+        const tujuan = $("select[name='tujuanU']").val();
+        const customer = $("input[name='customerU']").val();
         const jml = $("input[name='jmlU']").val();
         setLoadingU(true);
         resetValidU();
@@ -158,15 +174,25 @@
         if (tglkeluar == "") {
             validasi('Tanggal Keluar wajib di isi!', 'warning');
             $("input[name='tglkeluarU']").addClass('is-invalid');
-            setLoading(Ufalse);
+            setLoadingU(false);
+            return false;
+        } else if (tujuan == "" || tujuan == null) {
+            validasi('Nama Teknisi wajib di pilih!', 'warning');
+            $("select[name='tujuanU']").addClass('is-invalid');
+            setLoadingU(false);
             return false;
         } else if (status == "false" || kdbarang == '') {
             validasi('Barang wajib di pilih!', 'warning');
             $("input[name='kdbarangU']").addClass('is-invalid');
             setLoadingU(false);
             return false;
-        }  else if (jml == "" || jml == "0") {
-            validasi('Jumlah Masuk wajib di isi!', 'warning');
+        } else if (customer == "") {
+            validasi('Customer / Lokasi wajib di isi!', 'warning');
+            $("input[name='customerU']").addClass('is-invalid');
+            setLoadingU(false);
+            return false;
+        } else if (jml == "" || jml == "0") {
+            validasi('Jumlah Keluar wajib di isi!', 'warning');
             $("input[name='jmlU']").addClass('is-invalid');
             setLoadingU(false);
             return false;
@@ -180,21 +206,20 @@
         const bkkode = $("input[name='bkkodeU']").val();
         const tglkeluar = $("input[name='tglkeluarU']").val();
         const kdbarang = $("input[name='kdbarangU']").val();
-        const tujuan = $("select[name='tujuanU']").val();
         const teknisi = $("input[name='teknisiU']").val();
+        const customer = $("input[name='customerU']").val();
         const keterangan = $("input[name='keteranganU']").val();
-        const serial_number = $("input[name='serial_numberU']").val();
+        const serial_number = $("#serial_number_inputU").val();
         const jml = $("input[name='jmlU']").val();
 
         $.ajax({
             type: 'POST',
             url: "{{ url('admin/barang-keluar/proses_ubah') }}/" + id,
-            enctype: 'multipart/form-data',
             data: {
                 bkkode: bkkode,
                 tglkeluar: tglkeluar,
                 barang: kdbarang,
-                tujuan: tujuan,
+                tujuan: customer,
                 teknisi: teknisi,
                 keterangan: keterangan,
                 serial_number: serial_number,
@@ -208,6 +233,11 @@
                 $('#Umodaldemo8').modal('toggle');
                 table.ajax.reload(null, false);
                 resetU();
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.error ?? 'Terjadi kesalahan';
+                swal({ title: "Gagal!", text: msg, type: "error" });
+                setLoadingU(false);
             }
         });
     }
@@ -215,7 +245,8 @@
     function resetValidU() {
         $("input[name='tglkeluarU']").removeClass('is-invalid');
         $("input[name='kdbarangU']").removeClass('is-invalid');
-        $("input[name='tujuanU']").removeClass('is-invalid');
+        $("select[name='tujuanU']").removeClass('is-invalid');
+        $("input[name='customerU']").removeClass('is-invalid');
         $("input[name='jmlU']").removeClass('is-invalid');
     };
 
@@ -227,14 +258,43 @@
         $("input[name='kdbarangU']").val('');
         $("select[name='tujuanU']").val('').trigger('change');
         $("input[name='teknisiU']").val('');
+        $("input[name='customerU']").val('');
         $("input[name='keteranganU']").val('');
-        $("input[name='serial_numberU']").val('');
+        $("#serial_number_inputU").val('');
         $("input[name='jmlU']").val('0');
         $("#nmbarangU").val('');
         $("#satuanU").val('');
         $("#jenisU").val('');
         $("#statusU").val('false');
         setLoadingU(false);
+    }
+
+    function getTeknisiInfoU(param) {
+        var sn = '';
+        if (typeof param === 'string') {
+            sn = param;
+        } else {
+            var selectedOption = $(param).find('option:selected');
+            sn = selectedOption.data('sn');
+        }
+        if (!sn) {
+            $("input[name='teknisiU']").val('');
+            return;
+        }
+        $.ajax({
+            type: 'GET',
+            url: "/admin/user-management/teknisi/get-by-sn/" + sn,
+            success: function(data) {
+                if (data) {
+                    $("input[name='teknisiU']").val(data.teknisi_sn);
+                    if ($("#tujuanU").val() !== data.user_nmlengkap) {
+                        $("#tujuanU").val(data.user_nmlengkap).trigger('change.select2');
+                    }
+                } else {
+                    $("input[name='teknisiU']").val('');
+                }
+            }
+        });
     }
 
     function setLoadingU(bool) {
