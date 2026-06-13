@@ -78,7 +78,7 @@
 {{-- INFO BAR KHUSUS TEKNISI --}}
 @if($roleId == 3)
 <div class="teknisi-info-bar">
-    <div class="ti-icon"><i class="fe fe-tool"></i></div>
+    <div class="ti-icon"><i class="fe fe-user text-white"></i></div>
     <div>
         <div class="fw-bold" style="font-size:1rem;">Halo, {{ Session::get('user')->user_nmlengkap }}!</div>
         <div style="font-size:0.82rem; opacity:0.85;">Anda hanya dapat melihat & membuat peminjaman atas nama sendiri. ID Teknisi: <strong>{{ Session::get('user')->teknisi_sn ?? '-' }}</strong></div>

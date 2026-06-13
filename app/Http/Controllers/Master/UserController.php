@@ -186,14 +186,30 @@ class UserController extends Controller
             'user_email'     => $request->email,
         ];
 
-        if ($request->hasFile('photoU')) {
+        if ($request->has('remove_photo') && $request->remove_photo == '1') {
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                Storage::delete('public/users/' . $user->user_foto);
+            }
+            $updateData['user_foto'] = 'undraw_profile.svg';
+        } elseif ($request->hasFile('photoU')) {
             $image = $request->file('photoU');
             $image->storeAs('public/users', $image->hashName());
-            Storage::delete('public/users/' . $user->user_foto);
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                Storage::delete('public/users/' . $user->user_foto);
+            }
             $updateData['user_foto'] = $image->hashName();
         }
 
         $user->update($updateData);
+        
+        // Update Session if the updated user is the current logged-in user
+        if (Session::has('user') && Session::get('user')->user_id == $user->user_id) {
+            $updatedUser = UserModel::leftJoin('tbl_role', 'tbl_role.role_id', '=', 'tbl_user.role_id')
+                ->where('tbl_user.user_id', $user->user_id)
+                ->first();
+            Session::put('user', $updatedUser);
+        }
+
         Session::flash('status', 'success');
         Session::flash('msg', 'Profile Berhasil diubah!');
         return redirect(url('admin/profile/' . $user->user_id));

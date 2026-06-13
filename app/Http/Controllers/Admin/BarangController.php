@@ -409,6 +409,11 @@ class BarangController extends Controller
                 Storage::delete('public/barang/' . $barang->barang_gambar);
             }
             $updateData['barang_gambar'] = $image->hashName();
+        } else if ($request->hapus_foto == '1') {
+            if ($barang->barang_gambar != 'image.png') {
+                Storage::delete('public/barang/' . $barang->barang_gambar);
+            }
+            $updateData['barang_gambar'] = 'image.png';
         }
 
         $barang->update($updateData);

@@ -16,25 +16,31 @@
 <div class="row mb-5">
     <div class="col-xl-4">
         <div class="card">
+            <div class="card-body text-center">
+                <div class="avatar avatar-xxl chat-profile mb-3 brround">
+                    @if($data->user_foto == 'undraw_profile.svg' || $data->user_foto == '')
+                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    @else
+                    <img src="{{asset('storage/users/'.$data->user_foto)}}" alt="profile-user" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    @endif
+                </div>
+                <h5 class="mb-1 text-dark fw-semibold">{{$data->user_nmlengkap}}</h5>
+                <p class="text-muted mt-0 mb-0 pt-0 fs-13">{{$data->role_title}}</p>
+                @if($data->role_id == 3 && !empty($data->teknisi_sn))
+                <div class="mt-2">
+                    <span class="badge bg-primary-light text-primary" style="font-size:12px; letter-spacing: 0.5px;"><i class="fe fe-tool me-1"></i>ID Teknisi: {{$data->teknisi_sn}}</span>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <div class="card">
             <div class="card-header">
                 <div class="card-title">Edit Password</div>
             </div>
             <form action="{{url('/admin/updatePassword').'/'.$data->user_id}}" method="POST" name="myFormP" enctype="multipart/form-data" onsubmit="return validatePassword()">
                 @csrf
                 <div class="card-body">
-                    <div class="text-center chat-image mb-5">
-                        <div class="avatar avatar-xxl chat-profile mb-3 brround">
-                            @if($data->user_foto == 'undraw_profile.svg' || $data->user_foto == '')
-                            <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user">
-                            @else
-                            <img src="{{asset('storage/users/'.$data->user_foto)}}" alt="profile-user">
-                            @endif
-                        </div>
-                        <div class="main-chat-msg-name me-4">
-                            <h5 class="mb-1 text-dark fw-semibold">{{$data->user_nmlengkap}}</h5>
-                            <p class="text-muted mt-0 mb-0 pt-0 fs-13">{{$data->role_title}}</p>
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label class="form-label">Password Saat Ini</label>
                         <div class="wrap-input100 validate-input input-group" id="Password-toggle">
@@ -93,6 +99,14 @@
                     <div class="form-group">
                         <label for="img">Foto</label>
                         <input class="form-control" id="GetFile" name="photoU" type="file" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
+                        @if($data->user_foto != 'undraw_profile.svg' && $data->user_foto != '')
+                        <div class="mt-2">
+                            <label class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" name="remove_photo" value="1">
+                                <span class="custom-control-label text-danger">Hapus Foto Profil Saat Ini (Kembali ke Default)</span>
+                            </label>
+                        </div>
+                        @endif
                     </div>
 
                 </div>

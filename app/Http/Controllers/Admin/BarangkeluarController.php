@@ -229,6 +229,11 @@ class BarangkeluarController extends Controller
             $sns = array_map('trim', $sns);
             $sns = array_filter($sns);
 
+            // Cek duplikasi SN dalam satu request (mencegah bypass UI)
+            if (count($sns) !== count(array_unique($sns))) {
+                return response()->json(['error' => 'Terdapat Serial Number yang sama/duplikat dalam satu pengajuan!'], 400);
+            }
+
             // Validasi ketersediaan Serial Number (SN)
             foreach ($sns as $sn) {
                 if ($sn && $sn !== '-') {
@@ -357,6 +362,10 @@ class BarangkeluarController extends Controller
 
     public function proses_kembali(Request $request, $id)
     {
+        $user = Session::get('user');
+        if ($user && $user->role_id == 3) {
+            return response()->json(['error' => 'Akses ditolak! Teknisi tidak berhak memproses pengembalian.'], 403);
+        }
         $bk = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
             ->where('tbl_barangkeluar.bk_id', $id)
             ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama')
@@ -394,6 +403,10 @@ class BarangkeluarController extends Controller
 
     public function proses_ubah(Request $request, $id)
     {
+        $user = Session::get('user');
+        if ($user && $user->role_id == 3) {
+            return response()->json(['error' => 'Akses ditolak! Teknisi tidak berhak mengubah data transaksi.'], 403);
+        }
         $bk = BarangkeluarModel::find($id);
         if ($bk) {
             $jml = intval($request->jml);
@@ -480,6 +493,10 @@ class BarangkeluarController extends Controller
 
     public function proses_hapus($id)
     {
+        $user = Session::get('user');
+        if ($user && $user->role_id == 3) {
+            return response()->json(['error' => 'Akses ditolak! Teknisi tidak berhak menghapus data transaksi.'], 403);
+        }
         $bk = BarangkeluarModel::find($id);
         if ($bk) {
             $bk->delete();

@@ -111,29 +111,67 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
         /* ═══════════════════════════════════════════
            RESPONSIVE FIXES — Mobile & Tablet
            ═══════════════════════════════════════════ */
+           
+        /* ── Safe Area (iOS Notch/Dynamic Island) ── */
+        .page {
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        .app-header {
+            padding-top: env(safe-area-inset-top);
+        }
 
-        /* ── Page Header ── */
+        /* ── Page Header & Navbar ── */
         @media (max-width: 767.98px) {
+            .app-header .logo-horizontal {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                z-index: 10; /* Ensure it stays above other header elements */
+            }
+            .app-header .logo-horizontal img.desktop-logo,
+            .app-header .logo-horizontal img.light-logo1 {
+                height: 120px !important; /* Force a much larger height */
+                max-height: none !important; /* Override bootstrap constraints */
+                max-width: none !important;
+                object-fit: contain;
+                transform: scale(2.2); /* Enlarge visually */
+                transform-origin: center center;
+            }
+            .full-screen-link {
+                display: none !important;
+            }
+            .main-container {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
             .page-header {
                 flex-direction: column !important;
                 align-items: flex-start !important;
-                gap: 8px;
+                gap: 12px;
+                margin-bottom: 20px !important;
+                margin-top: 10px !important;
             }
-            .page-header .ms-auto,
-            .page-header .pageheader-btn {
+            .page-header .ms-sm-auto,
+            .page-header .pageheader-btn,
+            .page-header .d-grid {
                 width: 100%;
                 display: flex;
-                flex-wrap: wrap;
-                gap: 6px;
+                flex-direction: column;
+                gap: 8px;
             }
-            .page-header .pageheader-btn .btn {
-                flex: 1 1 auto;
-                font-size: 12px;
-                padding: 6px 10px;
-                text-align: center;
+            .page-header .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 10px 16px;
+                font-size: 14px;
             }
             .page-header h1.page-title {
-                font-size: 1.15rem;
+                font-size: 1.25rem;
             }
             .breadcrumb {
                 font-size: 12px;

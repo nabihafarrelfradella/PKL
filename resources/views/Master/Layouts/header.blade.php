@@ -9,21 +9,8 @@
                 <img src="../assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
             </a> -->
             <a class="logo-horizontal" href="{{url('/')}}">
-                <div class="header-brand-img desktop-logo">
-                    <div class="d-flex justify-content-start align-items-center h-100">
-                        <img src="{{url('/assets/default/web/default.png')}}" style="height: 45px; object-fit: contain;" alt="logo">
-                    </div>
-                </div>
-                {{-- Logo icon kecil: tampil saat sidebar collapsed --}}
-                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img logo-icon" alt="logo-icon" style="max-height:36px;">
-                {{-- Light mode --}}
-                <div class="header-brand-img light-logo1">
-                    <div class="d-flex justify-content-start align-items-center h-100">
-                        <img src="{{url('/assets/default/web/default.png')}}" style="height: 45px; object-fit: contain;" alt="logo">
-                    </div>
-                </div>
-                {{-- Logo icon kecil light mode --}}
-                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img logo-icon-light" alt="logo-icon" style="max-height:36px;">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain;" alt="logo">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain;" alt="logo">
             </a>
 
             <!-- LOGO -->
@@ -36,7 +23,7 @@
                     <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
                         <div class="d-flex justify-content-between order-lg-2">
                             <!-- Theme-Layout -->
-                            <div class="dropdown d-flex">
+                            <div class="dropdown d-none d-md-flex">
                                 <a class="nav-link icon full-screen-link nav-link-bg">
                                     <i class="fe fe-minimize fullscreen-button"></i>
                                 </a>
@@ -79,9 +66,9 @@
                                         <small class="text-muted me-4">{{Session::get('user')->role_title}}</small>
                                     </div>
                                     @if(Session::get('user')->user_foto == 'undraw_profile.svg')
-                                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user" class="avatar  profile-user brround cover-image">
+                                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user" class="avatar profile-user brround cover-image" style="object-fit: cover;">
                                     @else
-                                    <img class="avatar profile-user brround cover-image" src="{{asset('storage/users/'.Session::get('user')->user_foto)}}" alt="avatar">
+                                    <img class="avatar profile-user brround cover-image" src="{{asset('storage/users/'.Session::get('user')->user_foto)}}" alt="avatar" style="object-fit: cover;">
                                     @endif
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">

@@ -55,7 +55,9 @@
                             <center>
                                 <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImgU" class="">
                             </center>
-                            <input class="form-control mt-5" id="GetFileU" name="photo" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
+                            <input type="hidden" name="hapus_foto" id="hapus_foto" value="0">
+                            <input class="form-control mt-4" id="GetFileU" name="photo" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
+                            <button type="button" class="btn btn-danger btn-sm mt-2 w-100" onclick="removePhotoU()"><i class="fe fe-trash me-1"></i>Hapus Foto</button>
                         </div>
                     </div>
                 </div>
@@ -107,12 +109,14 @@
         const satuan = $("select[name='satuanU']").val();
         const merk = $("select[name='merkU']").val();
         const stok = $("input[name='stokU']").val();
+        const hapus_foto = $("#hapus_foto").val();
         const foto = $('#GetFileU')[0].files;
 
         var fd = new FormData();
 
         // Append data 
         fd.append('foto', foto[0]);
+        fd.append('hapus_foto', hapus_foto);
         fd.append('kode', kode);
         fd.append('nama', nama);
         fd.append('jenisbarang', jenisbarang);
@@ -159,9 +163,15 @@
         $("select[name='satuanU']").val('');
         $("select[name='merkU']").val('');
         $("input[name='stokU']").val('0');
+        $("#hapus_foto").val('0');
         $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFileU").val('');
         setLoadingU(false);
+    }
+    function removePhotoU() {
+        $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
+        $("#GetFileU").val('');
+        $("#hapus_foto").val('1');
     }
     function setLoadingU(bool) {
         if (bool == true) {
