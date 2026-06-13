@@ -16,7 +16,7 @@ class BarangmasukController extends Controller
     {
         $data["title"] = "Barang Masuk";
         $user = Session::get('user');
-        $data["hakTambah"] = ($user && in_array($user->role_id, [1, 2])) ? 1 : 0;
+        $data["hakTambah"] = ($user && in_array($user->role_id, [1, 2, 3])) ? 1 : 0;
         return view('Admin.BarangMasuk.index', $data);
     }
 
@@ -62,6 +62,7 @@ class BarangmasukController extends Controller
                         $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit text-success fs-14"></span></a>';
                         $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-14"></span></a>';
                     }
+                    // Teknisi (role 3) hanya bisa Print QR — tidak ada edit/hapus
                     
                     return $button;
                 })
@@ -73,65 +74,98 @@ class BarangmasukController extends Controller
     public function proses_tambah(Request $request)
     {
         try {
-            // 1. Validasi Sederhana
-            if (!$request->barang || !$request->jml) {
+            // ── Normalize input: support both batch (items[]) and legacy single-item ──
+            $items = [];
+
+            if ($request->has('items') && is_array($request->items)) {
+                // Batch mode: items[] = [{kode, jumlah}, ...]
+                foreach ($request->items as $item) {
+                    $kode = $item['kode'] ?? null;
+                    $jumlah = intval($item['jumlah'] ?? 0);
+                    if ($kode && $jumlah > 0) {
+                        $items[] = ['kode' => $kode, 'jumlah' => $jumlah];
+                    }
+                }
+            } elseif ($request->barang && $request->jml) {
+                // Legacy single-item mode (backward-compatible)
+                $items[] = ['kode' => $request->barang, 'jumlah' => intval($request->jml)];
+            }
+
+            if (empty($items)) {
                 return response()->json(['error' => 'Barang dan Jumlah tidak boleh kosong!'], 400);
             }
 
-            $jml = intval($request->jml);
-            $barang = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-                ->where('tbl_barang.barang_kode', $request->barang)
-                ->first();
-            
-            if (!$barang) {
-                return response()->json(['error' => 'Data Barang tidak ditemukan!'], 404);
-            }
+            // Gunakan datetime dari form, fallback ke now()
+            $tglmasuk = $request->tglmasuk
+                ? \Carbon\Carbon::parse($request->tglmasuk)
+                : now();
 
-            // 2. Prefix SN dari kode barang (BK / HP)
-            $prefix_sn = strtoupper(substr($barang->barang_kode, 0, 2));
-            $date_now  = now()->format('Ymd');
+            $totalSaved = 0;
 
-            // 3. Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
-            for ($i = 1; $i <= $jml; $i++) {
-                // Generate Kode Barang Masuk Unik (BM-MMYY-001)
-                $monthYear = now()->format('my');
-                $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
-                    ->orderBy('bm_kode', 'DESC')
+            foreach ($items as $item) {
+                $barangKode = $item['kode'];
+                $jml = $item['jumlah'];
+
+                $barang = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                    ->where('tbl_barang.barang_kode', $barangKode)
                     ->first();
 
-                if ($lastBM) {
-                    $lastNo = intval(substr($lastBM->bm_kode, -3));
-                    $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
-                } else {
-                    $nextNo = '001';
+                if (!$barang) {
+                    continue; // Skip barang yang tidak ditemukan
                 }
-                $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
-                $loop_index   = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
-                $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
+                // Prefix SN dari kode barang (BK / HP)
+                $prefix_sn = strtoupper(substr($barang->barang_kode, 0, 2));
+                $date_now  = now()->format('Ymd');
 
-                // Generate Kode Barang Unik (Timestamp + Urutan)
-                $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
+                // Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
+                for ($i = 1; $i <= $jml; $i++) {
+                    // Generate Kode Barang Masuk Unik (BM-MMYY-001)
+                    $monthYear = now()->format('my');
+                    $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
+                        ->orderBy('bm_kode', 'DESC')
+                        ->first();
 
-                // Gunakan datetime dari form (waktu device lokal), fallback ke now() jika kosong
-                $tglmasuk = $request->tglmasuk
-                    ? \Carbon\Carbon::parse($request->tglmasuk)
-                    : now();
+                    if ($lastBM) {
+                        $lastNo = intval(substr($lastBM->bm_kode, -3));
+                        $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
+                    } else {
+                        $nextNo = '001';
+                    }
+                    $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
-                BarangmasukModel::create([
-                    'bm_tanggal'       => $tglmasuk->toDateString(),
-                    'bm_kode'          => $bm_kode,
-                    'barang_kode'      => $request->barang,
-                    'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
-                    'serial_number'    => $serial_number,
-                    'kode_barang_unik' => $kode_barang_unik,
-                    'jam_masuk'        => $tglmasuk,
-                    'customer_id'      => $request->customer_id ?? 0,
-                ]);
+                    $loop_index   = str_pad($totalSaved + 1, 2, '0', STR_PAD_LEFT);
+                    $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
+                    $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
+
+                    // Generate Kode Barang Unik (Timestamp + Urutan)
+                    $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
+
+                    BarangmasukModel::create([
+                        'bm_tanggal'       => $tglmasuk->toDateString(),
+                        'bm_kode'          => $bm_kode,
+                        'barang_kode'      => $barangKode,
+                        'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
+                        'serial_number'    => $serial_number,
+                        'kode_barang_unik' => $kode_barang_unik,
+                        'jam_masuk'        => $tglmasuk,
+                        'customer_id'      => $request->customer_id ?? 0,
+                    ]);
+
+                    $totalSaved++;
+                }
             }
 
-            return response()->json(['success' => "Berhasil menyimpan {$jml} data barang masuk."]);
+            if ($totalSaved === 0) {
+                return response()->json(['error' => 'Tidak ada data barang yang valid untuk disimpan!'], 400);
+            }
+
+            $jenisCount = count($items);
+            $msg = $jenisCount > 1
+                ? "Berhasil menyimpan {$totalSaved} unit dari {$jenisCount} jenis barang."
+                : "Berhasil menyimpan {$totalSaved} data barang masuk.";
+
+            return response()->json(['success' => $msg]);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal simpan: ' . $e->getMessage()], 500);

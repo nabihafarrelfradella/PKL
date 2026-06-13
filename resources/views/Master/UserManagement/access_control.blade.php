@@ -204,7 +204,7 @@
             <div class="card-body py-3">
                 <ul class="list-unstyled mb-0 small">
                     <li><i class="fe fe-check text-success me-1"></i> Default: akses terbatas</li>
-                    <li><i class="fe fe-eye text-warning me-1"></i> Barang Masuk: lihat saja</li>
+                    <li><i class="fe fe-edit-2 text-info me-1"></i> Barang Masuk: lihat + input</li>
                     <li><i class="fe fe-edit-2 text-info me-1"></i> Barang Keluar: lihat + ajukan</li>
                     <li><i class="fe fe-edit-2 text-primary me-1"></i> Dapat dikonfigurasi via toggle di atas</li>
                 </ul>

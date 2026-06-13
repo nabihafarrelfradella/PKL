@@ -127,12 +127,12 @@
                     <h3>Transaksi</h3>
                 </li>
 
-                <!-- Barang Masuk (view only) -->
+                <!-- Barang Masuk (view + form input) -->
                 <li class="slide">
                     <a class="side-menu__item {{$title == 'Barang Masuk' ? 'active' : ''}}" href="{{url('/admin/barang-masuk')}}">
                         <i class="side-menu__icon fe fe-arrow-down-circle"></i>
                         <span class="side-menu__label">Barang Masuk</span>
-                        <span class="badge bg-secondary ms-1" style="font-size:10px">View</span>
+                        <span class="badge bg-info ms-1" style="font-size:10px">Form</span>
                     </a>
                 </li>
 

@@ -107,6 +107,180 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
         .sidebar-mini:not(.sidenav-toggled) .header-brand-img.logo-collapsed {
             display: none !important;
         }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE FIXES — Mobile & Tablet
+           ═══════════════════════════════════════════ */
+
+        /* ── Page Header ── */
+        @media (max-width: 767.98px) {
+            .page-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .page-header .ms-auto,
+            .page-header .pageheader-btn {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .page-header .pageheader-btn .btn {
+                flex: 1 1 auto;
+                font-size: 12px;
+                padding: 6px 10px;
+                text-align: center;
+            }
+            .page-header h1.page-title {
+                font-size: 1.15rem;
+            }
+            .breadcrumb {
+                font-size: 12px;
+            }
+        }
+
+        /* ── Card Headers ── */
+        @media (max-width: 767.98px) {
+            .card-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .card-header .btn,
+            .card-header a.btn {
+                width: 100%;
+                text-align: center;
+                font-size: 13px;
+            }
+        }
+
+        /* ── Stat Cards (Dashboard) ── */
+        @media (max-width: 575.98px) {
+            .stat-card {
+                min-height: 85px;
+                padding: 14px 16px;
+                border-radius: 10px;
+            }
+            .stat-card .stat-info h3 {
+                font-size: 1.3rem;
+            }
+            .stat-card .stat-info p {
+                font-size: 0.75rem;
+            }
+            .stat-card .stat-icon {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* ── Tables ── */
+        @media (max-width: 767.98px) {
+            .table {
+                font-size: 12px;
+            }
+            .table th, .table td {
+                padding: 6px 8px !important;
+            }
+            .table .btn-sm {
+                padding: 2px 5px;
+                font-size: 11px;
+            }
+        }
+
+        /* ── Modals ── */
+        @media (max-width: 575.98px) {
+            .modal-dialog.modal-lg,
+            .modal-dialog.modal-xl {
+                max-width: calc(100% - 20px) !important;
+                margin: 10px auto !important;
+            }
+            .modal-body {
+                padding: 12px !important;
+            }
+            .modal-body .row > [class*="col-md-"] {
+                margin-bottom: 0;
+            }
+            .modal-footer {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 10px 12px !important;
+            }
+            .modal-footer .btn {
+                flex: 1 1 auto;
+                font-size: 13px;
+            }
+        }
+
+        /* ── DataTables Controls ── */
+        @media (max-width: 767.98px) {
+            .dataTables_wrapper .dataTables_length,
+            .dataTables_wrapper .dataTables_filter {
+                text-align: left !important;
+                margin-bottom: 8px;
+            }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100% !important;
+                margin-left: 0 !important;
+            }
+            .dataTables_wrapper .dataTables_info,
+            .dataTables_wrapper .dataTables_paginate {
+                text-align: center !important;
+                margin-top: 8px;
+            }
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                padding: 4px 8px !important;
+                font-size: 12px;
+            }
+        }
+
+        /* ── Header Profile Text ── */
+        @media (max-width: 991.98px) {
+            .profile-1 .text-end h5,
+            .profile-1 .text-end small {
+                display: none;
+            }
+        }
+
+        /* ── Teknisi Info Bar ── */
+        @media (max-width: 575.98px) {
+            .teknisi-info-bar {
+                flex-wrap: wrap;
+                padding: 12px 14px;
+                gap: 10px;
+            }
+            .teknisi-info-bar .ms-auto {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            .teknisi-info-bar .ms-auto .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* ── Form Groups inside modals ── */
+        @media (max-width: 575.98px) {
+            .form-group label {
+                font-size: 12px;
+            }
+            .form-control {
+                font-size: 13px;
+            }
+            .input-group .btn {
+                padding: 6px 10px;
+            }
+        }
+
+        /* ── Batch Items Table ── */
+        @media (max-width: 575.98px) {
+            #batchItemsTable {
+                font-size: 11px;
+            }
+            #batchItemsTable th,
+            #batchItemsTable td {
+                padding: 5px 6px !important;
+            }
+        }
     </style>
 </head>
 
