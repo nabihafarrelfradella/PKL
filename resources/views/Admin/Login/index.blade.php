@@ -45,11 +45,7 @@
                     </button>
                 </div>
 
-                <div class="text-center mt-4">
-                    <a href='https://i.pinimg.com/736x/47/b8/68/47b8687e1a612547846960c69381aaaa.jpg' class="text-primary small text-decoration-underline" target='_blank'>
-                        Trouble Logging in?
-                    </a>
-                </div>
+
             </form>
         </div>
     </div>
