@@ -1,6 +1,6 @@
 <!-- MODAL TAMBAH BARANG KELUAR / FORM PEMINJAMAN TEKNISI -->
 <div class="modal fade" data-bs-backdrop="static" id="modaldemo8">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header @if(($roleId ?? 0) == 3) bg-primary @endif">
                 @if(($roleId ?? 0) == 3)
@@ -160,6 +160,41 @@
 </div>
 
 @section('formTambahJS')
+<style>
+    /* Fix Select2 dropdown positioning on mobile devices */
+    @media (max-width: 575.98px) {
+        .select2-container--open .select2-dropdown {
+            position: fixed !important;
+            top: 25% !important;
+            left: 5% !important;
+            width: 90% !important;
+            max-height: 280px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+            border: 1px solid #ccd9e8 !important;
+            border-radius: 12px !important;
+            background-color: #ffffff !important;
+            z-index: 10000 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        .select2-container--open .select2-dropdown .select2-search__field {
+            border-radius: 8px !important;
+            margin: 8px !important;
+            width: calc(100% - 16px) !important;
+        }
+        .select2-container--open .select2-dropdown .select2-results {
+            max-height: 220px !important;
+            overflow-y: auto !important;
+        }
+    }
+    
+    /* Ensure modal-body scrolls correctly on mobile and doesn't freeze */
+    .modal-dialog-scrollable .modal-body {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
 <script>
     function getLocalDateTimeString() {
         const now = new Date();
