@@ -9,20 +9,17 @@
                 <img src="../assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
             </a> -->
             <a class="logo-horizontal" href="{{url('/')}}">
-                {{-- Logo penuh: tampil saat sidebar terbuka --}}
                 <div class="header-brand-img desktop-logo">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <img src="{{url('/assets/default/web/default.png')}}" height="180px" class="me-1" alt="logo">
-                        <h4 class="fw-bold mt-4 text-white text-uppercase text-truncate">Manajemen Alfatindo</h4>
+                    <div class="d-flex justify-content-start align-items-center h-100">
+                        <img src="{{url('/assets/default/web/default.png')}}" style="height: 45px; object-fit: contain;" alt="logo">
                     </div>
                 </div>
                 {{-- Logo icon kecil: tampil saat sidebar collapsed --}}
                 <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img logo-icon" alt="logo-icon" style="max-height:36px;">
                 {{-- Light mode --}}
                 <div class="header-brand-img light-logo1">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <img src="{{url('/assets/default/web/default.png')}}" height="180px" class="me-1" alt="logo">
-                        <h4 class="fw-bold mt-4 text-black text-uppercase text-truncate">Manajemen Alfatindo</h4>
+                    <div class="d-flex justify-content-start align-items-center h-100">
+                        <img src="{{url('/assets/default/web/default.png')}}" style="height: 45px; object-fit: contain;" alt="logo">
                     </div>
                 </div>
                 {{-- Logo icon kecil light mode --}}

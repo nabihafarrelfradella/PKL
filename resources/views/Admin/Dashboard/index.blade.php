@@ -3,7 +3,7 @@
 @section('content')
     <style>
         .stat-card {
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 20px 22px;
             display: flex;
             align-items: center;
@@ -12,11 +12,14 @@
             position: relative;
             overflow: hidden;
             min-height: 110px;
-            transition: transform 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
         .stat-card .stat-info {
@@ -30,15 +33,16 @@
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
-            color: #fff;
+            color: #ffffff;
             line-height: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .stat-card .stat-info p {
             font-size: 0.85rem;
             margin: 5px 0 0 0;
-            color: rgba(255, 255, 255, 0.85);
-            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
         }
 
         .stat-card .stat-icon {
@@ -46,6 +50,12 @@
             color: rgba(255, 255, 255, 0.3);
             line-height: 1;
             z-index: 2;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(5deg);
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .stat-card::before {
@@ -69,12 +79,29 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.08);
         }
+
+        @media (max-width: 575px) {
+            .stat-card {
+                padding: 16px;
+                min-height: 90px;
+                border-radius: 12px;
+            }
+            .stat-card .stat-info h3 {
+                font-size: 1.5rem;
+            }
+            .stat-card .stat-info p {
+                font-size: 0.8rem;
+            }
+            .stat-card .stat-icon {
+                font-size: 2rem;
+            }
+        }
     </style>
 
-    <div class="page-header">
-        <h1 class="page-title">Dashboard Statistik</h1>
-        <div class="ms-auto pageheader-btn">
-            <a href="{{ route('barang-tracking.index') }}" class="btn btn-secondary btn-icon text-white me-2">
+    <div class="page-header d-flex flex-column flex-sm-row align-items-sm-center">
+        <h1 class="page-title mb-2 mb-sm-0">Dashboard Statistik</h1>
+        <div class="ms-sm-auto w-100 w-sm-auto d-grid gap-2 d-sm-flex mt-2 mt-sm-0">
+            <a href="{{ route('barang-tracking.index') }}" class="btn btn-secondary btn-icon text-white">
                 <i class="fe fe-activity me-1"></i> Barang Tracking
             </a>
             <a href="#modalTracking" data-bs-toggle="modal" class="btn btn-primary btn-icon text-white">
@@ -93,7 +120,7 @@
 
     <div class="row g-3 mb-5">
         <div class="col-sm-6 col-xl-4">
-            <div class="stat-card" style="background: #1fba8c;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #1fba8c 0%, #159b73 100%);">
                 <div class="stat-info">
                     <h3>{{$merk}}</h3>
                     <p>Merk Barang</p>
@@ -103,7 +130,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-4">
-            <div class="stat-card" style="background: #2f80ed;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #2f80ed 0%, #1c66c9 100%);">
                 <div class="stat-info">
                     <h3>{{$barang}}</h3>
                     <p>Total Barang</p>
@@ -113,7 +140,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-4">
-            <div class="stat-card" style="background: #0bbfaa;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #0bbfaa 0%, #089c8a 100%);">
                 <div class="stat-info">
                     <h3>{{$bm}}</h3>
                     <p>Barang Masuk</p>
@@ -123,7 +150,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="stat-card" style="background: #e84c4c;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #e84c4c 0%, #c43c3c 100%);">
                 <div class="stat-info">
                     <h3>{{$bk_dipinjam}}</h3>
                     <p>Sedang Dipinjam</p>
@@ -133,7 +160,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="stat-card" style="background: #f0a500;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f0a500 0%, #d18f00 100%);">
                 <div class="stat-info">
                     <h3>{{$bk}}</h3>
                     <p>Total Transaksi Keluar</p>
@@ -143,7 +170,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="stat-card" style="background: #9b3fdb;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #9b3fdb 0%, #7e2db8 100%);">
                 <div class="stat-info">
                     <h3>{{$teknisi}}</h3>
                     <p>Pegawai Teknisi</p>
@@ -153,7 +180,7 @@
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="stat-card" style="background: #17a2b8;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);">
                 <div class="stat-info">
                     <h3>{{$user}}</h3>
                     <p>Total Akun User</p>
