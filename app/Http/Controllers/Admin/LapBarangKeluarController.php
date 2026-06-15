@@ -71,9 +71,17 @@ class LapBarangKeluarController extends Controller
                 })
                 ->addColumn('status_badge', function ($row) {
                     if ($row->bk_status == 'Dipinjam') {
-                        return '<span class="badge bg-warning">Dipinjam</span>';
+                        return '<span class="badge bg-warning text-dark">Dipinjam</span>';
+                    } elseif ($row->bk_status == 'Selesai') {
+                        return '<span class="badge bg-success">Selesai</span>';
+                    } elseif ($row->bk_status == 'Ditolak') {
+                        return '<span class="badge bg-danger">Ditolak</span>';
+                    } elseif ($row->bk_status == 'Menunggu Persetujuan Pinjam') {
+                        return '<span class="badge bg-info">Menunggu Pinjam</span>';
+                    } elseif ($row->bk_status == 'Menunggu Persetujuan Kembali') {
+                        return '<span class="badge bg-info">Menunggu Kembali</span>';
                     }
-                    return '<span class="badge bg-success">Selesai</span>';
+                    return '<span class="badge bg-secondary">' . htmlspecialchars($row->bk_status) . '</span>';
                 })
                 // Tambahkan 'serial_number' ke rawColumns jika mengandung karakter khusus
                 ->rawColumns(['tgl', 'tujuan', 'teknisi', 'barang', 'status_badge', 'serial_number'])
