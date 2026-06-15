@@ -19,12 +19,14 @@
                         </div>
                         <div class="form-group">
                             <label for="tujuanU" class="form-label">Nama Teknisi <span class="text-danger">*</span></label>
-                            <select name="tujuanU" id="tujuanU" class="form-control select2U" style="width: 100%;" onchange="getTeknisiInfoU(this)">
-                                <option value="">-- Pilih Teknisi --</option>
-                                @foreach($pegawai as $pgw)
-                                    <option value="{{ $pgw->user_nmlengkap }}" data-sn="{{ $pgw->teknisi_sn }}">{{ $pgw->user_nmlengkap }}</option>
-                                @endforeach
-                            </select>
+                            <div class="select2-wrapper" style="position: relative;">
+                                <select name="tujuanU" id="tujuanU" class="form-control select2U" style="width: 100%;" onchange="getTeknisiInfoU(this)">
+                                    <option value="">-- Pilih Teknisi --</option>
+                                    @foreach($pegawai as $pgw)
+                                        <option value="{{ $pgw->user_nmlengkap }}" data-sn="{{ $pgw->teknisi_sn }}">{{ $pgw->user_nmlengkap }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="teknisiU" class="form-label">ID Teknisi</label>
@@ -72,9 +74,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="sn_select_groupU">
                             <label for="serial_numberU" class="form-label">SN Barang</label>
-                            <input type="text" name="serial_numberU" id="serial_number_inputU" readonly class="form-control" style="background:#f0f8ff;">
+                            <div class="select2-wrapper" id="sn_wrapperU" style="position: relative; display: none;">
+                                <select name="serial_numberU" id="sn_listU" class="form-control select2U" style="width: 100%;">
+                                    <option value="">-- Pilih SN... --</option>
+                                </select>
+                            </div>
+                            <input type="text" id="serial_number_inputU" readonly class="form-control" style="background:#f0f8ff;">
                         </div>
                         <div class="form-group">
                             <label for="jmlU" class="form-label">Jumlah Keluar <span class="text-danger">*</span></label>
@@ -100,32 +107,20 @@
 
 @section('formEditJS')
 <style>
-    /* Fix Select2 dropdown positioning on mobile devices */
-    @media (max-width: 575.98px) {
-        .select2-container--open .select2-dropdown {
-            position: fixed !important;
-            top: 25% !important;
-            left: 5% !important;
-            width: 90% !important;
-            max-height: 280px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
-            border: 1px solid #ccd9e8 !important;
-            border-radius: 12px !important;
-            background-color: #ffffff !important;
-            z-index: 10000 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-        }
-        .select2-container--open .select2-dropdown .select2-search__field {
-            border-radius: 8px !important;
-            margin: 8px !important;
-            width: calc(100% - 16px) !important;
-        }
-        .select2-container--open .select2-dropdown .select2-results {
-            max-height: 220px !important;
-            overflow-y: auto !important;
-        }
+    /* Ensure wrapper is relatively positioned for Select2 dropdown offset calculation */
+    .select2-wrapper {
+        position: relative !important;
+    }
+    
+    .select2-wrapper .select2-container {
+        z-index: 9999 !important;
+    }
+    
+    /* Limit the height of Select2 selection container to prevent it from growing indefinitely */
+    .select2-container .select2-selection--multiple {
+        max-height: 110px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
     
     /* Ensure modal-body scrolls correctly on mobile and doesn't freeze */
@@ -156,8 +151,30 @@
     }
 
     $(document).ready(function() {
-        $('.select2U').select2({
-            dropdownParent: $('#Umodaldemo8')
+        $('.select2U').each(function() {
+            $(this).select2({
+                dropdownParent: $(this).parent()
+            });
+        });
+
+        // Close Select2 dropdown on scrolling modal body to prevent floating misalignment
+        $('#Umodaldemo8 .modal-body').on('scroll', function() {
+            if ($('.select2U').hasClass('select2-hidden-accessible')) {
+                $('.select2U').select2('close');
+            }
+        });
+
+        // Toggle modal-body overflow when Select2 is opened/closed to prevent clipping inside scrollable container
+        $(document).on('select2:open', function(e) {
+            $(e.target).closest('.modal-body').css('overflow', 'visible');
+        });
+        $(document).on('select2:close', function(e) {
+            $(e.target).closest('.modal-body').css('overflow', 'auto');
+            
+            // Clean up Select2's residual scroll events that lock/freeze modal scroll
+            var evt = "scroll.select2";
+            $(e.target).parents().off(evt);
+            $(window).off(evt);
         });
     });
 
@@ -244,7 +261,9 @@
         const teknisi = $("input[name='teknisiU']").val();
         const customer = $("input[name='customerU']").val();
         const keterangan = $("input[name='keteranganU']").val();
-        const serial_number = $("#serial_number_inputU").val();
+        const serial_number = $("#sn_wrapperU").is(":visible") 
+            ? $("#sn_listU").val() 
+            : $("#serial_number_inputU").val();
         const jml = $("input[name='jmlU']").val();
 
         $.ajax({

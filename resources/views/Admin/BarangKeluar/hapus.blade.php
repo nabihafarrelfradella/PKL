@@ -36,6 +36,11 @@
                 $('#Hmodaldemo8').modal('toggle');
                 table.ajax.reload(null, false);
                 resetH();
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.error ?? 'Terjadi kesalahan';
+                swal({ title: "Gagal!", text: msg, type: "error" });
+                setLoadingH(false);
             }
         });
     }

@@ -153,7 +153,16 @@
         $("select[name='tujuanU']").val(data.teknisi_nama || '').trigger('change');
         $("input[name='teknisiU']").val(data.teknisi);
         $("input[name='jmlU']").val(data.bk_jumlah);
-        $("#serial_number_inputU").val(data.serial_number);
+        
+        // Show/hide select2 wrapper dynamically depending on serial number usage
+        if (data.serial_number && data.serial_number !== '-') {
+            $("#sn_wrapperU").show();
+            $("#serial_number_inputU").hide().val('');
+        } else {
+            $("#sn_wrapperU").hide();
+            $("#serial_number_inputU").show().val('-');
+        }
+
         $("input[name='keteranganU']").val(data.keterangan);
         $("input[name='customerU']").val(data.bk_tujuan || '');
         $("input[name='tglkeluarU']").val(data.created_at);
@@ -164,7 +173,7 @@
         }
         // Async fill satuan/jenis
         getbarangbyidU(data.barang_kode);
-        fetchAvailableSNsU(data.barang_kode, data.serial_number);
+        fetchAvailableSNsU(data.barang_kode, data.serial_number, data.kode_barang_unik);
         if (data.teknisi) {
             if (typeof getTeknisiInfoU === 'function') {
                 getTeknisiInfoU(data.teknisi);
@@ -172,9 +181,9 @@
         }
     }
 
-    function fetchAvailableSNsU(barang_kode, currentSN) {
+    function fetchAvailableSNsU(barang_kode, currentSN, currentKBU) {
         if (!barang_kode) {
-            $("#sn_listU").empty();
+            $("#sn_listU").empty().trigger('change');
             return;
         }
         $.ajax({
@@ -184,12 +193,20 @@
             success: function(data) {
                 var list = $("#sn_listU");
                 list.empty();
-                if (currentSN && currentSN !== '-' && !data.find(item => item.serial_number === currentSN)) {
-                    list.append(`<option value="${currentSN}">${currentSN} (Saat ini)</option>`);
+                if (currentSN && currentSN !== '-') {
+                    var hasCurrent = data.some(item => item.serial_number === currentSN);
+                    if (!hasCurrent) {
+                        var unikText = currentKBU ? ` (Unik: ${currentKBU})` : '';
+                        list.append(`<option value="${currentSN}">${currentSN}${unikText}</option>`);
+                    }
                 }
                 data.forEach(function(item) {
-                    list.append(`<option value="${item.serial_number}">${item.serial_number} (Unik: ${item.kode_barang_unik})</option>`);
+                    var unikText = item.kode_barang_unik ? ` (Unik: ${item.kode_barang_unik})` : '';
+                    list.append(`<option value="${item.serial_number}">${item.serial_number}${unikText}</option>`);
                 });
+                
+                // Select the current SN and update Select2 display
+                list.val(currentSN).trigger('change');
             }
         });
     }

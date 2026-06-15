@@ -66,7 +66,7 @@
                 <td>{{$d->serial_number ?? '-'}}</td>
                 <td align="center">{{$d->bk_jumlah}}</td>
                 <td>{{$d->bk_tujuan ?? '-'}}</td>
-                <td>{{$d->teknisi_nama ? $d->teknisi_nama . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
+                <td>{{($d->user_nmlengkap ?? $d->teknisi_nama) ? ($d->user_nmlengkap ?? $d->teknisi_nama) . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
                 <td>{{$d->keterangan ?? '-'}}</td>
             </tr>
             @endforeach

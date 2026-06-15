@@ -22,7 +22,8 @@ class LapBarangKeluarController extends Controller
     {
         // Gunakan select agar kolom serial_number dari tbl_barangkeluar tidak tertimpa
         $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama');
+                ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
+                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
         if ($request->tglawal) {
             $query->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir]);
@@ -40,7 +41,8 @@ class LapBarangKeluarController extends Controller
         if ($request->ajax()) {
             // Tambahkan select('tbl_barangkeluar.*') untuk memastikan SN ditarik dari tabel transaksi
             $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-                    ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_barang.barang_id');
+                    ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
+                    ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_barang.barang_id', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
             if ($request->tglawal != '') {
                 $query->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir]);
@@ -57,7 +59,8 @@ class LapBarangKeluarController extends Controller
                     return $row->bk_tujuan ?? '-';
                 })
                 ->addColumn('teknisi', function ($row) {
-                    return $row->teknisi_nama ? htmlspecialchars($row->teknisi_nama) . ' (' . htmlspecialchars($row->teknisi) . ')' : ($row->teknisi ?? '-');
+                    $nama = $row->user_nmlengkap ?? $row->teknisi_nama;
+                    return $nama ? htmlspecialchars($nama) . ' (' . htmlspecialchars($row->teknisi) . ')' : ($row->teknisi ?? '-');
                 })
                 ->addColumn('barang', function ($row) {
                     return $row->barang_nama ?? '-';
@@ -81,7 +84,8 @@ class LapBarangKeluarController extends Controller
     public function pdf(Request $request)
     {
         $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama');
+                ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
+                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
         if ($request->tglawal) {
             $query->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir]);

@@ -102,12 +102,14 @@ class BarangkeluarController extends Controller
                         "bk_jumlah"     => $row->bk_jumlah,
                         "bk_status"     => $row->bk_status,
                         "serial_number" => $row->serial_number,
+                        "kode_barang_unik" => $row->kode_barang_unik,
                         "teknisi"       => $row->teknisi,
                         "teknisi_nama"  => $teknisiUser ? $teknisiUser->user_nmlengkap : ($row->teknisi_nama ?? ''),
                         "keterangan"    => $row->keterangan,
                         "created_at"    => $row->jam_keluar ? Carbon::parse($row->jam_keluar)->format('Y-m-d H:i:s') : ($row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d H:i:s') : null),
                     ];
 
+                    $json = htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8');
                     $button = '';
 
                     // Tombol Approval (Hanya Owner & Admin Gudang)
@@ -124,15 +126,15 @@ class BarangkeluarController extends Controller
                     // Tombol Kembalikan: Owner, Admin Gudang, dan Teknisi
                     if (in_array($roleId, [1, 2, 3])) {
                         if ($row->bk_status == 'Dipinjam') {
-                            $button .= '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Kmodaldemo8" onclick=\'kembali(' . json_encode($array) . ')\' title="Kembalikan"><span class="fe fe-corner-up-left fs-14"></span></a>';
+                            $button .= '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Kmodaldemo8" onclick="kembali(' . $json . ')" title="Kembalikan"><span class="fe fe-corner-up-left fs-14"></span></a>';
                         }
                     }
 
                     // Tombol Edit/Hapus
                     if (in_array($roleId, [1, 2])) {
                         if (!in_array($row->bk_status, ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])) {
-                            $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . json_encode($array) . ')"><span class="fe fe-edit text-success fs-14"></span></a>';
-                            $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . json_encode($array) . ')"><span class="fe fe-trash-2 fs-14"></span></a>';
+                            $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit text-success fs-14"></span></a>';
+                            $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-14"></span></a>';
                         }
                     }
 
@@ -287,7 +289,8 @@ class BarangkeluarController extends Controller
             $user      = Session::get('user');
             $roleId    = $user->role_id ?? 0;
             $teknisiSN = ($roleId == 3) ? ($user->teknisi_sn ?? '') : $request->teknisi;
-            $teknisiNm = ($roleId == 3) ? $user->user_nmlengkap : ($request->tujuan ?? '');
+            $teknisiUser = UserModel::where('teknisi_sn', $teknisiSN)->first();
+            $teknisiNm = $teknisiUser ? $teknisiUser->user_nmlengkap : (($roleId == 3) ? $user->user_nmlengkap : ($request->tujuan ?? ''));
 
             // Status otomatis: Habis Pakai = Selesai, Kembali = Dipinjam
             $status = (str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
@@ -331,6 +334,7 @@ class BarangkeluarController extends Controller
                         'bk_status'        => $status,
                         'serial_number'    => $sn,
                         'teknisi'          => $teknisiSN,
+                        'teknisi_nama'     => $teknisiNm,
                         'keterangan'       => $request->keterangan,
                         'jam_keluar'       => $tglkeluar,
                     ]);
@@ -357,6 +361,7 @@ class BarangkeluarController extends Controller
                     'bk_status'        => $status,
                     'serial_number'    => '-',
                     'teknisi'          => $teknisiSN,
+                    'teknisi_nama'     => $teknisiNm,
                     'keterangan'       => $request->keterangan,
                     'jam_keluar'       => $tglkeluar,
                 ]);
@@ -482,9 +487,10 @@ class BarangkeluarController extends Controller
 
             // Validasi ketersediaan Serial Number (SN) saat ubah
             $sn = trim($request->serial_number);
+            $kbu = null;
             if ($sn && $sn !== '-') {
                 $isBorrowed = BarangkeluarModel::where('serial_number', $sn)
-                    ->where('bk_status', 'Dipinjam')
+                    ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
                     ->where('bk_id', '!=', $id)
                     ->exists();
                 if ($isBorrowed) {
@@ -500,6 +506,12 @@ class BarangkeluarController extends Controller
                 if ($isConsumed) {
                     return response()->json(['error' => "Serial Number {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
                 }
+
+                // Fetch new KBU
+                $bmRow = \App\Models\Admin\BarangmasukModel::where('barang_kode', $request->barang)
+                    ->where('serial_number', $sn)
+                    ->first();
+                $kbu = $bmRow ? $bmRow->kode_barang_unik : null;
             }
 
             $tglkeluar = $request->tglkeluar ? Carbon::parse($request->tglkeluar) : now();
@@ -508,16 +520,17 @@ class BarangkeluarController extends Controller
             $teknisiNama = $teknisiUser ? $teknisiUser->user_nmlengkap : null;
 
             $bk->update([
-                'bk_kode'       => $request->bkkode,
-                'barang_kode'   => $request->barang,
-                'bk_tanggal'    => $tglkeluar->toDateString(),
-                'bk_tujuan'     => $request->tujuan,
-                'bk_jumlah'     => $request->jml,
-                'serial_number' => $request->serial_number,
-                'teknisi'       => $request->teknisi,
-                'teknisi_nama'  => $teknisiNama,
-                'keterangan'    => $request->keterangan,
-                'jam_keluar'    => $tglkeluar,
+                'bk_kode'          => $request->bkkode,
+                'barang_kode'      => $request->barang,
+                'kode_barang_unik' => $kbu,
+                'bk_tanggal'       => $tglkeluar->toDateString(),
+                'bk_tujuan'        => $request->tujuan,
+                'bk_jumlah'        => $request->jml,
+                'serial_number'    => $request->serial_number,
+                'teknisi'          => $request->teknisi,
+                'teknisi_nama'     => $teknisiNama,
+                'keterangan'       => $request->keterangan,
+                'jam_keluar'       => $tglkeluar,
             ]);
             return response()->json(['success' => 'Berhasil']);
         }

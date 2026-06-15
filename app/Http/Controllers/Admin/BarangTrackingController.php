@@ -25,8 +25,8 @@ class BarangTrackingController extends Controller
             $query = DB::table('tbl_barangmasuk')
                 ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-                // Join ke subquery untuk mendapatkan transaksi terakhir saja
-                ->leftJoin(DB::raw('(SELECT * FROM tbl_barangkeluar WHERE bk_id IN (SELECT MAX(bk_id) FROM tbl_barangkeluar GROUP BY kode_barang_unik)) as tbl_barangkeluar'), function($join) {
+                // Join ke subquery untuk mendapatkan transaksi terakhir saja beserta nama teknisi aslinya
+                ->leftJoin(DB::raw('(SELECT tbl_barangkeluar.*, tbl_user.user_nmlengkap as user_nmlengkap_user FROM tbl_barangkeluar LEFT JOIN tbl_user ON tbl_user.teknisi_sn = tbl_barangkeluar.teknisi WHERE tbl_barangkeluar.bk_id IN (SELECT MAX(bk_id) FROM tbl_barangkeluar GROUP BY kode_barang_unik)) as tbl_barangkeluar'), function($join) {
                     $join->on('tbl_barangkeluar.kode_barang_unik', '=', 'tbl_barangmasuk.kode_barang_unik');
                 })
                 ->select(
@@ -39,6 +39,7 @@ class BarangTrackingController extends Controller
                     'tbl_barangkeluar.bk_tanggal as tgl_keluar_tgl',
                     'tbl_barangkeluar.teknisi as teknisi_sn_keluar',
                     'tbl_barangkeluar.teknisi_nama as nama_teknisi_keluar',
+                    'tbl_barangkeluar.user_nmlengkap_user',
                     'tbl_barangkeluar.bk_tujuan as customer_keluar',
                     'tbl_barangkeluar.keterangan as ket_keluar',
                     'tbl_barangkeluar.bk_status'
@@ -75,7 +76,8 @@ class BarangTrackingController extends Controller
                 })
                 ->addColumn('teknisi_ket', function ($row) {
                     $info = [];
-                    if ($row->nama_teknisi_keluar) $info[] = 'Oleh: ' . htmlspecialchars($row->nama_teknisi_keluar);
+                    $nama = $row->nama_teknisi_keluar ?? $row->user_nmlengkap_user;
+                    if ($nama) $info[] = 'Oleh: ' . htmlspecialchars($nama);
                     if ($row->teknisi_sn_keluar) $info[] = 'ID Teknisi: ' . htmlspecialchars($row->teknisi_sn_keluar);
                     if ($row->customer_keluar) $info[] = 'Tujuan: ' . htmlspecialchars($row->customer_keluar);
                     if ($row->ket_keluar) $info[] = 'Ket: ' . htmlspecialchars($row->ket_keluar);

@@ -62,12 +62,14 @@
                         {{-- OWNER / ADMIN: dropdown pilih teknisi --}}
                         <div class="form-group">
                             <label class="form-label">Nama Teknisi <span class="text-danger">*</span></label>
-                            <select name="tujuan" id="tujuan" class="form-control select2" style="width: 100%;" onchange="getTeknisiInfo(this)">
-                                <option value="">-- Pilih Teknisi --</option>
-                                @foreach($pegawai as $pgw)
-                                    <option value="{{ $pgw->user_nmlengkap }}" data-sn="{{ $pgw->teknisi_sn }}">{{ $pgw->user_nmlengkap }}</option>
-                                @endforeach
-                            </select>
+                            <div class="select2-wrapper" style="position: relative;">
+                                <select name="tujuan" id="tujuan" class="form-control select2" style="width: 100%;" onchange="getTeknisiInfo(this)">
+                                    <option value="">-- Pilih Teknisi --</option>
+                                    @foreach($pegawai as $pgw)
+                                        <option value="{{ $pgw->user_nmlengkap }}" data-sn="{{ $pgw->teknisi_sn }}">{{ $pgw->user_nmlengkap }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">ID Teknisi</label>
@@ -122,10 +124,12 @@
                         </div>
                         <div class="form-group">
                             <label>SN Barang</label>
-                            <select id="sn_select" name="serial_number[]" class="form-control sn-select2" style="width:100%;" multiple="multiple">
-                                <option value="">-- Pilih atau ketik SN... --</option>
-                            </select>
-                            <small class="text-muted">Pilih SN dari daftar atau ketik manual. Kosongkan jika tidak pakai SN.</small>
+                            <div class="select2-wrapper" style="position: relative;">
+                                <select id="sn_select" name="serial_number[]" class="form-control sn-select2" style="width:100%;" multiple="multiple">
+                                    <option value="">-- Pilih SN... --</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">Pilih SN dari daftar. Kosongkan jika tidak pakai SN.</small>
                         </div>
                         <div class="form-group">
                             <label>Jumlah Keluar <span class="text-danger">*</span></label>
@@ -161,32 +165,20 @@
 
 @section('formTambahJS')
 <style>
-    /* Fix Select2 dropdown positioning on mobile devices */
-    @media (max-width: 575.98px) {
-        .select2-container--open .select2-dropdown {
-            position: fixed !important;
-            top: 25% !important;
-            left: 5% !important;
-            width: 90% !important;
-            max-height: 280px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
-            border: 1px solid #ccd9e8 !important;
-            border-radius: 12px !important;
-            background-color: #ffffff !important;
-            z-index: 10000 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-        }
-        .select2-container--open .select2-dropdown .select2-search__field {
-            border-radius: 8px !important;
-            margin: 8px !important;
-            width: calc(100% - 16px) !important;
-        }
-        .select2-container--open .select2-dropdown .select2-results {
-            max-height: 220px !important;
-            overflow-y: auto !important;
-        }
+    /* Ensure wrapper is relatively positioned for Select2 dropdown offset calculation */
+    .select2-wrapper {
+        position: relative !important;
+    }
+    
+    .select2-wrapper .select2-container {
+        z-index: 9999 !important;
+    }
+    
+    /* Limit the height of Select2 selection container to prevent it from growing indefinitely */
+    .select2-container .select2-selection--multiple {
+        max-height: 110px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
     
     /* Ensure modal-body scrolls correctly on mobile and doesn't freeze */
@@ -232,13 +224,38 @@
 
     $(document).ready(function() {
         @if(($roleId ?? 0) != 3)
-        $('.select2').select2({
-            dropdownParent: $('#modaldemo8')
+        $('.select2').each(function() {
+            $(this).select2({
+                dropdownParent: $(this).parent()
+            });
         });
         @endif
 
         // Init SN Select2 dengan tags:true — bisa pilih list atau ketik bebas
         initSNSelect2();
+
+        // Close Select2 dropdown on scrolling modal body to prevent floating misalignment
+        $('#modaldemo8 .modal-body').on('scroll', function() {
+            if ($('#sn_select').hasClass('select2-hidden-accessible')) {
+                $('#sn_select').select2('close');
+            }
+            if ($('#tujuan').hasClass('select2-hidden-accessible')) {
+                $('#tujuan').select2('close');
+            }
+        });
+
+        // Toggle modal-body overflow when Select2 is opened/closed to prevent clipping inside scrollable container
+        $(document).on('select2:open', function(e) {
+            $(e.target).closest('.modal-body').css('overflow', 'visible');
+        });
+        $(document).on('select2:close', function(e) {
+            $(e.target).closest('.modal-body').css('overflow', 'auto');
+            
+            // Clean up Select2's residual scroll events that lock/freeze modal scroll
+            var evt = "scroll.select2";
+            $(e.target).parents().off(evt);
+            $(window).off(evt);
+        });
     });
 
     function initSNSelect2(maxSelect) {
@@ -257,18 +274,12 @@
         }
 
         $('#sn_select').select2({
-            dropdownParent: $('#modaldemo8'),
-            tags: true,
-            placeholder: '-- Pilih atau ketik SN... --',
+            dropdownParent: $('#sn_select').parent(),
+            placeholder: '-- Pilih SN... --',
             allowClear: false,
             hideSelectedOptions: true,
             language: {
                 maximumSelected: function() { return ''; }
-            },
-            createTag: function(params) {
-                var term = $.trim(params.term);
-                if (term === '') return null;
-                return { id: term, text: term + ' (manual)', newTag: true };
             }
         }).on('select2:selecting', function(e) {
             // Always read the freshest jml from both DOM and data attribute (take the max)

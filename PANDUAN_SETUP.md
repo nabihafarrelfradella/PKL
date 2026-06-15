@@ -4,7 +4,7 @@ Dokumen ini berisi langkah-langkah untuk menyiapkan dan menjalankan project ini 
 
 ---
 
-## 📋 Persyaratan Sistem
+## Persyaratan Sistem
 Sebelum memulai, pastikan komputer Anda sudah terinstal:
 1. **PHP** (minimal versi 8.0)
 2. **Composer** (untuk mengelola dependency PHP)
@@ -13,7 +13,7 @@ Sebelum memulai, pastikan komputer Anda sudah terinstal:
 
 ---
 
-## 🚀 Langkah-Langkah Setup Awal
+## Langkah-Langkah Setup Awal
 
 Ikuti langkah-langkah di bawah ini secara berurutan:
 
@@ -50,13 +50,19 @@ Jalankan perintah berikut untuk membuat kunci pengaman aplikasi unik pada file `
 php artisan key:generate
 ```
 
-### 5. Install Dependency Javascript (NPM)
+### 5. Link Storage Folder
+Karena aplikasi ini mengunggah dan menampilkan foto (seperti foto profil & barang), Anda wajib membuat *symlink* folder storage agar gambar bisa diakses:
+```bash
+php artisan storage:link
+```
+
+### 6. Install Dependency Javascript (NPM)
 Jalankan perintah berikut untuk mengunduh package frontend:
 ```bash
 npm install
 ```
 
-### 6. Jalankan Migrasi & Seeding Database
+### 7. Jalankan Migrasi & Seeding Database
 Untuk membuat struktur tabel database beserta data awal (seperti hak akses, menu, dan akun demo), jalankan perintah berikut:
 ```bash
 php artisan migrate --seed
@@ -77,7 +83,7 @@ Buka dua tab terminal terpisah di folder project:
 
 ---
 
-## 🔑 Akun Demo Default untuk Login
+## Akun Demo Default untuk Login
 Setelah masuk ke halaman login [http://127.0.0.1:8000/admin/login](http://127.0.0.1:8000/admin/login), Anda bisa masuk menggunakan akun default berikut:
 
 ### 1. Akun Owner
