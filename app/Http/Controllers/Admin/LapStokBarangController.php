@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\BarangkeluarModel;
 use App\Models\Admin\BarangmasukModel;
 use App\Models\Admin\BarangModel;
-use App\Models\Admin\WebModel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use PDF;
@@ -44,16 +43,28 @@ class LapStokBarangController extends Controller
         $data['data'] = $query->get();
 
         $data["title"] = "PDF Stok Barang";
-        $data['web'] = WebModel::first();
         $data['tglawal'] = $request->tglawal;
         $data['tglakhir'] = $request->tglakhir;
         $pdf = PDF::loadView('Admin.Laporan.StokBarang.pdf', $data);
         
         if($request->tglawal){
-            return $pdf->download('lap-stok-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
-        }else{
-            return $pdf->download('lap-stok-semua-tanggal.pdf');
+            return $pdf->stream('lap-stok-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
+        } else {
+            return $pdf->stream('lap-stok-semua-tanggal.pdf');
         }
+    }
+
+    public function excel(Request $request)
+    {
+        $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+            ->orderBy('barang_id', 'DESC');
+        
+        $data['data'] = $query->get();
+        $data["title"] = "Excel Stok Barang";
+        $data['tglawal'] = $request->tglawal;
+        $data['tglakhir'] = $request->tglakhir;
+        return view('Admin.Laporan.StokBarang.excel', $data);
     }
 
     public function show(Request $request)

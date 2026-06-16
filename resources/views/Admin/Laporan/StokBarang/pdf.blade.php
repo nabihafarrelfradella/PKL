@@ -31,7 +31,7 @@ use Carbon\Carbon;
 <body>
 
     <div class="header">
-        <img src="{{url('/assets/default/web/default.png')}}" alt="Alfatindo">
+
         <h1>Laporan Stok Barang</h1>
         @if($tglawal == '')
         <h4>Semua Tanggal</h4>

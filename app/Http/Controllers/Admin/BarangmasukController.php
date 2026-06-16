@@ -204,6 +204,15 @@ class BarangmasukController extends Controller
     {
         try {
             $barangmasuk = BarangmasukModel::findOrFail($id);
+            
+            if ($barangmasuk->kode_barang_unik) {
+                \App\Models\Admin\BarangkeluarModel::where('kode_barang_unik', $barangmasuk->kode_barang_unik)->delete();
+            } else if ($barangmasuk->serial_number) {
+                \App\Models\Admin\BarangkeluarModel::where('serial_number', $barangmasuk->serial_number)
+                    ->where('barang_kode', $barangmasuk->barang_kode)
+                    ->delete();
+            }
+
             $barangmasuk->delete();
             return response()->json(['success' => 'Berhasil']);
         } catch (\Exception $e) {

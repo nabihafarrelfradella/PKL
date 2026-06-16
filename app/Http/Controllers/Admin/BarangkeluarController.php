@@ -416,6 +416,11 @@ class BarangkeluarController extends Controller
             'bk_jumlah_kembali'  => $request->jml,
         ]);
 
+        if ($status == 'Selesai' && $bk->kode_barang_unik) {
+            \App\Models\Admin\BarangmasukModel::where('kode_barang_unik', $bk->kode_barang_unik)
+                ->update(['jam_masuk' => now()]);
+        }
+
         // Notifikasi pengembalian ke Owner & Admin Gudang
         $teknisi = UserModel::where('teknisi_sn', $bk->teknisi)->first();
         $nmTeknisi = $teknisi ? $teknisi->user_nmlengkap : ($bk->teknisi_nama ?? $bk->teknisi ?? 'Teknisi');
@@ -561,9 +566,9 @@ class BarangkeluarController extends Controller
             ->select('serial_number', 'kode_barang_unik')
             ->get();
 
-        // 2. Cari serial number yang tidak tersedia (sedang dipinjam / habis pakai sudah dipakai)
+        // 2. Cari serial number yang tidak tersedia (sedang dipinjam / proses pinjam / proses kembali / habis pakai)
         $borrowedSNs = BarangkeluarModel::where('barang_kode', $barang_kode)
-            ->where('bk_status', 'Dipinjam')
+            ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
             ->whereNotNull('serial_number')
             ->pluck('serial_number')
             ->toArray();
@@ -601,7 +606,10 @@ class BarangkeluarController extends Controller
         if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
 
         $status = (str_contains(strtolower($bk->jenisbarang_nama ?? ''), 'habis')) ? 'Selesai' : 'Dipinjam';
-        BarangkeluarModel::find($id)->update(['bk_status' => $status]);
+        BarangkeluarModel::find($id)->update([
+            'bk_status'  => $status,
+            'jam_keluar' => now(),
+        ]);
         return response()->json(['success' => 'Peminjaman disetujui!']);
     }
 
@@ -620,6 +628,12 @@ class BarangkeluarController extends Controller
         if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
 
         $bk->update(['bk_status' => 'Selesai']);
+
+        if ($bk->kode_barang_unik) {
+            \App\Models\Admin\BarangmasukModel::where('kode_barang_unik', $bk->kode_barang_unik)
+                ->update(['jam_masuk' => now()]);
+        }
+
         return response()->json(['success' => 'Pengembalian disetujui!']);
     }
 

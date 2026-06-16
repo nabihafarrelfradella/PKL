@@ -219,7 +219,11 @@
     // Fungsi kembali() ada di kembali.blade.php (di-include di bawah)
 
     function validasi(judul, status) {
-        swal({ title: judul, type: status, confirmButtonText: "Iya." });
+        swal({
+            title: judul,
+            type: status,
+            confirmButtonText: "Iya."
+        });
     }
 </script>
 @endsection
@@ -258,9 +262,15 @@
                 });
             },
             "columns": [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
-                { data: 'tgl',          name: 'created_at' },
-                { data: 'bk_kode',      name: 'bk_kode' },
+                {
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    searchable: false
+                },
+                {
+                    data: 'tgl',
+                    name: 'created_at',
+                },{ data: 'bk_kode',      name: 'bk_kode' },
                 { data: 'barang',       name: 'barang_nama' },
                 { data: 'serial_number',name: 'serial_number' },
                 { data: 'tujuan',       name: 'bk_tujuan' },

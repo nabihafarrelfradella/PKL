@@ -1,8 +1,41 @@
 <?php
     use Illuminate\Support\Facades\Session;
+    use App\Models\Admin\AksesModel;
     $user   = Session::get('user');
     $roleId = $user ? $user->role_id : 0;
     // role_id=1 → Owner, role_id=2 → Admin Gudang, role_id=3 → Pegawai Teknisi
+    
+    // Ambil daftar akses 'view' untuk role ini (selain Owner)
+    $aksesMenus = [];
+    $aksesMenusJudul = [];
+    $aksesSubmenus = [];
+    if ($roleId != 1) {
+        $menus = AksesModel::leftJoin('tbl_menu', 'tbl_menu.menu_id', '=', 'tbl_akses.menu_id')
+            ->where('tbl_akses.role_id', $roleId)
+            ->where('tbl_akses.akses_type', 'view')
+            ->get(['tbl_menu.menu_redirect', 'tbl_menu.menu_judul']);
+            
+        $aksesMenus = $menus->pluck('menu_redirect')->toArray();
+        $aksesMenusJudul = $menus->pluck('menu_judul')->toArray();
+            
+        $aksesSubmenus = AksesModel::leftJoin('tbl_submenu', 'tbl_submenu.submenu_id', '=', 'tbl_akses.submenu_id')
+            ->where('tbl_akses.role_id', $roleId)
+            ->where('tbl_akses.akses_type', 'view')
+            ->pluck('tbl_submenu.submenu_redirect')->toArray();
+    }
+    
+    if (!function_exists('hasViewAccess')) {
+        function hasViewAccess($roleId, $redirect, $type, $menus, $submenus) {
+            if ($roleId == 1) return true; // Owner has all access
+            if ($type == 'menu') {
+                return in_array($redirect, $menus);
+            } elseif ($type == 'judul') {
+                return in_array($redirect, $menus);
+            } else {
+                return in_array($redirect, $submenus);
+            }
+        }
+    }
 ?>
 <!--APP-SIDEBAR-->
 <div class="sticky">
@@ -35,19 +68,25 @@
                     <h3>Menu</h3>
                 </li>
 
-                <!-- Dashboard (semua role) -->
+                <!-- Dashboard (semua role, diasumsikan selalu ada) -->
+                @if(hasViewAccess($roleId, '/dashboard', 'menu', $aksesMenus, $aksesSubmenus))
                 <li class="slide">
                     <a class="side-menu__item {{$title == 'Dashboard' ? 'active' : ''}}" data-bs-toggle="slide" href="{{url('/admin/dashboard')}}">
                         <i class="side-menu__icon fe fe-home"></i>
                         <span class="side-menu__label">Dashboard</span>
                     </a>
                 </li>
+                @endif
 
-                @if($roleId == 1 || $roleId == 2)
                 {{-- ============================================
-                     OWNER & ADMIN GUDANG
+                     DYNAMIC MENU (Based on RBAC)
                      ============================================ --}}
 
+                @php
+                    $isMasterBarangMenuAllowed = hasViewAccess($roleId, 'Master Barang', 'judul', $aksesMenusJudul, []);
+                    $showMasterBarang = $isMasterBarangMenuAllowed && (hasViewAccess($roleId, '/jenisbarang', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/barang', 'submenu', $aksesMenus, $aksesSubmenus));
+                @endphp
+                @if($showMasterBarang)
                 <li class="sub-category">
                     <h3>Master Data</h3>
                 </li>
@@ -59,11 +98,26 @@
                         <span class="side-menu__label">Master Barang</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
+                        @if(hasViewAccess($roleId, '/jenisbarang', 'submenu', $aksesMenus, $aksesSubmenus))
+                        <li><a href="{{url('/admin/jenisbarang')}}" class="slide-item {{$title == 'Jenis' ? 'active' : ''}}">Jenis Barang</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/merk')}}" class="slide-item {{$title == 'Merk' ? 'active' : ''}}">Merk Barang</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/barang', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/barang')}}" class="slide-item {{$title == 'Barang' ? 'active' : ''}}">Data Barang</a></li>
+                        @endif
                     </ul>
                 </li>
+                @endif
 
+                @php
+                    $isTransaksiMenuAllowed = hasViewAccess($roleId, 'Transaksi', 'judul', $aksesMenusJudul, []);
+                    $showTransaksi = $isTransaksiMenuAllowed && (hasViewAccess($roleId, '/barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus) || 
+                                     hasViewAccess($roleId, '/barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus) || 
+                                     hasViewAccess($roleId, '/barang-tracking', 'submenu', $aksesMenus, $aksesSubmenus));
+                @endphp
+                @if($showTransaksi)
                 <li class="sub-category">
                     <h3>Transaksi</h3>
                 </li>
@@ -75,12 +129,26 @@
                         <span class="side-menu__label">Transaksi</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
+                        @if(hasViewAccess($roleId, '/barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/barang-masuk')}}" class="slide-item {{$title == 'Barang Masuk' ? 'active' : ''}}">Barang Masuk</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/barang-keluar')}}" class="slide-item {{$title == 'Barang Keluar' ? 'active' : ''}}">Barang Keluar</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/barang-tracking', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/barang-tracking')}}" class="slide-item {{$title == 'Barang Tracking' ? 'active' : ''}}">Barang Tracking</a></li>
+                        @endif
                     </ul>
                 </li>
+                @endif
 
+                @php
+                    $isLaporanMenuAllowed = hasViewAccess($roleId, 'Laporan', 'judul', $aksesMenusJudul, []);
+                    $showLaporan = $isLaporanMenuAllowed && (hasViewAccess($roleId, '/lap-barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus) || 
+                                   hasViewAccess($roleId, '/lap-barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus) || 
+                                   hasViewAccess($roleId, '/lap-stok-barang', 'submenu', $aksesMenus, $aksesSubmenus));
+                @endphp
+                @if($showLaporan)
                 <li class="sub-category">
                     <h3>Laporan</h3>
                 </li>
@@ -92,11 +160,18 @@
                         <span class="side-menu__label">Laporan</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
+                        @if(hasViewAccess($roleId, '/lap-barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/lap-barang-masuk')}}" class="slide-item {{in_array($title, ['Lap Barang Masuk', 'Laporan Barang Masuk']) ? 'active' : ''}}">Lap. Barang Masuk</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/lap-barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/lap-barang-keluar')}}" class="slide-item {{in_array($title, ['Lap Barang Keluar', 'Laporan Barang Keluar']) ? 'active' : ''}}">Lap. Barang Keluar</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/lap-stok-barang', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/lap-stok-barang')}}" class="slide-item {{in_array($title, ['Lap Stok Barang', 'Laporan Stok Barang']) ? 'active' : ''}}">Lap. Stok Barang</a></li>
+                        @endif
                     </ul>
                 </li>
+                @endif
 
                 @if($roleId == 1)
                 {{-- ============================================
@@ -119,32 +194,7 @@
                 </li>
                 @endif
 
-                @elseif($roleId == 3)
-                {{-- ============================================
-                     PEGAWAI TEKNISI — Limited Access
-                     ============================================ --}}
-                <li class="sub-category">
-                    <h3>Transaksi</h3>
-                </li>
 
-                <!-- Barang Masuk (view + form input) -->
-                <li class="slide">
-                    <a class="side-menu__item {{$title == 'Barang Masuk' ? 'active' : ''}}" href="{{url('/admin/barang-masuk')}}">
-                        <i class="side-menu__icon fe fe-arrow-down-circle"></i>
-                        <span class="side-menu__label">Barang Masuk</span>
-                        <span class="badge bg-info ms-1" style="font-size:10px">Form</span>
-                    </a>
-                </li>
-
-                <!-- Barang Keluar (view + form peminjaman) -->
-                <li class="slide">
-                    <a class="side-menu__item {{$title == 'Barang Keluar' ? 'active' : ''}}" href="{{url('/admin/barang-keluar')}}">
-                        <i class="side-menu__icon fe fe-arrow-up-circle"></i>
-                        <span class="side-menu__label">Barang Keluar</span>
-                        <span class="badge bg-info ms-1" style="font-size:10px">Form</span>
-                    </a>
-                </li>
-                @endif
 
                 <li class="sub-category">
                     <h3>Other</h3>

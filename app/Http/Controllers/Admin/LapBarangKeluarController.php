@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\BarangkeluarModel;
-use App\Models\Admin\WebModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -101,16 +100,32 @@ class LapBarangKeluarController extends Controller
 
         $data['data'] = $query->orderBy('bk_id', 'DESC')->get();
         $data['title']    = 'PDF Laporan Barang Keluar';
-        $data['web']      = WebModel::first();
         $data['tglawal']  = $request->tglawal;
         $data['tglakhir'] = $request->tglakhir;
         
         $pdf = PDF::loadView('Admin.Laporan.BarangKeluar.pdf', $data);
         
         if ($request->tglawal) {
-            return $pdf->download('lap-bk-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
+            return $pdf->stream('lap-bk-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
         } else {
-            return $pdf->download('lap-bk-semua-tanggal.pdf');
+            return $pdf->stream('lap-bk-semua-tanggal.pdf');
         }
+    }
+
+    public function excel(Request $request)
+    {
+        $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
+                ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
+
+        if ($request->tglawal) {
+            $query->whereBetween('bk_tanggal', [$request->tglawal, $request->tglakhir]);
+        }
+
+        $data['data'] = $query->orderBy('bk_id', 'DESC')->get();
+        $data['title']    = 'Excel Laporan Barang Keluar';
+        $data['tglawal']  = $request->tglawal;
+        $data['tglakhir'] = $request->tglakhir;
+        return view('Admin.Laporan.BarangKeluar.excel', $data);
     }
 }

@@ -18,24 +18,25 @@
             </div>
             <div class="card-body">
                 <div class="row mb-4">
-                    <div class="col-md-3">
+                    <div class="col-12">
                         <label for="" class="fw-bold">Filter Tanggal</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <input type="text" name="tglawal" class="form-control datepicker-date" placeholder="Tanggal Awal">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <input type="text" name="tglakhir" class="form-control datepicker-date" placeholder="Tanggal Akhir">
-                                </div>
-                            </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-0">
+                            <label class="form-label small text-muted">Dari Tanggal</label>
+                            <input type="date" name="tglawal" id="tglawal" class="form-control">
                         </div>
                     </div>
-                    <div class="col-md-6 mt-5">
-                        <button class="btn btn-success-light" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
-                        <button class="btn btn-secondary-light" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
+                    <div class="col-md-3">
+                        <div class="form-group mb-0">
+                            <label class="form-label small text-muted">Sampai Tanggal</label>
+                            <input type="date" name="tglakhir" id="tglakhir" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end pb-3 mt-3 mt-md-0">
+                        <button class="btn btn-success-light me-1" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
+                        <button class="btn btn-secondary-light me-1" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
+                        <button class="btn btn-success-light me-1" onclick="exportExcel()"><i class="fe fe-file-text"></i> Export Excel</button>
                         <button class="btn btn-primary-light" onclick="print()"><i class="fe fe-printer"></i> Print</button>
                     </div>
                 </div>
@@ -138,18 +139,40 @@
         table.ajax.reload(null, false);
     }
 
-    function print() {
+    function exportExcel() {
         var tglawal = $('input[name="tglawal"]').val();
         var tglakhir = $('input[name="tglakhir"]').val();
         
-        let url = "{{ route('lap-sb.print') }}";
+        let url = "{{ route('lap-sb.excel') }}";
         
-        // Jika filter tanggal diisi, tambahkan parameter ke URL
         if (tglawal != '' && tglakhir != '') {
             url += "?tglawal=" + tglawal + "&tglakhir=" + tglakhir;
         }
 
         window.open(url, '_blank');
+    }
+
+    function print() {
+        var tglawal = $('input[name="tglawal"]').val();
+        var tglakhir = $('input[name="tglakhir"]').val();
+        if (tglawal != '' && tglakhir != '') {
+            window.open("{{route('lap-sb.print')}}?tglawal=" + tglawal + "&tglakhir=" + tglakhir, '_blank');
+        } else {
+            swal({
+                title: "Yakin Print Semua Data?",
+                type: "warning",
+                buttons: true,
+                dangerMode: true,
+                confirmButtonText: "Yakin",
+                cancelButtonText: 'Batal',
+                showCancelButton: true,
+                confirmButtonColor: '#09ad95',
+            }, function(value) {
+                if (value == true) {
+                    window.open("{{route('lap-sb.print')}}", '_blank');
+                }
+            });
+        }
     }
 
     function validasi(judul, status) {

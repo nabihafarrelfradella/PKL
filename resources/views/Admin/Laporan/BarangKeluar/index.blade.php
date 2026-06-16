@@ -23,21 +23,22 @@
                         <label for="" class="fw-bold">Filter Tanggal</label>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label class="form-label small text-muted">Dari Tanggal</label>
                             <input type="date" name="tglawal" id="tglawal" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label class="form-label small text-muted">Sampai Tanggal</label>
                             <input type="date" name="tglakhir" id="tglakhir" class="form-control">
                         </div>
                     </div>
-                    <div class="col-md-6 d-flex align-items-end">
+                    <div class="col-md-6 d-flex align-items-end pb-3 mt-3 mt-md-0">
                         <button class="btn btn-success-light me-1" onclick="filter()"><i class="fe fe-filter"></i> Filter</button>
                         <button class="btn btn-secondary-light me-1" onclick="reset()"><i class="fe fe-refresh-ccw"></i> Reset</button>
-                        <button class="btn btn-primary-light me-1" onclick="print()"><i class="fe fe-printer"></i> Print</button>
+                        <button class="btn btn-success-light me-1" onclick="exportExcel()"><i class="fe fe-file-text"></i> Export Excel</button>
+                        <button class="btn btn-primary-light" onclick="print()"><i class="fe fe-printer"></i> Print</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -123,6 +124,18 @@
         $('#tglawal').val('');
         $('#tglakhir').val('');
         table.ajax.reload(null, false);
+    }
+
+    function exportExcel() {
+        var tglawal = $('#tglawal').val();
+        var tglakhir = $('#tglakhir').val();
+        
+        let url = "{{ route('lap-bk.excel') }}";
+        if (tglawal != '' && tglakhir != '') {
+            url += "?tglawal=" + tglawal + "&tglakhir=" + tglakhir;
+        }
+        
+        window.open(url, '_blank');
     }
 
     function print() {

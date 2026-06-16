@@ -101,16 +101,41 @@ class LapBarangMasukController extends Controller
         
         $data['data'] = $query->orderBy('bm_id', 'DESC')->get();
         $data["title"] = "PDF Barang Masuk";
-        $data['web'] = WebModel::first();
         $data['tglawal'] = $request->tglawal;
         $data['tglakhir'] = $request->tglakhir;
         
         $pdf = PDF::loadView('Admin.Laporan.BarangMasuk.pdf', $data);
         
         if ($request->tglawal) {
-            return $pdf->download('lap-bm-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
+            return $pdf->stream('lap-bm-'.$request->tglawal.'-'.$request->tglakhir.'.pdf');
         } else {
-            return $pdf->download('lap-bm-semua-tanggal.pdf');
+            return $pdf->stream('lap-bm-semua-tanggal.pdf');
         }
+    }
+
+    public function excel(Request $request)
+    {
+        $query = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->select([
+                'tbl_barangmasuk.bm_id',
+                'tbl_barangmasuk.bm_kode',
+                'tbl_barangmasuk.bm_tanggal',
+                'tbl_barangmasuk.bm_jumlah',
+                'tbl_barangmasuk.serial_number',
+                'tbl_barangmasuk.kode_barang_unik',
+                'tbl_barangmasuk.barang_kode',
+                'tbl_barang.barang_nama',
+            ]);
+        
+        if ($request->tglawal) {
+            $query->whereBetween('bm_tanggal', [$request->tglawal, $request->tglakhir]);
+        }
+        
+        $data['data'] = $query->orderBy('bm_id', 'DESC')->get();
+        $data["title"] = "Excel Barang Masuk";
+        $data['tglawal'] = $request->tglawal;
+        $data['tglakhir'] = $request->tglakhir;
+        
+        return view('Admin.Laporan.BarangMasuk.excel', $data);
     }
 }

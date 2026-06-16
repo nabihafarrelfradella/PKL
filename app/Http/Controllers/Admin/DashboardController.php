@@ -10,7 +10,7 @@ use App\Models\Admin\JenisBarangModel;
 use App\Models\Admin\MerkModel;
 use App\Models\Admin\UserModel;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Session;
 class DashboardController extends Controller
 {
     public function index()
@@ -29,11 +29,31 @@ class DashboardController extends Controller
         // Total barang masuk (semua transaksi masuk)
         $data['bm']       = BarangmasukModel::count();
 
-        // Total barang keluar aktif berstatus Dipinjam
-        $data['bk_dipinjam'] = BarangkeluarModel::where('bk_status', 'Dipinjam')->count();
+        $user = Session::get('user');
 
-        // Total semua transaksi keluar
-        $data['bk']       = BarangkeluarModel::count();
+        if ($user && $user->role_id == 3) {
+            // Jika teknisi, hitung hanya transaksi miliknya
+            $data['bk_dipinjam'] = BarangkeluarModel::whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Kembali'])
+                                                    ->where('teknisi', $user->teknisi_sn)
+                                                    ->count();
+
+            $data['bk']          = BarangkeluarModel::whereIn('bk_status', ['Dipinjam', 'Selesai', 'Menunggu Persetujuan Kembali'])
+                                                    ->where('teknisi', $user->teknisi_sn)
+                                                    ->count();
+
+            $data['bk_menunggu'] = BarangkeluarModel::whereIn('bk_status', ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
+                                                    ->where('teknisi', $user->teknisi_sn)
+                                                    ->count();
+        } else {
+            // Total barang keluar aktif berstatus Dipinjam
+            $data['bk_dipinjam'] = BarangkeluarModel::whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Kembali'])->count();
+
+            // Total semua transaksi keluar yang sudah disetujui
+            $data['bk']          = BarangkeluarModel::whereIn('bk_status', ['Dipinjam', 'Selesai', 'Menunggu Persetujuan Kembali'])->count();
+
+            // Total persetujuan yang menunggu aksi admin
+            $data['bk_menunggu'] = BarangkeluarModel::whereIn('bk_status', ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])->count();
+        }
 
         // Total user
         $data['user']     = UserModel::count();

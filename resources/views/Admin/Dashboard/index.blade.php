@@ -100,6 +100,7 @@
 
     <div class="page-header d-flex flex-column flex-sm-row align-items-sm-center">
         <h1 class="page-title mb-2 mb-sm-0">Dashboard Statistik</h1>
+        @if(Session::get('user')->role_id != 3)
         <div class="ms-sm-auto w-100 w-sm-auto d-grid gap-2 d-sm-flex mt-2 mt-sm-0">
             <a href="{{ route('barang-tracking.index') }}" class="btn btn-secondary btn-icon text-white">
                 <i class="fe fe-activity me-1"></i> Barang Tracking
@@ -108,6 +109,7 @@
                 <i class="fe fe-search me-1"></i> Cek Resi / Tracking
             </a>
         </div>
+        @endif
     </div>
     @if(Session::has('status'))
         <div class="alert alert-{{ Session::get('status') == 'success' ? 'success' : 'danger' }} alert-dismissible fade show"
@@ -149,7 +151,7 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
             <div class="stat-card" style="background: linear-gradient(135deg, #e84c4c 0%, #c43c3c 100%);">
                 <div class="stat-info">
                     <h3>{{$bk_dipinjam}}</h3>
@@ -159,7 +161,7 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
             <div class="stat-card" style="background: linear-gradient(135deg, #f0a500 0%, #d18f00 100%);">
                 <div class="stat-info">
                     <h3>{{$bk}}</h3>
@@ -169,7 +171,18 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #e83e8c 0%, #c23375 100%);">
+                <div class="stat-info">
+                    <h3>{{$bk_menunggu}}</h3>
+                    <p>Menunggu Persetujuan</p>
+                </div>
+                <div class="stat-icon"><i class="fe fe-clock"></i></div>
+            </div>
+        </div>
+
+        @if(Session::get('user')->role_id != 3)
+        <div class="col-sm-6 col-xl-6">
             <div class="stat-card" style="background: linear-gradient(135deg, #9b3fdb 0%, #7e2db8 100%);">
                 <div class="stat-info">
                     <h3>{{$teknisi}}</h3>
@@ -179,7 +192,7 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-6">
             <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);">
                 <div class="stat-info">
                     <h3>{{$user}}</h3>
@@ -188,6 +201,7 @@
                 <div class="stat-icon"><i class="fe fe-user"></i></div>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- PANEL BARANG DIPINJAM — hanya untuk Owner & Admin Gudang --}}
