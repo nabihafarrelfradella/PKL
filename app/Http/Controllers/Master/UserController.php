@@ -513,7 +513,6 @@ class UserController extends Controller
 
             // Master Barang
             ['label' => 'Master Barang (menu)', 'group' => 'Master Barang', 'ref_type' => 'menu', 'ref_slug' => 'master-barang', 'types' => ['view']],
-            ['label' => 'Jenis Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/jenisbarang', 'types' => ['view', 'create', 'update', 'delete']],
             ['label' => 'Merk Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/merk', 'types' => ['view', 'create', 'update', 'delete']],
             ['label' => 'Data Barang', 'group' => 'Master Barang', 'ref_type' => 'submenu', 'ref_slug' => '/barang', 'types' => ['view', 'create', 'update', 'delete']],
 

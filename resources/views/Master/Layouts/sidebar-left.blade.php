@@ -84,7 +84,7 @@
 
                 @php
                     $isMasterBarangMenuAllowed = hasViewAccess($roleId, 'Master Barang', 'judul', $aksesMenusJudul, []);
-                    $showMasterBarang = $isMasterBarangMenuAllowed && (hasViewAccess($roleId, '/jenisbarang', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/barang', 'submenu', $aksesMenus, $aksesSubmenus));
+                    $showMasterBarang = $isMasterBarangMenuAllowed && (hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/barang', 'submenu', $aksesMenus, $aksesSubmenus));
                 @endphp
                 @if($showMasterBarang)
                 <li class="sub-category">
@@ -98,9 +98,6 @@
                         <span class="side-menu__label">Master Barang</span><i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
-                        @if(hasViewAccess($roleId, '/jenisbarang', 'submenu', $aksesMenus, $aksesSubmenus))
-                        <li><a href="{{url('/admin/jenisbarang')}}" class="slide-item {{$title == 'Jenis' ? 'active' : ''}}">Jenis Barang</a></li>
-                        @endif
                         @if(hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/merk')}}" class="slide-item {{$title == 'Merk' ? 'active' : ''}}">Merk Barang</a></li>
                         @endif
