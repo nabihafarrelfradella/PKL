@@ -20,7 +20,7 @@ class BarangkeluarController extends Controller
         $data["title"]    = "Barang Keluar";
         $user             = Session::get('user');
         $data["roleId"]   = $user->role_id ?? 0;
-        $data["hakTambah"]= ($data["roleId"] == 1 || $data["roleId"] == 2 || $data["roleId"] == 3) ? 1 : 0;
+        $data["hakTambah"]= $this->checkAccess($data["roleId"], '/barang-keluar', 'create');
 
         // Untuk form tambah: daftar teknisi (hanya Owner & Admin yang pakai dropdown)
         $data["pegawai"] = UserModel::where('role_id', 3)->orderBy('user_nmlengkap', 'ASC')->get();
@@ -151,10 +151,8 @@ class BarangkeluarController extends Controller
                     </button>';
                 })
                 ->addColumn('action', function ($row) use ($roleId) {
-                    if (in_array($roleId, [1, 2])) {
-                        return '<button class="btn btn-sm btn-danger-light" onclick="hapusTransaksi(\'' . htmlspecialchars($row->bk_kode) . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>';
-                    }
-                    return '-';
+                    $hakAksesDelete = $this->checkAccess($roleId, '/barang-keluar', 'delete');
+                    return $hakAksesDelete ? '<button class="btn btn-danger-light btn-sm" onclick="hapusTransaksi(\'' . htmlspecialchars($row->bk_kode) . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>' : '-';
                 })
                 ->rawColumns(['action', 'tgl', 'status', 'teknisi', 'tujuan', 'serial_number', 'expand'])
                 ->make(true);
@@ -225,9 +223,16 @@ class BarangkeluarController extends Controller
             }
 
             // Edit & Hapus
-            if (in_array($roleId, [1, 2]) && !in_array($row->bk_status, ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])) {
-                $action .= '<a class="btn text-success btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit fs-13"></span></a>';
-                $action .= '<a class="btn text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-13"></span></a>';
+            $hakEdit = $this->checkAccess($roleId, '/barang-keluar', 'update');
+            $hakDelete = $this->checkAccess($roleId, '/barang-keluar', 'delete');
+            
+            if (!in_array($row->bk_status, ['Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])) {
+                if ($hakEdit > 0) {
+                    $action .= '<a class="btn text-success btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit fs-13"></span></a>';
+                }
+                if ($hakDelete > 0) {
+                    $action .= '<a class="btn text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-13"></span></a>';
+                }
             }
 
             // Status badge

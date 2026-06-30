@@ -34,20 +34,20 @@
                     #modaldemo8 .my-3 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
                     #modaldemo8 .form-label, #modaldemo8 label { margin-bottom: 0.25rem; font-size: 0.85rem; }
                 </style>
-                <div class="row">
-                    <div class="col-md-5">
+                <div class="row g-3">
+                    <div class="col-lg-5">
                         <div class="form-group d-none">
                             <label class="form-label">Kode Keluar <span class="text-danger">*</span></label>
                             <input type="text" name="bkkode" readonly class="form-control" placeholder="Otomatis">
                         </div>
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
                                 <div class="form-group">
                                     <label class="form-label">Tanggal Keluar <span class="text-danger">*</span></label>
                                     <input type="datetime-local" name="tglkeluar" id="tglkeluar_input" class="form-control">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-sm-6">
                                 @if(($roleId ?? 0) == 3)
                                 {{-- TEKNISI: auto-fill nama & SN dari session --}}
                                 <div class="form-group">
@@ -80,8 +80,8 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
                                 @if(($roleId ?? 0) == 3)
                                 <div class="form-group">
                                     <label class="form-label fw-semibold text-danger">
@@ -96,7 +96,7 @@
                                 </div>
                                 @endif
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-sm-6">
                                 <div class="form-group">
                                     <label class="form-label">
                                         <i class="fe fe-map-pin me-1 text-danger"></i>Lokasi Instalasi <span class="text-danger">*</span>
@@ -115,7 +115,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-7">
+                    <div class="col-lg-7">
                         <div class="form-group">
                             <label>Kode Barang / Kode Unik / SN <span class="text-danger me-1">*</span>
                                 <input type="hidden" id="status" value="false">
@@ -124,24 +124,24 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </label>
-                            <div class="input-group">
+                            <div class="input-group flex-nowrap">
                                 <input type="text" class="form-control" autocomplete="off" name="kdbarang" placeholder="Scan QR atau masukkan kode...">
                                 <button class="btn btn-primary-light" onclick="searchBarang()" type="button"><i class="fe fe-search"></i></button>
                                 <button class="btn btn-success-light" onclick="modalBarang()" type="button"><i class="fe fe-box"></i></button>
                             </div>
                             <small class="text-muted">Bisa scan QR Code atau input Serial Number</small>
                         </div>
-                        <div class="row">
-                            <div class="col-md-8">
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-8">
                                 <div class="form-group">
                                     <label>Nama Barang</label>
                                     <input type="text" class="form-control" id="nmbarang" readonly>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-sm-4">
                                 <div class="form-group">
                                     <label>Jumlah Keluar <span class="text-danger">*</span></label>
-                                    <div class="input-group">
+                                    <div class="input-group flex-nowrap">
                                         <button class="btn btn-light border" type="button" onclick="adjustQty(-1)" style="padding-top: 0; padding-bottom: 0;"><i class="fe fe-minus"></i></button>
                                         <input type="text" name="jml" value="1" class="form-control text-center font-weight-bold" oninput="this.value = this.value.replace(/[^0-9]/g, ''); validateAndNotifyQty();" style="font-weight: 600;">
                                         <button class="btn btn-light border" type="button" onclick="adjustQty(1)" style="padding-top: 0; padding-bottom: 0;"><i class="fe fe-plus"></i></button>

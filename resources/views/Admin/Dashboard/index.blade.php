@@ -205,6 +205,7 @@
     </div>
 
     <!-- CHART SECTION -->
+    @if(Session::get('user')->role_id != 3)
     <div class="row row-sm mb-4">
         <div class="col-12 mb-3">
             <h4 class="mb-0 fw-bold">Statistik Pergerakan Barang</h4>
@@ -263,7 +264,10 @@
                 </div>
             </div>
         </div>
-    </div>    {{-- PANEL BARANG DIPINJAM — hanya untuk Owner & Admin Gudang --}}
+    </div>
+    @endif
+    
+    {{-- PANEL BARANG DIPINJAM — hanya untuk Owner & Admin Gudang --}}
     @php $userRole = Session::get('user')->role_id ?? 0; @endphp
     @if(in_array($userRole, [1, 2]))
     <div class="row row-sm mb-4">

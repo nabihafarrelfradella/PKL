@@ -15,7 +15,7 @@ class MerkController extends Controller
     public function index()
     {
         $data["title"] = "Merk";
-        $data["hakTambah"] = (Session::get('user')->role_id == 1 || Session::get('user')->role_id == 2) ? 1 : 0;
+        $data["hakTambah"] = $this->checkAccess(Session::get('user')->role_id, '/merk', 'create');
         return view('Admin.Merk.index', $data);
     }
 
@@ -38,8 +38,8 @@ class MerkController extends Controller
                     );
                     $button = '';
                     $roleId = Session::get('user')->role_id;
-                    $hakEdit = ($roleId == 1 || $roleId == 2) ? 1 : 0;
-                    $hakDelete = ($roleId == 1 || $roleId == 2) ? 1 : 0;
+                    $hakEdit = $this->checkAccess($roleId, '/merk', 'update');
+                    $hakDelete = $this->checkAccess($roleId, '/merk', 'delete');
                     if ($hakEdit > 0 && $hakDelete > 0) {
                         $button .= '
                         <a class="btn modal-effect text-primary btn-sm" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#Umodaldemo8" data-bs-toggle="tooltip" data-bs-original-title="Edit" onclick="update(' . htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8') . ')"><span class="fe fe-edit text-success fs-14"></span></a>

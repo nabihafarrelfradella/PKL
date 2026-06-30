@@ -17,7 +17,7 @@ class BarangmasukController extends Controller
     {
         $data["title"] = "Barang Masuk";
         $user = Session::get('user');
-        $data["hakTambah"] = ($user && in_array($user->role_id, [1, 2])) ? 1 : 0;
+        $data["hakTambah"] = $this->checkAccess($user->role_id ?? 0, '/barang-masuk', 'create');
         return view('Admin.BarangMasuk.index', $data);
     }
 
@@ -57,7 +57,7 @@ class BarangmasukController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $user = Session::get('user');
-                    $hakAkses = ($user && in_array($user->role_id, [1, 2])) ? 1 : 0;
+                    $hakAkses = $this->checkAccess($user->role_id ?? 0, '/barang-masuk', 'delete');
                     
                     $bmKode = htmlspecialchars($row->bm_kode, ENT_QUOTES, 'UTF-8');
                     $btnHapus = $hakAkses ? '<button class="btn btn-danger-light btn-sm" onclick="hapusSemuaBM(\'' . $bmKode . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>' : '';
@@ -89,9 +89,10 @@ class BarangmasukController extends Controller
             ->get();
 
         $user   = Session::get('user');
-        $roleId = $user->role_id ?? 0;
+        $hakEdit = $this->checkAccess($user->role_id ?? 0, '/barang-masuk', 'update');
+        $hakDelete = $this->checkAccess($user->role_id ?? 0, '/barang-masuk', 'delete');
 
-        $result = $rows->map(function ($row) use ($roleId) {
+        $result = $rows->map(function ($row) use ($hakEdit, $hakDelete) {
             $array = [
                 "bm_id"            => $row->bm_id,
                 "bm_kode"          => $row->bm_kode,
@@ -109,8 +110,10 @@ class BarangmasukController extends Controller
             // QR
             $action .= '<a class="btn text-info btn-sm" data-bs-toggle="modal" href="#Qmodaldemo8" onclick="showQR(' . $json . ')"><span class="fe fe-printer fs-13"></span></a>';
 
-            if (in_array($roleId, [1, 2])) {
+            if ($hakEdit > 0) {
                 $action .= '<a class="btn text-success btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit fs-13"></span></a>';
+            }
+            if ($hakDelete > 0) {
                 $action .= '<a class="btn text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-13"></span></a>';
             }
 

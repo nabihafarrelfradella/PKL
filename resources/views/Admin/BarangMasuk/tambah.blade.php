@@ -12,7 +12,7 @@
                     #modaldemo8 .form-label, #modaldemo8 label { margin-bottom: 0.25rem; font-size: 0.85rem; }
                 </style>
                 {{-- ── BAGIAN INPUT ── --}}
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-5">
                         <div class="form-group d-none">
                             <label for="bmkode" class="form-label">Kode Barang Masuk <span class="text-danger">*</span></label>
@@ -41,7 +41,7 @@
                                 <button class="btn btn-success-light" onclick="modalBarang()" type="button"><i class="fe fe-box"></i></button>
                             </div>
                         </div>
-                        <div class="row">
+                        <div class="row g-3">
                             <div class="col-md-8">
                                 <div class="form-group">
                                     <label>Nama Barang</label>

@@ -83,8 +83,7 @@
                      ============================================ --}}
 
                 @php
-                    $isMasterBarangMenuAllowed = hasViewAccess($roleId, 'Master Barang', 'judul', $aksesMenusJudul, []);
-                    $showMasterBarang = $isMasterBarangMenuAllowed && (hasViewAccess($roleId, '/merk', 'submenu', $aksesMenus, $aksesSubmenus) || hasViewAccess($roleId, '/barang', 'submenu', $aksesMenus, $aksesSubmenus));
+                    $showMasterBarang = hasViewAccess($roleId, 'Master Barang', 'judul', $aksesMenusJudul, []);
                 @endphp
                 @if($showMasterBarang)
                 <li class="sub-category">
@@ -109,10 +108,7 @@
                 @endif
 
                 @php
-                    $isTransaksiMenuAllowed = hasViewAccess($roleId, 'Transaksi', 'judul', $aksesMenusJudul, []);
-                    $showTransaksi = $isTransaksiMenuAllowed && (hasViewAccess($roleId, '/barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus) || 
-                                     hasViewAccess($roleId, '/barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus) || 
-                                     hasViewAccess($roleId, '/barang-tracking', 'submenu', $aksesMenus, $aksesSubmenus));
+                    $showTransaksi = hasViewAccess($roleId, 'Transaksi', 'judul', $aksesMenusJudul, []);
                 @endphp
                 @if($showTransaksi)
                 <li class="sub-category">
@@ -140,10 +136,7 @@
                 @endif
 
                 @php
-                    $isLaporanMenuAllowed = hasViewAccess($roleId, 'Laporan', 'judul', $aksesMenusJudul, []);
-                    $showLaporan = $isLaporanMenuAllowed && (hasViewAccess($roleId, '/lap-barang-masuk', 'submenu', $aksesMenus, $aksesSubmenus) || 
-                                   hasViewAccess($roleId, '/lap-barang-keluar', 'submenu', $aksesMenus, $aksesSubmenus) || 
-                                   hasViewAccess($roleId, '/lap-stok-barang', 'submenu', $aksesMenus, $aksesSubmenus));
+                    $showLaporan = hasViewAccess($roleId, 'Laporan', 'judul', $aksesMenusJudul, []);
                 @endphp
                 @if($showLaporan)
                 <li class="sub-category">
