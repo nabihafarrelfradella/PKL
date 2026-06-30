@@ -55,10 +55,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group d-none">
                             <label for="jmlU" class="form-label">Jumlah Masuk <span class="text-danger">*</span></label>
-                            <input type="text" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
-                            <small class="text-muted">Jumlah tidak dapat diubah (setiap baris = 1 unit)</small>
+                            <input type="hidden" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
                         </div>
                     </div>
                 </div>
@@ -112,7 +111,7 @@
                     $("#statusU").val("true");
                     $("#nmbarangU").val(data[0].barang_nama);
                     $("#satuanU").val(data[0].satuan_id);
-                    $("#jenisU").val(data[0].jenisbarang_nama);
+                    $("#jenisU").val(data[0].tipe_barang);
                 } else {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("false");

@@ -21,9 +21,9 @@
                             <label for="tglkembali" class="form-label">Tanggal Kembali <span class="text-danger">*</span></label>
                             <input type="date" name="tglkembali" class="form-control">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group d-none">
                             <label for="jmlK" class="form-label">Jumlah Kembali <span class="text-danger">*</span></label>
-                            <input type="number" name="jmlK" class="form-control" readonly>
+                            <input type="hidden" name="jmlK" class="form-control" readonly>
                         </div>
                         <div class="form-group">
                             <label for="kondisi" class="form-label">Kondisi Barang <span class="text-danger">*</span></label>

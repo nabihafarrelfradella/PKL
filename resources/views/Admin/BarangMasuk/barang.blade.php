@@ -51,7 +51,7 @@
         $("input[name='kdbarang']").val(data.barang_kode);
         $("#nmbarang").val(data.barang_nama.replace(/_/g, ' '));
         $("#satuan").val(data.satuan_nama.replace(/_/g, ' '));
-        $("#jenis").val(data.jenisbarang_nama.replace(/_/g, ' '));
+        $("#jenis").val(data.tipe_barang.replace(/_/g, ' '));
         $('#modaldemo8').removeClass('d-none');
         $('#modalBarang').modal('hide');
     }
@@ -62,7 +62,7 @@
         $("input[name='kdbarangU']").val(data.barang_kode);
         $("#nmbarangU").val(data.barang_nama.replace(/_/g, ' '));
         $("#satuanU").val(data.satuan_nama.replace(/_/g, ' '));
-        $("#jenisU").val(data.jenisbarang_nama.replace(/_/g, ' '));
+        $("#jenisU").val(data.tipe_barang.replace(/_/g, ' '));
         $('#Umodaldemo8').removeClass('d-none');
         $('#modalBarang').modal('hide');
     }

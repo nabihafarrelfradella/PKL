@@ -14,7 +14,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Deteksi jika folder parent adalah public_html (lingkungan cPanel)
+        $parentDir = dirname(base_path());
+        if (basename($parentDir) === 'public_html') {
+            $this->app->bind('path.public', function() use ($parentDir) {
+                return $parentDir;
+            });
+        }
     }
 
     /**

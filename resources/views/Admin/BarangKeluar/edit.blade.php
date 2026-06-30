@@ -33,9 +33,22 @@
                             <input type="text" name="teknisiU" readonly class="form-control" placeholder="Otomatis">
                         </div>
 
-                        <div class="form-group">
-                            <label for="customerU" class="form-label">Customer / Lokasi <span class="text-danger">*</span></label>
-                            <input type="text" name="customerU" id="customerU" class="form-control" placeholder="Nama customer atau lokasi instalasi">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customerU" class="form-label">Nama Customer <span class="text-danger">*</span></label>
+                                    <input type="text" name="customerU" id="customerU" class="form-control" placeholder="Nama customer / instansi">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="lokasiU" class="form-label">Lokasi Instalasi <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" name="lokasiU" id="lokasiU" class="form-control" placeholder="Lokasi..." autocomplete="off">
+                                        <button class="btn btn-primary-light border" type="button" onclick="openLocationPicker('lokasiU')" title="Pilih di Peta"><i class="fe fe-map"></i></button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="keteranganU" class="form-label">Keterangan</label>
@@ -83,10 +96,9 @@
                             </div>
                             <input type="text" id="serial_number_inputU" readonly class="form-control" style="background:#f0f8ff;">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group d-none">
                             <label for="jmlU" class="form-label">Jumlah Keluar <span class="text-danger">*</span></label>
-                            <input type="text" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
-                            <small class="text-muted">Jumlah tidak dapat diubah (setiap baris = 1 unit)</small>
+                            <input type="hidden" name="jmlU" id="jmlU" readonly class="form-control" style="background:#f0f8ff;" placeholder="">
                         </div>
                     </div>
                 </div>
@@ -196,7 +208,7 @@
                     $("#statusU").val("true");
                     $("#nmbarangU").val(data[0].barang_nama);
                     $("#satuanU").val(data[0].satuan_id);
-                    $("#jenisU").val(data[0].jenisbarang_nama);
+                    $("#jenisU").val(data[0].tipe_barang);
                 } else {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("false");
@@ -239,8 +251,13 @@
             setLoadingU(false);
             return false;
         } else if (customer == "") {
-            validasi('Customer / Lokasi wajib di isi!', 'warning');
+            validasi('Nama Customer wajib di isi!', 'warning');
             $("input[name='customerU']").addClass('is-invalid');
+            setLoadingU(false);
+            return false;
+        } else if ($("input[name='lokasiU']").val() == "") {
+            validasi('Lokasi Instalasi wajib di isi!', 'warning');
+            $("input[name='lokasiU']").addClass('is-invalid');
             setLoadingU(false);
             return false;
         } else if (jml == "" || jml == "0") {
@@ -266,6 +283,8 @@
             : $("#serial_number_inputU").val();
         const jml = $("input[name='jmlU']").val();
 
+        const lokasi = $("input[name='lokasiU']").val();
+
         $.ajax({
             type: 'POST',
             url: "{{ url('admin/barang-keluar/proses_ubah') }}/" + id,
@@ -274,6 +293,7 @@
                 tglkeluar: tglkeluar,
                 barang: kdbarang,
                 tujuan: customer,
+                lokasi: lokasi,
                 teknisi: teknisi,
                 keterangan: keterangan,
                 serial_number: serial_number,

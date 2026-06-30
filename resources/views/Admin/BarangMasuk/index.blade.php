@@ -22,7 +22,6 @@
                 <h3 class="card-title">Data</h3>
                 @if ($hakTambah > 0)
                 <div>
-                    <button class="btn btn-info-light me-2" onclick="batchPrintQR()"><i class="fe fe-printer"></i> Batch Print QR</button>
                     <a class="modal-effect btn btn-primary-light" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">Tambah Data
                         <i class="fe fe-plus"></i></a>
                 </div>
@@ -32,14 +31,12 @@
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%"><input type="checkbox" id="checkAllBM"></th>
+                            <th class="border-bottom-0" width="1%"></th>
+                            <th class="border-bottom-0" width="1%"></th>
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Tanggal & Jam Masuk</th>
                             <th class="border-bottom-0">Kode Barang Masuk</th>
-                            <th class="border-bottom-0">Kode Barang</th>
-                            <th class="border-bottom-0">Barang</th>
-                            <th class="border-bottom-0">Serial Number</th>
-                            <th class="border-bottom-0">Jumlah Masuk</th>
+                            <th class="border-bottom-0">Jumlah Unit</th>
                             <th class="border-bottom-0" width="1%">Action</th>
                         </thead>
                         <tbody></tbody>
@@ -55,6 +52,7 @@
 @include('Admin.BarangMasuk.edit')
 @include('Admin.BarangMasuk.hapus')
 @include('Admin.BarangMasuk.barang')
+
 
 <!-- MODAL QR -->
 <div class="modal fade" data-bs-backdrop="static" id="Qmodaldemo8">
@@ -149,20 +147,64 @@
         printWindow.print();
     }
 
-    function batchPrintQR() {
-        var selected = [];
-        $('.qr-checkbox:checked').each(function() {
-            selected.push(JSON.parse(decodeURIComponent($(this).val())));
-        });
+    function batchPrintQR(bmKode) {
+        if (!bmKode) return;
         
-        if (selected.length === 0) {
-            swal("Pilih Data", "Silakan pilih setidaknya satu data untuk dicetak QR-nya.", "warning");
-            return;
+        var selected = [];
+        var btn = $('.btn-expand-bm[data-bm-kode="' + bmKode + '"]');
+        var tr = btn.closest('tr');
+        var row = table.row(tr);
+        
+        if (row.child.isShown()) {
+            row.child().find('.qr-checkbox-sn:checked').each(function() {
+                selected.push(JSON.parse(decodeURIComponent($(this).val())));
+            });
+            
+            if (selected.length === 0) {
+                swal("Pilih Data", "Silakan pilih setidaknya satu SN untuk dicetak QR-nya.", "warning");
+                return;
+            }
+            processBatchPrint(selected);
+        } else {
+            var isParentChecked = tr.find('.parent-checkbox').prop('checked');
+            if (!isParentChecked) {
+                swal("Pilih Data", "Silakan centang transaksi ini atau buka detail untuk memilih SN yang akan dicetak.", "warning");
+                return;
+            }
+            swal({
+                title: 'Sedang Memproses...',
+                text: 'Mengambil data QR Code...',
+                showConfirmButton: false
+            });
+            $.ajax({
+                url: "{{ url('admin/barang-masuk/detail-sn/all') }}/" + encodeURIComponent(bmKode),
+                method: 'GET',
+                success: function(data) {
+                    swal.close();
+                    if (!data || data.length === 0) {
+                        swal("Gagal", "Tidak ada Serial Number untuk transaksi ini.", "error");
+                        return;
+                    }
+                    data.forEach(function(item) {
+                        selected.push({
+                            kode_unik: item.kode_barang_unik || item.bm_kode,
+                            nama: item.barang_nama,
+                            sn: item.serial_number
+                        });
+                    });
+                    processBatchPrint(selected);
+                },
+                error: function() {
+                    swal("Gagal", "Gagal mengambil data Serial Number.", "error");
+                }
+            });
         }
+    }
 
+    function processBatchPrint(selected) {
         var printWindow = window.open('', '_blank');
         printWindow.document.write('<html><head><title>Batch Print QR</title>');
-        printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+        printWindow.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></s' + 'cript>');
         printWindow.document.write('<style>');
         printWindow.document.write('@page { size: 58mm auto; margin: 0; }');
         printWindow.document.write('body { font-family: Arial, sans-serif; margin: 0 auto; padding: 10px 0; text-align: center; width: 58mm; }');
@@ -193,7 +235,7 @@
         });
         printWindow.document.write('setTimeout(function() { window.print(); }, 500);');
         printWindow.document.write('};');
-        printWindow.document.write('<\/script>');
+        printWindow.document.write('</s' + 'cript>');
         printWindow.document.write('</body></html>');
         printWindow.document.close();
     }
@@ -209,6 +251,50 @@
 @endsection
 
 @section('scripts')
+<style>
+    .btn-expand-bm {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .btn-expand-bm.expanded {
+        transform: rotate(90deg);
+        background-color: #e8f0fe;
+        border-color: #4a6cf7;
+        color: #4a6cf7;
+    }
+    .child-row-table {
+        background: #f8faff;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin: 4px 0;
+    }
+    .child-row-table table {
+        width: 100%;
+        font-size: 12.5px;
+        border-collapse: collapse;
+    }
+    .child-row-table th {
+        background: #e8f0fe;
+        color: #3a5bd4;
+        font-weight: 600;
+        padding: 6px 10px;
+        border: 1px solid #d0daf5;
+    }
+    .child-row-table td {
+        padding: 6px 10px;
+        border: 1px solid #e8ecf5;
+        vertical-align: middle;
+    }
+    .child-row-table tr:hover td {
+        background: #eef2ff;
+    }
+</style>
 <script>
     $.ajaxSetup({
         headers: {
@@ -216,84 +302,157 @@
         }
     });
 
+    function formatChildBM(data, isParentChecked) {
+        if (!data || data.length === 0) {
+            return '<div class="child-row-table"><p class="text-muted mb-0 py-2 text-center">Tidak ada data Serial Number.</p></div>';
+        }
+        var checkStr = isParentChecked ? 'checked' : '';
+        let html = '<div class="child-row-table"><table>';
+        html += '<thead><tr><th width="1%"><input type="checkbox" class="checkAllSN" ' + checkStr + '></th><th width="1%">#</th><th>Kode Barang</th><th>Barang</th><th>Serial Number</th><th>Kode Unik</th><th width="10%">Action</th></tr></thead><tbody>';
+        data.forEach(function(row, i) {
+            var val = encodeURIComponent(JSON.stringify({
+                kode_unik: row.kode_barang_unik || row.bm_kode,
+                nama: row.barang_nama,
+                sn: row.serial_number
+            }));
+            html += '<tr>';
+            html += '<td><input type="checkbox" class="qr-checkbox-sn" value="' + val + '" ' + checkStr + '></td>';
+            html += '<td>' + (i + 1) + '</td>';
+            html += '<td><span class="badge bg-secondary-light text-secondary">' + (row.barang_kode || '-') + '</span></td>';
+            html += '<td>' + (row.barang_nama || '-') + '</td>';
+            html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
+            html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
+            html += '<td>' + (row.action || '-') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        return html;
+    }
+
     var table;
     $(document).ready(function() {
-        //datatables
         table = $('#table-1').DataTable({
-
             "processing": true,
             "serverSide": true,
             "info": true,
             "order": [],
             "scrollX": true,
             "stateSave": true,
-            "lengthMenu": [
-                [5, 10, 25, 50, 100],
-                [5, 10, 25, 50, 100]
-            ],
+            "lengthMenu": [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
             "pageLength": 10,
-
             lengthChange: true,
-
             "ajax": {
                 "url": "{{ route('barang-masuk.getbarang-masuk') }}",
             },
-
-            "columns": [{
-                    data: null,
+            "columns": [
+                {
+                    data: 'expand',
                     orderable: false,
                     searchable: false,
-                    render: function(data, type, row) {
-                        var val = encodeURIComponent(JSON.stringify({
-                            kode_unik: row.kode_barang_unik || row.bm_kode,
-                            nama: row.barang_nama,
-                            sn: row.serial_number
-                        }));
-                        return '<input type="checkbox" class="qr-checkbox" value="' + val + '">';
-                    }
+                    render: function(data) { return data; }
                 },
-                {
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    searchable: false
-                },
-                {
-                    data: 'tgl',
-                    name: 'jam_masuk',
-                },
-                {
-                    data: 'bm_kode',
-                    name: 'bm_kode',
-                },
-                {
-                    data: 'barang_kode',
-                    name: 'barang_kode',
-                },
-                {
-                    data: 'barang',
-                    name: 'barang_nama',
-                },
-                {
-                    data: 'serial_number',
-                    name: 'serial_number',
-                },
-                {
-                    data: 'bm_jumlah',
-                    name: 'bm_jumlah',
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false
-                },
+                { data: 'chk', name: 'chk', orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'tgl', name: 'jam_masuk' },
+                { data: 'bm_kode', name: 'bm_kode' },
+                { data: 'serial_number', name: 'serial_number' },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
+            "drawCallback": function() {
+                // Re-attach expand button events after each draw
+                $('#table-1 tbody').off('click', '.btn-expand-bm').on('click', '.btn-expand-bm', function(e) {
+                    e.stopPropagation();
+                    var btn        = $(this);
+                    var tr         = btn.closest('tr');
+                    var row        = table.row(tr);
+                    var barangKode = btn.data('barang-kode');
+                    var bmKode     = btn.data('bm-kode');
 
+                    if (row.child.isShown()) {
+                        row.child.hide();
+                        btn.removeClass('expanded');
+                    } else {
+                        btn.addClass('expanded');
+                        row.child('<div class="text-center py-3"><i class="fe fe-loader"></i> Memuat...</div>').show();
+
+                        var isParentChecked = tr.find('.parent-checkbox').prop('checked');
+                        $.ajax({
+                            url: "{{ url('admin/barang-masuk/detail-sn/all') }}/" + encodeURIComponent(bmKode),
+                            method: 'GET',
+                            success: function(data) {
+                                row.child(formatChildBM(data, isParentChecked)).show();
+                            },
+                            error: function() {
+                                row.child('<div class="text-center py-2 text-danger">Gagal memuat data.</div>').show();
+                            }
+                        });
+                    }
+                });
+            }
         });
 
         $('#checkAllBM').on('click', function() {
             $('.qr-checkbox').prop('checked', this.checked);
         });
+    });
+
+    function hapusSemuaBM(bmKode) {
+        hapusKelompok(bmKode, '');
+    }
+
+    function hapusKelompok(bmKode, barangKode) {
+        swal({
+            title: 'Hapus semua unit?',
+            text: 'Semua unit barang dalam transaksi ' + bmKode + ' akan dihapus!',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.ajax({
+                    url: '/admin/barang-masuk/hapus-kelompok',
+                    method: 'POST',
+                    data: { bm_kode: bmKode, barang_kode: barangKode },
+                    success: function(res) {
+                        swal('Terhapus!', res.success, 'success');
+                        table.ajax.reload();
+                    },
+                    error: function(xhr) {
+                        swal('Gagal!', xhr.responseJSON ? xhr.responseJSON.error : 'Terjadi kesalahan', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    $(document).on('change', '.parent-checkbox', function() {
+        var isChecked = $(this).prop('checked');
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+        if (row.child.isShown()) {
+            row.child().find('.checkAllSN').prop('checked', isChecked);
+            row.child().find('.qr-checkbox-sn').prop('checked', isChecked);
+        }
+    });
+
+    $(document).on('change', '.checkAllSN', function() {
+        var isChecked = $(this).prop('checked');
+        var tableChild = $(this).closest('table');
+        tableChild.find('.qr-checkbox-sn').prop('checked', isChecked);
+        
+        var parentTr = $(this).closest('tr').closest('table').closest('tr').prev('tr');
+        parentTr.find('.parent-checkbox').prop('checked', isChecked);
+    });
+    
+    $(document).on('change', '.qr-checkbox-sn', function() {
+        var tableChild = $(this).closest('table');
+        var allChecked = tableChild.find('.qr-checkbox-sn').length === tableChild.find('.qr-checkbox-sn:checked').length;
+        tableChild.find('.checkAllSN').prop('checked', allChecked);
+        
+        var parentTr = $(this).closest('tr').closest('table').closest('tr').prev('tr');
+        parentTr.find('.parent-checkbox').prop('checked', allChecked);
     });
 </script>
 @endsection

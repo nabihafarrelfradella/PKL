@@ -19,6 +19,7 @@ class BarangkeluarModel extends Model
         'kode_barang_unik',
         'bk_tanggal',
         'bk_tujuan',
+        'bk_lokasi',
         'bk_jumlah',
         'bk_status', // 'Dipinjam' atau 'Selesai'
         'serial_number',

@@ -51,7 +51,7 @@
         $("input[name='kdbarang']").val(data.barang_kode);
         $("#nmbarang").val(data.barang_nama.replace(/_/g, ' '));
         $("#satuan").val(data.satuan_nama.replace(/_/g, ' '));
-        $("#jenis").val(data.jenisbarang_nama.replace(/_/g, ' '));
+        $("#jenis").val(data.tipe_barang.replace(/_/g, ' '));
         setSNSelect2('', '');
         fetchAvailableSNs(data.barang_kode);
         $('#modaldemo8').removeClass('d-none');
@@ -64,7 +64,7 @@
         $("input[name='kdbarangU']").val(data.barang_kode);
         $("#nmbarangU").val(data.barang_nama.replace(/_/g, ' '));
         $("#satuanU").val(data.satuan_nama.replace(/_/g, ' '));
-        $("#jenisU").val(data.jenisbarang_nama.replace(/_/g, ' '));
+        $("#jenisU").val(data.tipe_barang.replace(/_/g, ' '));
         $("input[name='serial_numberU']").val('');
         fetchAvailableSNsU(data.barang_kode);
         $('#Umodaldemo8').removeClass('d-none');

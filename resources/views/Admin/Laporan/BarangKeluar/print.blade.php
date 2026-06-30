@@ -50,6 +50,7 @@
                 <th>SN.BARANG</th>
                 <th align="center">JML</th>
                 <th>TUJUAN / CUSTOMER</th>
+                <th>LOKASI</th>
                 <th>TEKNISI (ID)</th>
                 <th>KETERANGAN</th>
             </tr>
@@ -66,6 +67,7 @@
                 <td>{{$d->serial_number ?? '-'}}</td>
                 <td align="center">{{$d->bk_jumlah}}</td>
                 <td>{{$d->bk_tujuan ?? '-'}}</td>
+                <td>{{$d->bk_lokasi ?? '-'}}</td>
                 <td>{{($d->user_nmlengkap ?? $d->teknisi_nama) ? ($d->user_nmlengkap ?? $d->teknisi_nama) . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
                 <td>{{$d->keterangan ?? '-'}}</td>
             </tr>

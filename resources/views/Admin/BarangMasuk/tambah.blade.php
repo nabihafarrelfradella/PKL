@@ -6,10 +6,15 @@
                 <h6 class="modal-title"><i class="fe fe-plus-circle me-1"></i>Tambah Barang Masuk</h6><button onclick="reset()" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
+                <style>
+                    #modaldemo8 .form-group { margin-bottom: 0.5rem; }
+                    #modaldemo8 .my-3 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+                    #modaldemo8 .form-label, #modaldemo8 label { margin-bottom: 0.25rem; font-size: 0.85rem; }
+                </style>
                 {{-- ── BAGIAN INPUT ── --}}
                 <div class="row">
                     <div class="col-md-5">
-                        <div class="form-group">
+                        <div class="form-group d-none">
                             <label for="bmkode" class="form-label">Kode Barang Masuk <span class="text-danger">*</span></label>
                             <input type="text" name="bmkode" readonly class="form-control" placeholder="Otomatis">
                         </div>
@@ -36,21 +41,11 @@
                                 <button class="btn btn-success-light" onclick="modalBarang()" type="button"><i class="fe fe-box"></i></button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Nama Barang</label>
-                            <input type="text" class="form-control" id="nmbarang" readonly>
-                        </div>
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-8">
                                 <div class="form-group">
-                                    <label>Satuan</label>
-                                    <input type="text" class="form-control" id="satuan" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>Jenis</label>
-                                    <input type="text" class="form-control" id="jenis" readonly>
+                                    <label>Nama Barang</label>
+                                    <input type="text" class="form-control" id="nmbarang" readonly>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -60,6 +55,8 @@
                                 </div>
                             </div>
                         </div>
+                        <input type="hidden" id="satuan">
+                        <input type="hidden" id="jenis">
                         <div class="text-end">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="addToBatch()">
                                 <i class="fe fe-plus me-1"></i>Tambah ke Daftar
@@ -177,7 +174,7 @@
                     $("#status").val("true");
                     $("#nmbarang").val(data[0].barang_nama);
                     $("#satuan").val(data[0].satuan_id); // Mengambil nama satuan (sesuai field di DB)
-                    $("#jenis").val(data[0].jenisbarang_nama);
+                    $("#jenis").val(data[0].tipe_barang);
                 } else {
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("false");

@@ -7,6 +7,7 @@ use App\Models\Admin\BarangmasukModel;
 use App\Models\Admin\BarangModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -23,53 +24,112 @@ class BarangmasukController extends Controller
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
-                ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama')
-                ->orderBy('bm_id', 'DESC')
-                ->get();
+            // Kelompokkan HANYA per bm_kode (1 baris = 1 transaksi penerimaan barang/surat jalan)
+            $data = BarangmasukModel::select(
+                    'tbl_barangmasuk.bm_kode',
+                    DB::raw('MAX(tbl_barangmasuk.bm_id) as bm_id'),
+                    DB::raw('MAX(tbl_barangmasuk.jam_masuk) as jam_masuk'),
+                    DB::raw('MAX(tbl_barangmasuk.bm_tanggal) as bm_tanggal'),
+                    DB::raw('COUNT(tbl_barangmasuk.bm_id) as total_unit')
+                )
+                ->groupBy('tbl_barangmasuk.bm_kode')
+                ->orderBy('bm_id', 'DESC');
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
                     $datetime = $row->jam_masuk ?? $row->bm_tanggal;
-                    return $datetime ? Carbon::parse($datetime)->translatedFormat('d F Y H:i:s') : '-';
+                    return $datetime ? Carbon::parse($datetime)->translatedFormat('d F Y H:i') : '-';
                 })
-                ->addColumn('barang', function ($row) {
-                    return $row->barang_nama ?? '-';
+                ->addColumn('chk', function ($row) {
+                    return '<input type="checkbox" class="parent-checkbox" data-bm-kode="' . htmlspecialchars($row->bm_kode) . '">';
+                })
+
+                ->addColumn('serial_number', function ($row) {
+                    return $row->total_unit . ' unit';
+                })
+                ->addColumn('expand', function ($row) {
+                    return '<button class="btn btn-sm btn-light btn-expand-bm"
+                        data-bm-kode="' . htmlspecialchars($row->bm_kode) . '"
+                        title="Lihat Detail Serial Number">
+                        <i class="fe fe-chevron-right"></i>
+                    </button>';
                 })
                 ->addColumn('action', function ($row) {
-                    $array = [
-                        "bm_id"            => $row->bm_id,
-                        "bm_kode"          => $row->bm_kode,
-                        "barang_kode"      => $row->barang_kode,
-                        "barang_nama"      => str_replace(["'", '"'], "", $row->barang_nama),
-                        "bm_tanggal"       => $row->bm_tanggal,
-                        "jam_masuk"        => $row->jam_masuk,
-                        "bm_jumlah"        => $row->bm_jumlah,
-                        "serial_number"    => $row->serial_number,
-                        "kode_barang_unik" => $row->kode_barang_unik,
-                    ];
-                    
                     $user = Session::get('user');
-                    $roleId = $user->role_id ?? 0;
-                    $json = htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8');
-                    $button = '';
-
-                    // Tombol Print QR
-                    $button .= '<a class="btn modal-effect text-info btn-sm" data-bs-toggle="modal" href="#Qmodaldemo8" onclick="showQR(' . $json . ')"><span class="fe fe-printer fs-14"></span></a>';
-
-                    if (in_array($roleId, [1, 2])) {
-                        $button .= '<a class="btn modal-effect text-primary btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit text-success fs-14"></span></a>';
-                        $button .= '<a class="btn modal-effect text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-14"></span></a>';
-                    }
-                    // Teknisi (role 3) hanya bisa Print QR — tidak ada edit/hapus
+                    $hakAkses = ($user && in_array($user->role_id, [1, 2])) ? 1 : 0;
                     
-                    return $button;
+                    $bmKode = htmlspecialchars($row->bm_kode, ENT_QUOTES, 'UTF-8');
+                    $btnHapus = $hakAkses ? '<button class="btn btn-danger-light btn-sm" onclick="hapusSemuaBM(\'' . $bmKode . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>' : '';
+                    
+                    $action = '<div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-info-light btn-sm" onclick="batchPrintQR(\'' . $bmKode . '\')" title="Batch Print QR">
+                            <i class="fe fe-printer"></i>
+                        </button>
+                        ' . $btnHapus . '
+                    </div>';
+                    return $action;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'serial_number', 'expand', 'chk'])
+
                 ->make(true);
         }
     }
+
+    /**
+     * Endpoint: Kembalikan semua SN berdasarkan barang_kode
+     */
+    public function detailSN($bm_kode)
+    {
+        // Filter HANYA berdasarkan bm_kode (semua barang di transaksi tsb)
+        $rows = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->where('tbl_barangmasuk.bm_kode', $bm_kode)
+            ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama')
+            ->orderBy('bm_id', 'DESC')
+            ->get();
+
+        $user   = Session::get('user');
+        $roleId = $user->role_id ?? 0;
+
+        $result = $rows->map(function ($row) use ($roleId) {
+            $array = [
+                "bm_id"            => $row->bm_id,
+                "bm_kode"          => $row->bm_kode,
+                "barang_kode"      => $row->barang_kode,
+                "barang_nama"      => str_replace(["'", '"'], "", $row->barang_nama),
+                "bm_tanggal"       => $row->bm_tanggal,
+                "jam_masuk"        => $row->jam_masuk,
+                "bm_jumlah"        => $row->bm_jumlah,
+                "serial_number"    => $row->serial_number,
+                "kode_barang_unik" => $row->kode_barang_unik,
+            ];
+            $json   = htmlspecialchars(json_encode($array), ENT_QUOTES, 'UTF-8');
+            $action = '';
+
+            // QR
+            $action .= '<a class="btn text-info btn-sm" data-bs-toggle="modal" href="#Qmodaldemo8" onclick="showQR(' . $json . ')"><span class="fe fe-printer fs-13"></span></a>';
+
+            if (in_array($roleId, [1, 2])) {
+                $action .= '<a class="btn text-success btn-sm" data-bs-toggle="modal" href="#Umodaldemo8" onclick="update(' . $json . ')"><span class="fe fe-edit fs-13"></span></a>';
+                $action .= '<a class="btn text-danger btn-sm" data-bs-toggle="modal" href="#Hmodaldemo8" onclick="hapus(' . $json . ')"><span class="fe fe-trash-2 fs-13"></span></a>';
+            }
+
+            $tgl = $row->jam_masuk
+                ? Carbon::parse($row->jam_masuk)->translatedFormat('d M Y H:i')
+                : ($row->bm_tanggal ? Carbon::parse($row->bm_tanggal)->translatedFormat('d M Y') : '-');
+
+            return [
+                'barang_kode'      => $row->barang_kode ?? '-',
+                'barang_nama'      => $row->barang_nama ?? '-',
+                'serial_number'    => $row->serial_number ?? '-',
+                'kode_barang_unik' => $row->kode_barang_unik ?? '-',
+                'action'           => $action,
+            ];
+        });
+
+        return response()->json($result);
+    }
+
 
     public function proses_tambah(Request $request)
     {
@@ -102,6 +162,20 @@ class BarangmasukController extends Controller
 
             $totalSaved = 0;
 
+            // Generate ONE bm_kode for the entire transaction batch
+            $monthYear = now()->format('my');
+            $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
+                ->orderBy('bm_kode', 'DESC')
+                ->first();
+
+            if ($lastBM) {
+                $lastNo = intval(substr($lastBM->bm_kode, -3));
+                $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
+            } else {
+                $nextNo = '001';
+            }
+            $bm_kode = "BM-{$monthYear}-{$nextNo}";
+
             foreach ($items as $item) {
                 $barangKode = $item['kode'];
                 $jml = $item['jumlah'];
@@ -120,19 +194,6 @@ class BarangmasukController extends Controller
 
                 // Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
                 for ($i = 1; $i <= $jml; $i++) {
-                    // Generate Kode Barang Masuk Unik (BM-MMYY-001)
-                    $monthYear = now()->format('my');
-                    $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
-                        ->orderBy('bm_kode', 'DESC')
-                        ->first();
-
-                    if ($lastBM) {
-                        $lastNo = intval(substr($lastBM->bm_kode, -3));
-                        $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
-                    } else {
-                        $nextNo = '001';
-                    }
-                    $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
                     $loop_index   = str_pad($totalSaved + 1, 2, '0', STR_PAD_LEFT);
                     $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
@@ -215,6 +276,33 @@ class BarangmasukController extends Controller
 
             $barangmasuk->delete();
             return response()->json(['success' => 'Berhasil']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function hapus_kelompok(Request $request)
+    {
+        try {
+            $bm_kode = $request->bm_kode;
+            if (!$bm_kode) {
+                return response()->json(['error' => 'Kode BM tidak valid!'], 400);
+            }
+            $bms = BarangmasukModel::where('bm_kode', $bm_kode)->get();
+            if ($bms->isEmpty()) {
+                return response()->json(['error' => 'Data tidak ditemukan!'], 404);
+            }
+            foreach($bms as $bm) {
+                if ($bm->kode_barang_unik) {
+                    \App\Models\Admin\BarangkeluarModel::where('kode_barang_unik', $bm->kode_barang_unik)->delete();
+                } else if ($bm->serial_number) {
+                    \App\Models\Admin\BarangkeluarModel::where('serial_number', $bm->serial_number)
+                        ->where('barang_kode', $bm->barang_kode)
+                        ->delete();
+                }
+                $bm->delete();
+            }
+            return response()->json(['success' => 'Berhasil menghapus seluruh transaksi ' . $bm_kode]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

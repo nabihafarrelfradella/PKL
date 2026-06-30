@@ -99,7 +99,11 @@ class UserController extends Controller
     {
         $img = $request->file('photo') ? $request->file('photo')->hashName() : 'undraw_profile.svg';
         if ($request->file('photo')) {
-            $request->file('photo')->storeAs('public/users/', $img);
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $request->file('photo')->move($destinationPath, $img);
         }
 
         $user = UserModel::create([
@@ -133,9 +137,19 @@ class UserController extends Controller
 
         if ($request->hasFile('photoU')) {
             $image = $request->file('photoU');
-            $image->storeAs('public/users', $image->hashName());
-            Storage::delete('public/users/' . $user->user_foto);
-            $updateData['user_foto'] = $image->hashName();
+            $filename = $image->hashName();
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $image->move($destinationPath, $filename);
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = $filename;
         }
 
         $user->update($updateData);
@@ -149,7 +163,12 @@ class UserController extends Controller
     public function hapus(Request $request)
     {
         $detail = UserModel::findOrFail($request->iduser);
-        Storage::delete('public/users/' . $detail->user_foto);
+        if ($detail->user_foto != 'undraw_profile.svg' && $detail->user_foto != '') {
+            $oldPath = public_path('storage/users/' . $detail->user_foto);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+        }
         $detail->delete();
         $this->logActivity('DELETE', "Deleted user: {$detail->user_nama} (user_id: {$request->iduser})");
 
@@ -188,16 +207,27 @@ class UserController extends Controller
 
         if ($request->has('remove_photo') && $request->remove_photo == '1') {
             if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
-                Storage::delete('public/users/' . $user->user_foto);
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
             $updateData['user_foto'] = 'undraw_profile.svg';
         } elseif ($request->hasFile('photoU')) {
             $image = $request->file('photoU');
-            $image->storeAs('public/users', $image->hashName());
-            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
-                Storage::delete('public/users/' . $user->user_foto);
+            $filename = $image->hashName();
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
             }
-            $updateData['user_foto'] = $image->hashName();
+            $image->move($destinationPath, $filename);
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = $filename;
         }
 
         $user->update($updateData);
@@ -289,6 +319,12 @@ class UserController extends Controller
         $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
         $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
 
+        // Proteksi Duplikasi Teknisi SN
+        $cekDuplikat = UserModel::where('teknisi_sn', $teknisi_sn)->exists();
+        if ($cekDuplikat) {
+            return response()->json(['error' => 'Gagal! Sudah ada Teknisi lain dengan kombinasi Jenis Kelamin dan Tanggal Lahir yang sama.'], 400);
+        }
+
         $user = UserModel::create([
             'user_foto'      => 'undraw_profile.svg',
             'user_nmlengkap' => $request->nmlengkap,
@@ -326,6 +362,13 @@ class UserController extends Controller
         // Re-generate SN jika gender atau dob berubah
         $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
         $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
+
+        if ($oldSn !== $teknisi_sn) {
+            $cekDuplikat = UserModel::where('teknisi_sn', $teknisi_sn)->where('user_id', '!=', $user->user_id)->exists();
+            if ($cekDuplikat) {
+                return response()->json(['error' => 'Gagal! Perubahan dibatalkan karena sudah ada Teknisi lain dengan kombinasi Jenis Kelamin dan Tanggal Lahir tersebut.'], 400);
+            }
+        }
 
         $updateData = [
             'user_nmlengkap' => $request->nmlengkap,

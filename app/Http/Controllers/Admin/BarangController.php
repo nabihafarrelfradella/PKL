@@ -143,7 +143,7 @@ class BarangController extends Controller
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
                         "barang_stok" => $row->barang_stok,
                         "barang_gambar" => $row->barang_gambar,
-                        "tipe_barang" => $row->jenisbarang_keterangan,
+                        "tipe_barang" => $row->tipe_barang,
                     );
                     $button = '';
                     $roleId = Session::get('user')->role_id;
@@ -252,7 +252,7 @@ class BarangController extends Controller
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
                         "satuan_nama" => $row->satuan_id,
                         "jenisbarang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->jenisbarang_nama)),
-                        "tipe_barang" => $row->jenisbarang_keterangan,
+                        "tipe_barang" => $row->tipe_barang,
                     );
                     $button = '';
                     if ($request->get('param') == 'tambah') {
@@ -293,8 +293,13 @@ class BarangController extends Controller
             $img = "image.png";
         } else {
             $image = $request->file('foto');
-            $image->storeAs('public/barang/', $image->hashName());
-            $img = $image->hashName();
+            $filename = $image->hashName();
+            $destinationPath = public_path('storage/barang');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $image->move($destinationPath, $filename);
+            $img = $filename;
         }
 
         // Generate KODE BARANG: [BK/HP]-[MMYY]-[001]
@@ -339,20 +344,21 @@ class BarangController extends Controller
         if ($stok > 0) {
             $prefix_sn = strtoupper(substr($barang_kode, 0, 2));
             $date_now  = now()->format('Ymd');
-            for ($i = 1; $i <= $stok; $i++) {
-                // Generate BM Code: BM-MMYY-001
-                $monthYear = now()->format('my');
-                $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
-                    ->orderBy('bm_kode', 'DESC')
-                    ->first();
-                if ($lastBM) {
-                    $lastNo = intval(substr($lastBM->bm_kode, -3));
-                    $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
-                } else {
-                    $nextNo = '001';
-                }
-                $bm_kode = "BM-{$monthYear}-{$nextNo}";
+            
+            // Generate ONE BM Code for all initial stock units
+            $monthYear = now()->format('my');
+            $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
+                ->orderBy('bm_kode', 'DESC')
+                ->first();
+            if ($lastBM) {
+                $lastNo = intval(substr($lastBM->bm_kode, -3));
+                $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
+            } else {
+                $nextNo = '001';
+            }
+            $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
+            for ($i = 1; $i <= $stok; $i++) {
                 $loop_index   = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
                 $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
@@ -404,14 +410,25 @@ class BarangController extends Controller
         //check if image is uploaded
         if ($request->hasFile('foto')) {
             $image = $request->file('foto');
-            $image->storeAs('public/barang', $image->hashName());
-            if ($barang->barang_gambar != 'image.png') {
-                Storage::delete('public/barang/' . $barang->barang_gambar);
+            $filename = $image->hashName();
+            $destinationPath = public_path('storage/barang');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
             }
-            $updateData['barang_gambar'] = $image->hashName();
+            $image->move($destinationPath, $filename);
+            if ($barang->barang_gambar != 'image.png') {
+                $oldPath = public_path('storage/barang/' . $barang->barang_gambar);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['barang_gambar'] = $filename;
         } else if ($request->hapus_foto == '1') {
             if ($barang->barang_gambar != 'image.png') {
-                Storage::delete('public/barang/' . $barang->barang_gambar);
+                $oldPath = public_path('storage/barang/' . $barang->barang_gambar);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
             $updateData['barang_gambar'] = 'image.png';
         }
@@ -439,7 +456,10 @@ class BarangController extends Controller
 
             //delete image
             if ($barang->barang_gambar != 'image.png') {
-                Storage::delete('public/barang/' . $barang->barang_gambar);
+                $oldPath = public_path('storage/barang/' . $barang->barang_gambar);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
 
             //delete

@@ -282,6 +282,8 @@
                 let msg = 'Terjadi kesalahan!';
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
                     msg = Object.values(xhr.responseJSON.errors)[0][0];
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    msg = xhr.responseJSON.error;
                 }
                 swal({ title: msg, type: 'error' });
             },
@@ -311,7 +313,13 @@
                 table.ajax.reload(null, false);
             },
             error: function (xhr) {
-                swal({ title: 'Gagal memperbarui!', type: 'error' });
+                let msg = 'Gagal memperbarui!';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    msg = Object.values(xhr.responseJSON.errors)[0][0];
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    msg = xhr.responseJSON.error;
+                }
+                swal({ title: msg, type: 'error' });
             }
         });
     }

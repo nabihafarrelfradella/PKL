@@ -115,16 +115,15 @@
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
+                            <th class="border-bottom-0" width="1%"></th>
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Tanggal & Jam Keluar</th>
                             <th class="border-bottom-0">Kode BK</th>
-                            <th class="border-bottom-0">Barang</th>
-                            <th class="border-bottom-0">Serial Number</th>
-                            <th class="border-bottom-0">Customer / Lokasi</th>
                             <th class="border-bottom-0">Teknisi</th>
-                            <th class="border-bottom-0">Jumlah</th>
+                            <th class="border-bottom-0">Tujuan & Lokasi</th>
+                            <th class="border-bottom-0">Total Unit</th>
                             <th class="border-bottom-0">Status</th>
-                            <th class="border-bottom-0" width="1%">Action</th>
+                            <th class="border-bottom-0" width="1%">Aksi</th>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -165,6 +164,7 @@
 
         $("input[name='keteranganU']").val(data.keterangan);
         $("input[name='customerU']").val(data.bk_tujuan || '');
+        $("input[name='lokasiU']").val(data.bk_lokasi || '');
         $("input[name='tglkeluarU']").val(data.created_at);
         // Pre-fill barang nama immediately from action data (no AJAX wait)
         if (data.barang_nama) {
@@ -229,10 +229,75 @@
 @endsection
 
 @section('scripts')
+<style>
+    .btn-expand-bk {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .btn-expand-bk.expanded {
+        transform: rotate(90deg);
+        background-color: #e8f0fe;
+        border-color: #4a6cf7;
+        color: #4a6cf7;
+    }
+    .child-row-table {
+        background: #f8faff;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin: 4px 0;
+    }
+    .child-row-table table {
+        width: 100%;
+        font-size: 12.5px;
+        border-collapse: collapse;
+    }
+    .child-row-table th {
+        background: #e8f0fe;
+        color: #3a5bd4;
+        font-weight: 600;
+        padding: 6px 10px;
+        border: 1px solid #d0daf5;
+    }
+    .child-row-table td {
+        padding: 6px 10px;
+        border: 1px solid #e8ecf5;
+        vertical-align: middle;
+    }
+    .child-row-table tr:hover td {
+        background: #eef2ff;
+    }
+</style>
 <script>
     $.ajaxSetup({
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
+
+    function formatChildBK(data, isParentChecked) {
+        if (!data || data.length === 0) {
+            return '<div class="child-row-table"><p class="text-muted mb-0 py-2 text-center">Tidak ada data Barang/SN.</p></div>';
+        }
+        let html = '<div class="child-row-table"><table>';
+        html += '<thead><tr><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Serial Number</th><th>Kode Unik</th><th>Status</th><th width="10%">Action</th></tr></thead><tbody>';
+        data.forEach(function(row, i) {
+            html += '<tr>';
+            html += '<td class="text-center">' + (i + 1) + '</td>';
+            html += '<td><span class="badge bg-secondary-light text-secondary">' + (row.barang_kode || '-') + '</span></td>';
+            html += '<td>' + (row.barang_nama || '-') + '</td>';
+            html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
+            html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
+            html += '<td>' + (row.status || '-') + '</td>';
+            html += '<td class="text-center">' + (row.action || '-') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        return html;
+    }
 
     var table;
     $(document).ready(function() {
@@ -252,32 +317,57 @@
                 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                     return new bootstrap.Tooltip(tooltipTriggerEl)
                 });
-
                 var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
                 var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-                    return new bootstrap.Popover(popoverTriggerEl, {
-                        html: true,
-                        sanitize: false
-                    })
+                    return new bootstrap.Popover(popoverTriggerEl, { html: true, sanitize: false })
+                });
+
+                // Re-attach expand button events after each draw
+                $('#table-1 tbody').off('click', '.btn-expand-bk').on('click', '.btn-expand-bk', function(e) {
+                    e.stopPropagation();
+                    var btn        = $(this);
+                    var tr         = btn.closest('tr');
+                    var row        = table.row(tr);
+                    var bkKode = btn.data('bk-kode');
+
+                    if (row.child.isShown()) {
+                        row.child.hide();
+                        btn.removeClass('expanded');
+                    } else {
+                        btn.addClass('expanded');
+                        row.child('<div class="text-center py-3"><i class="fe fe-loader"></i> Memuat...</div>').show();
+
+                        $.ajax({
+                            url: "{{ url('admin/barang-keluar/detail-sn/all') }}/" + encodeURIComponent(bkKode),
+                            method: 'GET',
+                            success: function(data) {
+                                row.child(formatChildBK(data)).show();
+                                // Re-init popovers in child row
+                                var pops = [].slice.call(row.child().find('[data-bs-toggle="popover"]'));
+                                pops.forEach(function(el) { new bootstrap.Popover(el, { html: true, sanitize: false }); });
+                            },
+                            error: function() {
+                                row.child('<div class="text-center py-2 text-danger">Gagal memuat data.</div>').show();
+                            }
+                        });
+                    }
                 });
             },
             "columns": [
                 {
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    searchable: false
+                    data: 'expand',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data) { return data || ''; }
                 },
-                {
-                    data: 'tgl',
-                    name: 'created_at',
-                },{ data: 'bk_kode',      name: 'bk_kode' },
-                { data: 'barang',       name: 'barang_nama' },
-                { data: 'serial_number',name: 'serial_number' },
-                { data: 'tujuan',       name: 'bk_tujuan' },
-                { data: 'teknisi',      name: 'teknisi' },
-                { data: 'bk_jumlah',   name: 'bk_jumlah' },
-                { data: 'status',       name: 'bk_status' },
-                { data: 'action',       name: 'action', orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'tgl',       name: 'created_at' },
+                { data: 'bk_kode',   name: 'bk_kode' },
+                { data: 'teknisi',   name: 'teknisi_nama' },
+                { data: 'tujuan',    name: 'bk_tujuan' },
+                { data: 'serial_number', name: 'serial_number' },
+                { data: 'status',    name: 'bk_status' },
+                { data: 'action',    name: 'action', orderable: false, searchable: false },
             ],
         });
     });
@@ -361,6 +451,32 @@
                     table.ajax.reload();
                 }).fail(function(err) {
                     swal("Gagal!", err.responseJSON.error || "Terjadi kesalahan", "error");
+                });
+            }
+        });
+    }
+
+    function hapusTransaksi(bkKode) {
+        swal({
+            title: "Hapus Transaksi?",
+            text: "Semua barang (unit) pada transaksi " + bkKode + " ini akan dihapus permanen dan stok akan dikembalikan.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            confirmButtonText: "Ya, Hapus Semua!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.ajax({
+                    url: "{{ url('admin/barang-keluar/hapus-transaksi') }}/" + encodeURIComponent(bkKode),
+                    type: "POST", // Menggunakan POST agar kompatibel dan aman CSRF
+                    success: function(res) {
+                        swal("Berhasil!", res.success, "success");
+                        table.ajax.reload(null, false);
+                    },
+                    error: function(err) {
+                        swal("Gagal!", err.responseJSON?.error || "Terjadi kesalahan", "error");
+                    }
                 });
             }
         });

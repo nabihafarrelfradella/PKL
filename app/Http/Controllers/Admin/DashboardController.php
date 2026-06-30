@@ -61,6 +61,35 @@ class DashboardController extends Controller
         // Total teknisi (role_id = 3)
         $data['teknisi']  = UserModel::where('role_id', 3)->count();
 
+        // CHART 1: Barang Sering Dipinjam (Top 10)
+        // Dihitung dari jumlah transaksi dengan status 'Dipinjam'
+        $data['chartDipinjam'] = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
+            ->where('tbl_barangkeluar.bk_status', 'Dipinjam')
+            ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        // CHART 2: Barang Paling Sering Habis (Top 10)
+        // Dihitung dari total unit yang keluar (bk_jumlah) keseluruhan
+        $data['chartHabis'] = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total'))
+            ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        // CHART 3: Barang Sering Rusak (Top 10)
+        // Dihitung dari kondisi kembali "Rusak Ringan" atau "Rusak Berat"
+        $data['chartRusak'] = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
+            ->whereIn('tbl_barangkeluar.bk_kondisi_kembali', ['Rusak Ringan', 'Rusak Berat'])
+            ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
         return view('Admin.Dashboard.index', $data);
     }
 
@@ -86,5 +115,54 @@ class DashboardController extends Controller
             'masuk'  => $masuk,
             'keluar' => $keluar,
         ]);
+    }
+
+    public function getChartData(Request $request)
+    {
+        $filter = $request->filter ?? 'semua';
+        $type = $request->type ?? 'semua';
+        $now = now();
+        $response = [];
+
+        // Helper function (closure) untuk filter
+        $applyFilter = function($query) use ($filter, $now) {
+            if ($filter == 'hari') {
+                $query->whereDate('tbl_barangkeluar.created_at', $now);
+            } elseif ($filter == 'minggu') {
+                $query->whereBetween('tbl_barangkeluar.created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+            } elseif ($filter == 'bulan') {
+                $query->whereMonth('tbl_barangkeluar.created_at', $now->month)->whereYear('tbl_barangkeluar.created_at', $now->year);
+            } elseif ($filter == 'tahun') {
+                $query->whereYear('tbl_barangkeluar.created_at', $now->year);
+            }
+        };
+
+        if ($type == 'dipinjam' || $type == 'semua') {
+            $qDipinjam = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->where('tbl_barangkeluar.bk_status', 'Dipinjam');
+            $applyFilter($qDipinjam);
+            $response['chartDipinjam'] = $qDipinjam->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
+                ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+                ->orderByDesc('total')->limit(10)->get();
+        }
+
+        if ($type == 'habis' || $type == 'semua') {
+            $qHabis = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode');
+            $applyFilter($qHabis);
+            $response['chartHabis'] = $qHabis->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total'))
+                ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+                ->orderByDesc('total')->limit(10)->get();
+        }
+
+        if ($type == 'rusak' || $type == 'semua') {
+            $qRusak = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->whereIn('tbl_barangkeluar.bk_kondisi_kembali', ['Rusak Ringan', 'Rusak Berat']);
+            $applyFilter($qRusak);
+            $response['chartRusak'] = $qRusak->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
+                ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
+                ->orderByDesc('total')->limit(10)->get();
+        }
+
+        return response()->json($response);
     }
 }

@@ -50,6 +50,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/admin', [DashboardController::class, 'index']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+        Route::get('/admin/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
         Route::post('/admin/dashboard/cekResi', [DashboardController::class, 'cekResi'])->name('dashboard.cekResi');
     });
 
@@ -98,6 +99,8 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-masuk/proses_tambah/', [BarangmasukController::class, 'proses_tambah'])->name('barang-masuk.store');
         Route::post('/admin/barang-masuk/proses_ubah/{barangmasuk}', [BarangmasukController::class, 'proses_ubah']);
         Route::post('/admin/barang-masuk/proses_hapus/{barangmasuk}', [BarangmasukController::class, 'proses_hapus']);
+        Route::post('/admin/barang-masuk/hapus-kelompok', [BarangmasukController::class, 'hapus_kelompok']);
+        Route::get('/admin/barang-masuk/detail-sn/all/{barang_kode}', [BarangmasukController::class, 'detailSN'])->name('barang-masuk.detailSN');
         Route::get('/admin/barang/getbarang/{id}', [BarangController::class, 'getbarang']);
         Route::get('/admin/barang/getunit/{id}', [BarangController::class, 'getunit']);
         Route::get('/admin/barang/listbarang/{param}', [BarangController::class, 'listbarang']);
@@ -110,11 +113,13 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-keluar/proses_tambah/', [BarangkeluarController::class, 'proses_tambah'])->name('barang-keluar.store');
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);
+        Route::post('/admin/barang-keluar/hapus-transaksi/{bk_kode}', [BarangkeluarController::class, 'hapusTransaksi']);
         Route::post('/admin/barang-keluar/proses_kembali/{barangkeluar}', [BarangkeluarController::class, 'proses_kembali']);
         Route::post('/admin/barang-keluar/terima_pinjam/{barangkeluar}', [BarangkeluarController::class, 'terima_pinjam']);
         Route::post('/admin/barang-keluar/tolak_pinjam/{barangkeluar}', [BarangkeluarController::class, 'tolak_pinjam']);
         Route::post('/admin/barang-keluar/terima_kembali/{barangkeluar}', [BarangkeluarController::class, 'terima_kembali']);
         Route::post('/admin/barang-keluar/tolak_kembali/{barangkeluar}', [BarangkeluarController::class, 'tolak_kembali']);
+        Route::get('/admin/barang-keluar/detail-sn/all/{barang_kode}', [BarangkeluarController::class, 'detailSN'])->name('barang-keluar.detailSN');
         Route::get('/admin/barang/get-available-sn/{barang_kode}', [BarangkeluarController::class, 'getAvailableSN']);
         // Teknisi lookup (needed for form dropdowns by Owner & Admin Gudang)
         Route::get('/admin/user-management/teknisi/get/{id}', [BarangkeluarController::class, 'getTeknisi']);

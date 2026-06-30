@@ -22,12 +22,6 @@
                 <div class="navbar navbar-collapse responsive-navbar p-0">
                     <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
                         <div class="d-flex justify-content-between order-lg-2">
-                            <!-- Theme-Layout -->
-                            <div class="dropdown d-none d-md-flex">
-                                <a class="nav-link icon full-screen-link nav-link-bg">
-                                    <i class="fe fe-minimize fullscreen-button"></i>
-                                </a>
-                            </div>
                             {{-- NOTIFIKASI BELL — hanya untuk Owner & Admin Gudang --}}
                             @if(in_array(Session::get('user')->role_id, [1, 2]))
                             <div class="dropdown d-flex notifications" id="notifDropdown">
