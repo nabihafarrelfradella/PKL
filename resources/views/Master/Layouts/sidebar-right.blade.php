@@ -1,4 +1,4 @@
- <!-- Sidebar-right -->
+﻿ <!-- Sidebar-right -->
  <div class="sidebar sidebar-right sidebar-animate">
      <div class="panel panel-primary card mb-0 shadow-none border-0">
          <div class="tab-menu-heading border-0 d-flex p-3">

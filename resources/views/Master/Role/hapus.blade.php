@@ -1,11 +1,11 @@
-<!-- MODAL EFFECTS -->
+﻿<!-- MODAL EFFECTS -->
 <div class="modal fade" data-bs-backdrop="static" id="Hmodaldemo8">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <form method="POST" action="{{url('/admin/role/hapus')}}" name="myFormH" id="myFormH" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body text-center p-4 pb-5">
-                    <button type="reset" aria-label="Close" class="btn-close position-absolute" data-bs-dismiss="modal"><span aria-hidden="true">×</span></button>
+                    <button type="reset" aria-label="Close" class="btn-close position-absolute" data-bs-dismiss="modal"><span aria-hidden="true">Ã—</span></button>
                     <br>
                     <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
                     <h3 class="mb-5">Yakin hapus <span id="vrole"></span> ?</h3>

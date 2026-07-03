@@ -1,147 +1,281 @@
 @extends('Master.Layouts.app_login', ['title' => $title])
 
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<div class="split-screen">
-    <div class="left-side">
-        <div class="login-wrapper">
+<div class="page-wrap">
 
-            <div class="logo-section mb-5 text-start">
-                <img src="{{url('/assets/default/web/default.png')}}" height="120px" alt="logo">
+    <!-- Left: Illustration -->
+    <div class="left-panel">
+        <img src="{{url('/assets/default/web/warehouse_illustration.png')}}" alt="Warehouse Illustration" class="illus-img">
+
+        <!-- Decorative overlays (pointer-events:none so illustration stays clickable) -->
+        <div class="deco deco-blob-tl"></div>
+        <div class="deco deco-blob-br"></div>
+        <div class="deco deco-ring"></div>
+        <div class="deco deco-dots"></div>
+    </div>
+
+    <!-- Right: Login Form -->
+    <div class="right-panel">
+        <div class="form-box">
+
+            <!-- Logo + Title -->
+            <div class="brand-block">
+                <img src="{{url('/assets/default/web/logo-login.png')}}" alt="Alfatindo Logo" class="brand-logo">
+                <h1 class="brand-name">MANAJEMEN GUDANG</h1>
             </div>
 
-            <div class="login-header mb-5 text-start">
-                <h1 class="fw-bold text-dark">Login</h1>
-                <p class="text-muted">Silakan gunakan Username dan Password untuk login</p>
-            </div>
-
-            <form class="login-form validate-form" method="POST" name="myForm" action="{{ url('admin/proseslogin') }}" onsubmit="return validateForm()">
+            <!-- Form -->
+            <form method="POST" name="myForm" action="{{ url('admin/proseslogin') }}" onsubmit="return validateForm()">
                 @csrf
-                
-                <div class="input-container mb-4">
-                    <input name="user" id="user" value="{{Session::get('userInput')}}" type="text" placeholder=" " autocomplete="off">
-                    <label for="user">Username</label>
-                    <i class="ri-user-3-line input-icon"></i>
+
+                <div class="input-field">
+                    <input name="user" id="user" type="text" value="{{Session::get('userInput')}}" placeholder="Username" autocomplete="off">
                 </div>
 
-                <div class="input-container mb-4">
-                    <input name="pwd" id="pwd" type="password" placeholder=" " autocomplete="off">
-                    <label for="pwd">Password</label>
-                    <i class="ri-lock-2-line input-icon"></i>
+                <div class="input-field">
+                    <input name="pwd" id="pwd" type="password" placeholder="Password" autocomplete="off">
                 </div>
 
-                <div class="form-check text-start mb-5">
-                    <input class="form-check-input" type="checkbox" id="rememberCheck">
-                    <label class="form-check-label text-muted small" for="rememberCheck">
-                        Keep me logged in
-                    </label>
-                </div>
-
-                <div class="form-btn-container mb-4">
-                    <button type="submit" class="login-form-btn w-100" id="btnLogin">LOGIN</button>
-                    <button type="button" class="login-form-btn w-100 d-none" id="btnLoader" disabled>
-                        <span class="spinner-border spinner-border-sm me-2"></span> Memproses...
-                    </button>
-                </div>
-
-
+                <button type="submit" class="btn-login" id="btnLogin">Login</button>
+                <button type="button" class="btn-login d-none" id="btnLoader" disabled>
+                    <span class="spinner-border spinner-border-sm me-2"></span> Memproses...
+                </button>
             </form>
+
         </div>
     </div>
 
-    <div class="right-side d-none d-lg-flex">
-        <div class="content-wrapper text-center">
-            <div class="date-section mb-5">
-                <h1 class="fw-light display-3 text-white">{{ date('jS F,') }}</h1>
-                <h1 class="fw-bold display-3 text-white">{{ date('Y') }}</h1>
-            </div>
-
-            <div class="modern-art">
-                <div class="circle c1"></div>
-                <div class="circle c2"></div>
-                <div class="circle c3"></div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
-/* 1. Layout Dasar */
-body, html { height: 100%; margin: 0; overflow: hidden; }
-.split-screen { display: flex; height: 100vh; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.left-side { 
-    flex: 1; background: #fff; display: flex; align-items: center; 
-    justify-content: center; padding: 60px; position: relative; 
-}
+    body, html {
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+    }
 
-.right-side { 
-    flex: 1; background: #0a1f3d; display: flex; align-items: center; 
-    justify-content: center; position: relative; overflow: hidden; 
-}
+    /* ===== FULL-SCREEN SPLIT LAYOUT ===== */
+    .page-wrap {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        background: #fff;
+    }
 
-.login-wrapper { width: 100%; max-width: 400px; }
-.top-nav-link { position: absolute; top: 30px; right: 30px; }
+    /* --- Left Panel --- */
+    .left-panel {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-/* 2. Input Container & Icon Centering (Tengah Sempurna) */
-.input-container { 
-    position: relative; border: 1px solid #e0e0e0; border-radius: 8px; 
-    height: 60px; display: flex; align-items: center; transition: all 0.3s;
-}
+    .illus-img {
+        width: 85%;
+        height: 85%;
+        max-width: 85%;
+        max-height: 85%;
+        object-fit: contain;
+        display: block;
+    }
 
-.input-container:focus-within {
-    border-color: #6c5ce7;
-    box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
-}
+    /* --- Decorative overlays --- */
+    .deco {
+        position: absolute;
+        pointer-events: none;
+        z-index: 2;
+    }
 
-.input-container input { 
-    width: 100%; height: 100%; border: none; outline: none; 
-    padding: 22px 15px 8px 50px; background: transparent; font-size: 1rem;
-}
+    /* Soft blob top-left */
+    .deco-blob-tl {
+        top: -60px;
+        left: -60px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0) 70%);
+    }
 
-/* KUNCI: Membuat Ikon Berada di Tengah Vertikal */
-.input-icon { 
-    position: absolute; left: 18px; top: 50%; 
-    transform: translateY(-50%); /* Geser ikon tepat ke tengah */
-    font-size: 1.4rem; color: #bdbdbd; transition: 0.3s; 
-}
+    /* Soft blob bottom-right */
+    .deco-blob-br {
+        bottom: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(220,91,127,0.13) 0%, rgba(220,91,127,0) 70%);
+    }
 
-.input-container label { 
-    position: absolute; left: 50px; top: 50%; 
-    transform: translateY(-50%); transition: 0.3s; 
-    color: #999; pointer-events: none; 
-}
+    /* Floating ring - top right corner */
+    .deco-ring {
+        top: 24px;
+        right: 24px;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        border: 3px solid rgba(37,99,235,0.18);
+        animation: spinRing 12s linear infinite;
+    }
 
-/* Floating Label Animation */
-.input-container input:focus + label, 
-.input-container input:not(:placeholder-shown) + label { 
-    top: 15px; font-size: 0.75rem; color: #6c5ce7; font-weight: bold; 
-}
+    @keyframes spinRing {
+        from { transform: rotate(0deg) scale(1); }
+        50%  { transform: rotate(180deg) scale(1.08); }
+        to   { transform: rotate(360deg) scale(1); }
+    }
 
-.input-container:focus-within .input-icon { color: #6c5ce7; }
+    /* Dot grid - bottom left */
+    .deco-dots {
+        bottom: 28px;
+        left: 28px;
+        width: 90px;
+        height: 90px;
+        background-image: radial-gradient(circle, rgba(37,99,235,0.22) 1.5px, transparent 1.5px);
+        background-size: 14px 14px;
+        opacity: 0.7;
+        animation: fadeInOut 5s ease-in-out infinite alternate;
+    }
 
-/* 3. Tombol Login */
-.login-form-btn { 
-    background: #6c5ce7; color: #fff; border: none; height: 55px; 
-    border-radius: 8px; font-weight: bold; letter-spacing: 1.5px; transition: 0.3s;
-}
+    @keyframes fadeInOut {
+        from { opacity: 0.4; }
+        to   { opacity: 0.85; }
+    }
 
-.login-form-btn:hover { background: #5b4cc4; transform: translateY(-2px); }
+    /* --- Right Panel --- */
+    .right-panel {
+        flex: 0 0 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(160deg, #c5d8f7 0%, #f4c5c5 100%);
+        padding: 40px 50px;
+        box-shadow: -4px 0 30px rgba(0,0,0,0.08);
+    }
 
-/* 4. Dekorasi Kanan */
-.circle { position: absolute; border-radius: 50%; background: #6c5ce7; filter: blur(30px); opacity: 0.4; }
-.c1 { width: 200px; height: 200px; top: 10%; left: 20%; }
-.c2 { width: 150px; height: 150px; bottom: 15%; right: 20%; background: #a29bfe; }
-.c3 { width: 80px; height: 80px; top: 50%; left: 60%; background: #fff; opacity: 0.1; }
+    .form-box {
+        width: 100%;
+        max-width: 320px;
+    }
+
+    /* Brand block: logo + name stacked centered */
+    .brand-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 4px;
+    }
+
+    .brand-logo {
+        height: 200px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 12px rgba(37,99,235,0.15));
+    }
+
+    .brand-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1a2540;
+        letter-spacing: 2px;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    /* Input fields */
+    .input-field {
+        margin-bottom: 14px;
+    }
+
+    .input-field input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e0e6ef;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        color: #1a2540;
+        background: #f8fafc;
+        outline: none;
+        transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    }
+
+    .input-field input:focus {
+        border-color: #2563EB;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .input-field input::placeholder { color: #b0b8c8; }
+
+    /* Login button */
+    .btn-login {
+        width: 100%;
+        margin-top: 10px;
+        padding: 13px;
+        background: linear-gradient(90deg, #2563EB, #e05b7f);
+        color: #fff;
+        border: none;
+        border-radius: 30px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: background 0.3s, transform 0.15s, box-shadow 0.25s;
+        box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(90deg, #e05b7f, #2563EB);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220,91,127,0.4);
+    }
+
+    .btn-login:active { transform: translateY(0); }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+        .page-wrap {
+            flex-direction: column;
+            overflow: auto;
+            height: 100vh;
+        }
+
+        body, html { overflow: auto; }
+
+        /* Sembunyikan panel ilustrasi di mobile */
+        .left-panel {
+            display: none !important;
+        }
+
+        /* Form login mengisi seluruh layar */
+        .right-panel {
+            flex: 1;
+            width: 100%;
+            min-height: 100vh;
+            padding: 60px 32px 50px;
+            box-shadow: none;
+            justify-content: center;
+        }
+
+        .form-box {
+            max-width: 100%;
+            width: 100%;
+        }
+    }
 </style>
+
 @endsection
 
 @section('scripts')
 <script>
     $(document).ready(function() {
         setLoading(false);
-        
+
         @if(Session::has('status'))
             swal({
                 title: "{{ Session::get('status') == 'success' ? 'Berhasil' : 'Gagal' }}",
@@ -155,14 +289,12 @@ body, html { height: 100%; margin: 0; overflow: hidden; }
     function validateForm() {
         var usr = $('#user').val();
         var pwd = $('#pwd').val();
-
         if (usr.trim() == "" || pwd.trim() == "") {
             swal("Peringatan", "Username dan Password tidak boleh kosong!", "warning");
             return false;
         }
-
         setLoading(true);
-        return true; 
+        return true;
     }
 
     function setLoading(bool) {

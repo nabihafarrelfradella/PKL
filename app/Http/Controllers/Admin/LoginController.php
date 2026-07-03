@@ -28,6 +28,14 @@ class LoginController extends Controller
             ->first();
 
         if ($user) {
+            // Tolak akses jika role adalah Pegawai Teknisi (role_id = 3)
+            if ($user->role_id == 3) {
+                Session::flash('status', 'error');
+                Session::flash('msg', 'Akses ditolak! Teknisi tidak memiliki hak akses login.');
+                Session::flash('userInput', $username);
+                return redirect('/admin/login');
+            }
+
             // Set Session
             $role = AksesModel::where('role_id', $user->role_id)->get();
             $request->session()->put('user', $user);

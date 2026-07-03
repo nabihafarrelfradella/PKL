@@ -3,7 +3,7 @@
     use App\Models\Admin\AksesModel;
     $user   = Session::get('user');
     $roleId = $user ? $user->role_id : 0;
-    // role_id=1 → Owner, role_id=2 → Admin Gudang, role_id=3 → Pegawai Teknisi
+    // role_id=1 â†’ Owner, role_id=2 â†’ Admin Gudang, role_id=3 â†’ Pegawai Teknisi
     
     // Ambil daftar akses 'view' untuk role ini (selain Owner)
     $aksesMenus = [];
@@ -43,19 +43,10 @@
     <div class="app-sidebar">
         <div class="side-header">
             <a class="header-brand1" href="{{url('/admin')}}">
-                <img src="{{url('/assets/default/web/default.png')}}" height="120px" class="header-brand-img toggle-logo" alt="logo">
-                <div class="header-brand-img desktop-logo">
-                    <div class="d-flex align-items-center">
-                        <img src="{{url('/assets/default/web/default.png')}}" height="180px" class="me-1" alt="logo">
-                        <h4 class="fw-bold mt-4 text-white text-uppercase text-truncate">Manajemen Alfatindo</h4>
-                    </div>
-                </div>
-                <img src="{{url('/assets/default/web/default.png')}}" height="120px" class="header-brand-img light-logo" alt="logo">
-                <div class="header-brand-img light-logo1">
-                    <div class="d-flex align-items-center">
-                        <img src="{{url('/assets/default/web/default.png')}}" height="120px" class="me-1" alt="logo">
-                    </div>
-                </div>
+                <img src="{{url('/assets/default/web/logo-icon.png')}}" height="65px" class="header-brand-img toggle-logo" alt="logo">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" alt="logo">
+                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img light-logo" alt="logo">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" alt="logo">
             </a>
         </div>
         <div class="main-sidemenu">
@@ -165,7 +156,7 @@
 
                 @if($roleId == 1)
                 {{-- ============================================
-                     OWNER ONLY — User Management
+                     OWNER ONLY â€” User Management
                      ============================================ --}}
                 <li class="sub-category">
                     <h3>Manajemen Pengguna</h3>
@@ -178,7 +169,7 @@
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{route('user-mgmt.teknisi')}}" class="slide-item {{$title == 'Daftar Teknisi' ? 'active' : ''}}">Daftar Teknisi</a></li>
-                        <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Staff Gudang</a></li>
+                        <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Admin Gudang</a></li>
                         <li><a href="{{route('user-mgmt.access-control')}}" class="slide-item {{$title == 'Access Control' ? 'active' : ''}}">Access Control</a></li>
                     </ul>
                 </li>

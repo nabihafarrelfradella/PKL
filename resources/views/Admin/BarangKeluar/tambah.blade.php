@@ -103,6 +103,9 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="text" name="lokasi" id="lokasiInput" class="form-control" placeholder="Lokasi..." autocomplete="off">
+                                        <input type="hidden" name="lat" id="latInput">
+                                        <input type="hidden" name="lng" id="lngInput">
+                                        <input type="hidden" name="map_url" id="mapUrlInput">
                                         <button class="btn btn-primary-light border" type="button" onclick="openLocationPicker()" title="Pilih di Peta"><i class="fe fe-map"></i></button>
                                     </div>
                                 </div>
@@ -124,10 +127,12 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </label>
-                            <div class="input-group flex-nowrap">
-                                <input type="text" class="form-control" autocomplete="off" name="kdbarang" placeholder="Scan QR atau masukkan kode...">
+                            <div class="input-group flex-nowrap" style="position: relative;">
+                                <input type="text" class="form-control" autocomplete="off" name="kdbarang" id="kdbarang" placeholder="Scan QR atau masukkan kode...">
                                 <button class="btn btn-primary-light" onclick="searchBarang()" type="button"><i class="fe fe-search"></i></button>
                                 <button class="btn btn-success-light" onclick="modalBarang()" type="button"><i class="fe fe-box"></i></button>
+
+                                <ul id="autocomplete-list" class="list-group position-absolute w-100" style="top: 100%; z-index: 1050; display: none; max-height: 300px; overflow-y: auto; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);"></ul>
                             </div>
                             <small class="text-muted">Bisa scan QR Code atau input Serial Number</small>
                         </div>
@@ -150,16 +155,25 @@
                             </div>
                         </div>
                         <input type="hidden" id="satuan">
-                        <input type="hidden" id="jenis">
-                        <div class="form-group">
-                            <label>SN Barang</label>
-                            <div class="select2-wrapper" style="position: relative;">
-                                <select id="sn_select" name="serial_number[]" class="form-control sn-select2" style="width:100%;" multiple="multiple">
-                                    <option value="">-- Pilih SN... --</option>
-                                </select>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Jenis Barang</label>
+                                    <input type="text" class="form-control" id="jenis" readonly placeholder="Otomatis">
+                                </div>
                             </div>
-                            <small class="text-muted">Pilih SN dari daftar. Kosongkan jika tidak pakai SN.</small>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Kode Unik</label>
+                                    <div class="select2-wrapper" style="position: relative;">
+                                        <select id="sn_select" name="serial_number[]" class="form-control sn-select2" style="width:100%;" multiple="multiple">
+                                            <option value="">-- Pilih Kode Unik... --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        <small class="text-muted">Pilih Kode Unik dari daftar. Kosongkan jika tidak diperlukan.</small>
                         <div class="text-end mt-3">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="addToBatch()">
                                 <i class="fe fe-plus me-1"></i>Tambah ke Daftar
@@ -170,7 +184,7 @@
 
                 <hr class="my-3">
 
-                {{-- ── DAFTAR BARANG YANG AKAN DISIMPAN ── --}}
+                {{-- â”€â”€ DAFTAR BARANG YANG AKAN DISIMPAN â”€â”€ --}}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="mb-0">
                         <i class="fe fe-list me-1 text-primary"></i>Daftar Barang Keluar
@@ -188,7 +202,7 @@
                                 <th width="1%">No</th>
                                 <th>Kode Barang</th>
                                 <th>Nama Barang</th>
-                                <th>SN Terpilih</th>
+                                <th>Kode Unik Terpilih</th>
                                 <th width="8%">Jumlah</th>
                                 <th width="1%">Aksi</th>
                             </tr>
@@ -297,6 +311,7 @@
 <script>
     let map, marker;
     let selectedAddress = '';
+    let currentMapUrl = '';
     let mapTargetInput = 'lokasiInput';
 
     function openLocationPicker(targetId = 'lokasiInput') {
@@ -337,6 +352,11 @@
     let autocompleteTimeout;
     
     function autocompleteMapSearch(query) {
+        if(query.includes('http://') || query.includes('https://')) {
+            $('#autocompleteResults').hide().empty();
+            return;
+        }
+
         if(query.length < 3) {
             $('#autocompleteResults').hide().empty();
             return;
@@ -370,6 +390,7 @@
         map.setView([lat, lon], 16);
         marker.setLatLng([lat, lon]);
         selectedAddress = name;
+        currentMapUrl = '';
         $('#selectedLocationText').text(selectedAddress);
     }
     
@@ -418,7 +439,7 @@
         });
         @endif
 
-        // Init SN Select2 dengan tags:true — bisa pilih list atau ketik bebas
+        // Init SN Select2 dengan tags:true â€” bisa pilih list atau ketik bebas
         initSNSelect2();
 
         // Close Select2 dropdown on scrolling modal body to prevent floating misalignment
@@ -446,7 +467,7 @@
     });
 
     function initSNSelect2(maxSelect) {
-        // Always read current jml from DOM — never trust closure for dynamic value
+        // Always read current jml from DOM â€” never trust closure for dynamic value
         var maxSelection = maxSelect || parseInt($("input[name='jml']").val()) || 1;
 
         // Store on element so handler always has the freshest value
@@ -462,7 +483,7 @@
 
         $('#sn_select').select2({
             dropdownParent: $('#sn_select').parent(),
-            placeholder: '-- Pilih SN... --',
+            placeholder: '-- Pilih Kode Unik... --',
             allowClear: false,
             hideSelectedOptions: true,
             language: {
@@ -579,7 +600,7 @@
 
     function fetchAvailableSNs(barang_kode) {
         var $sel = $('#sn_select');
-        // Save currently selected values before rebuilding — filter out empty/blank values
+        // Save currently selected values before rebuilding â€” filter out empty/blank values
         var previousSelected = ($sel.val() || []).filter(function(s) { return s && s.trim() !== ''; });
 
         // Get all SNs already in batchItems
@@ -610,10 +631,13 @@
                 // Add available SNs that are NOT already selected AND NOT in the cart
                 data.forEach(function(item) {
                     if (!previousSelected.includes(item.serial_number) && !snInCart.includes(item.serial_number)) {
-                        var unikText = item.kode_barang_unik ? ` (Unik: ${item.kode_barang_unik})` : '';
+                        var labelText = item.serial_number;
+                        if (item.kondisi) {
+                            labelText += ' - ' + item.kondisi;
+                        }
                         var $opt = $('<option></option>')
                             .val(item.serial_number)
-                            .text(item.serial_number + unikText)
+                            .text(labelText)
                             .attr('data-kbu', item.kode_barang_unik);
                         $sel.append($opt);
                     }
@@ -622,10 +646,9 @@
                 previousSelected.forEach(function(sn) {
                     if (sn && !snInCart.includes(sn)) {
                         var matched = data.find(function(d) { return d.serial_number === sn; });
-                        var unikText = matched && matched.kode_barang_unik ? ` (Unik: ${matched.kode_barang_unik})` : '';
                         var $opt = $('<option selected></option>')
                             .val(sn)
-                            .text(sn + unikText)
+                            .text(sn)
                             .attr('data-kbu', matched ? matched.kode_barang_unik : '');
                         $sel.append($opt);
                     }
@@ -706,8 +729,14 @@
         const nmbarang = $("#nmbarang").val();
         const jml = parseInt($("input[name='jml']").val()) || 0;
         
-        var selectedSNs = $('#sn_select').val() || [];
-        selectedSNs = selectedSNs.filter(function(s) { return s && s.trim() !== ''; });
+        var selectedSNs = [];
+        var selectedSNTexts = [];
+        $('#sn_select option:selected').each(function() {
+            if ($(this).val() !== "") {
+                selectedSNs.push($(this).val());
+                selectedSNTexts.push($(this).text());
+            }
+        });
         
         var hasSNOptions = $('#sn_select option').filter(function() { return $(this).val() !== ""; }).length > 0;
 
@@ -734,13 +763,15 @@
             // Gabungkan jumlah dan SN jika sudah ada
             batchItems[existingIndex].jumlah += jml;
             batchItems[existingIndex].sns = batchItems[existingIndex].sns.concat(selectedSNs);
+            batchItems[existingIndex].sn_texts = (batchItems[existingIndex].sn_texts || batchItems[existingIndex].sns.slice(0, batchItems[existingIndex].sns.length - selectedSNs.length)).concat(selectedSNTexts);
         } else {
             // Tambah item baru
             batchItems.push({
                 kode: kdbarang,
                 nama: nmbarang,
                 jumlah: jml,
-                sns: selectedSNs
+                sns: selectedSNs,
+                sn_texts: selectedSNTexts
             });
         }
 
@@ -767,16 +798,30 @@
         }
 
         batchItems.forEach((item, index) => {
-            let snText = item.sns.length > 0 ? item.sns.join(', ') : '<em>Tidak ada SN</em>';
+            let snHtml = '';
+            if (item.sns && item.sns.length > 0) {
+                snHtml = item.sns.map((sn, sIdx) => {
+                    let displaySn = (item.sn_texts && item.sn_texts[sIdx]) ? item.sn_texts[sIdx] : sn;
+                    return `<div class="d-flex align-items-center justify-content-between mb-1">
+                                <div style="min-width: 100px;"><code>${displaySn}</code></div>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="removeBatchDetail(${index}, ${sIdx})" title="Hapus SN">
+                                    <i class="fe fe-trash-2 fs-12"></i>
+                                </button>
+                            </div>`;
+                }).join('');
+            } else {
+                snHtml = '<span class="text-muted">-</span>';
+            }
+
             tbody.append(`
                 <tr>
                     <td class="text-center align-middle">${index + 1}</td>
                     <td class="align-middle"><span class="badge bg-primary-transparent text-primary">${item.kode}</span></td>
                     <td class="align-middle">${item.nama}</td>
-                    <td class="align-middle"><small>${snText}</small></td>
+                    <td class="align-middle">${snHtml}</td>
                     <td class="align-middle text-center"><strong>${item.jumlah}</strong></td>
                     <td class="align-middle text-center">
-                        <button type="button" class="btn btn-sm btn-danger-light btn-icon" onclick="removeFromBatch(${index})" title="Hapus">
+                        <button type="button" class="btn btn-sm btn-danger-light btn-icon" onclick="removeFromBatch(${index})" title="Hapus Semua">
                             <i class="fe fe-trash-2"></i>
                         </button>
                     </td>
@@ -793,6 +838,24 @@
         renderBatchTable();
         
         // Refresh dropdown SN jika barang yang sedang aktif sama
+        var currentKdB = $("input[name='kdbarang']").val().trim();
+        if(currentKdB) {
+            fetchAvailableSNs(currentKdB);
+        }
+    }
+
+    function removeBatchDetail(itemIndex, snIndex) {
+        let item = batchItems[itemIndex];
+        item.sns.splice(snIndex, 1);
+        if (item.sn_texts) {
+            item.sn_texts.splice(snIndex, 1);
+        }
+        item.jumlah -= 1;
+        if (item.jumlah <= 0) {
+            batchItems.splice(itemIndex, 1);
+        }
+        renderBatchTable();
+        
         var currentKdB = $("input[name='kdbarang']").val().trim();
         if(currentKdB) {
             fetchAvailableSNs(currentKdB);
@@ -824,19 +887,19 @@
     }
 
     function clearItemInput() {
-        $("#status").val("false");
-        $("input[name='kdbarang']").val('');
-        $("#nmbarang").val('');
-        $("#satuan").val('');
-        $("#jenis").val('');
-        $("input[name='kode_barang_unik']").val('');
         $("input[name='jml']").val('1');
+        $("input[name='kode_barang_unik']").val('');
         
         // Reset Select2 SN
         $('#sn_select').empty().append('<option value=""></option>');
         initSNSelect2();
         
-        $("input[name='kdbarang']").focus();
+        var currentKdB = $("input[name='kdbarang']").val().trim();
+        if(currentKdB) {
+            fetchAvailableSNs(currentKdB);
+        }
+        
+        $('#sn_select').select2('open');
     }
 
     function checkForm() {
@@ -875,6 +938,9 @@
         const keterangan      = $("input[name='keterangan']").val();
         const customer        = $("input[name='customer']").val();
         const lokasi          = $("input[name='lokasi']").val();
+        const lat             = $("#latInput").val();
+        const lng             = $("#lngInput").val();
+        const mapUrl          = $("#mapUrlInput").val();
 
         $.ajax({
             type: 'POST',
@@ -887,6 +953,9 @@
                 keterangan: keterangan,
                 customer: customer,
                 lokasi: lokasi,
+                lat: lat,
+                lng: lng,
+                map_url: mapUrl,
                 items: batchItems
             },
             success: function(data) {
@@ -920,6 +989,9 @@
         $("input[name='keterangan']").val('');
         $("input[name='kode_barang_unik']").val('');
         $("input[name='jml']").val('1');
+        $("input[name='lokasi']").val('');
+        $("#latInput").val('');
+        $("#lngInput").val('');
         $("#nmbarang").val('');
         
         batchItems = [];
@@ -927,7 +999,7 @@
         $("#satuan").val('');
         $("#jenis").val('');
         $("#status").val('false');
-        // Reset Select2 SN: destroy → kosongkan → reinit
+        // Reset Select2 SN: destroy â†’ kosongkan â†’ reinit
         if ($('#sn_select').hasClass('select2-hidden-accessible')) {
             $('#sn_select').select2('destroy');
         }
@@ -965,11 +1037,13 @@
             
             map.on('click', function(e) {
                 marker.setLatLng(e.latlng);
+                currentMapUrl = '';
                 reverseGeocode(e.latlng.lat, e.latlng.lng);
             });
 
             marker.on('dragend', function(e) {
                 let position = marker.getLatLng();
+                currentMapUrl = '';
                 reverseGeocode(position.lat, position.lng);
             });
 
@@ -1004,10 +1078,42 @@
     }
 
     function searchLocationMap() {
-        let query = $('#mapSearchInput').val();
+        let query = $('#mapSearchInput').val().trim();
         if(!query) return;
         
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        // Handle Google Maps Links
+        if (query.includes('http://') || query.includes('https://')) {
+            $('#selectedLocationText').text('Mengekstrak koordinat dari link...');
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('barang-keluar.resolve-map-link') }}",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    url: query
+                },
+                success: function(res) {
+                    if (res.success) {
+                        let lat = res.lat;
+                        let lon = res.lng;
+                        map.setView([lat, lon], 16);
+                        marker.setLatLng([lat, lon]);
+                        currentMapUrl = query;
+                        reverseGeocode(lat, lon);
+                    } else {
+                        swal({ title: "Gagal!", text: res.error || 'Gagal mengekstrak koordinat dari link.', type: "error" });
+                        $('#selectedLocationText').text('Gagal memproses link map');
+                    }
+                },
+                error: function(xhr) {
+                    swal({ title: "Gagal!", text: xhr.responseJSON?.error || 'Gagal menghubungi server.', type: "error" });
+                    $('#selectedLocationText').text('Gagal memproses link map');
+                }
+            });
+            return;
+        }
+
+        $('#selectedLocationText').text('Mencari lokasi...');
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id`)
             .then(response => response.json())
             .then(data => {
                 if(data && data.length > 0) {
@@ -1017,20 +1123,104 @@
                     map.setView([lat, lon], 16);
                     marker.setLatLng([lat, lon]);
                     selectedAddress = result.display_name;
+                    currentMapUrl = '';
                     $('#selectedLocationText').text(selectedAddress);
                 } else {
-                    alert('Lokasi tidak ditemukan');
+                    swal({ title: "Peringatan", text: "Lokasi tidak ditemukan", type: "warning" });
+                    $('#selectedLocationText').text('Alamat tidak ditemukan');
                 }
+            })
+            .catch(err => {
+                $('#selectedLocationText').text('Pencarian gagal');
             });
     }
 
     function confirmLocation() {
         if(selectedAddress) {
             $('#' + mapTargetInput).val(selectedAddress);
+            let pos = marker.getLatLng();
+            if (mapTargetInput === 'lokasiU') {
+                $('#latInputU').val(pos.lat);
+                $('#lngInputU').val(pos.lng);
+                $('#mapUrlInputU').val(currentMapUrl);
+            } else {
+                $('#latInput').val(pos.lat);
+                $('#lngInput').val(pos.lng);
+                $('#mapUrlInput').val(currentMapUrl);
+            }
             bootstrap.Modal.getInstance(document.getElementById('modalLocationPicker')).hide();
         } else {
-            alert('Silakan pilih lokasi di peta terlebih dahulu.');
+            swal({ title: "Peringatan", text: "Silakan pilih lokasi di peta terlebih dahulu.", type: "warning" });
         }
+    }
+
+    // â”€â”€ Autocomplete Logic â”€â”€
+    $(document).ready(function() {
+        let timer;
+        const inputKd = $('#kdbarang');
+        const list = $('#autocomplete-list');
+
+        // Add CSS for autocomplete hover
+        $("<style>")
+            .prop("type", "text/css")
+            .html(`
+                #autocomplete-list .list-group-item { background-color: #fff; transition: all 0.2s; }
+                #autocomplete-list .list-group-item:hover { background-color: #f8f9fa !important; }
+            `)
+            .appendTo("head");
+
+        inputKd.on('keyup focus', function() {
+            clearTimeout(timer);
+            let val = $(this).val();
+            if (val.length < 1) {
+                list.hide();
+                return;
+            }
+            timer = setTimeout(function() {
+                $.ajax({
+                    url: "{{ route('barang.autocomplete') }}",
+                    data: { term: val },
+                    success: function(data) {
+                        list.empty();
+                        if (data.length > 0) {
+                            data.forEach(item => {
+                                list.append(`
+                                    <li class="list-group-item list-group-item-action d-flex align-items-center" style="cursor: pointer;" onclick='pilihAutocomplete(${JSON.stringify(item)})'>
+                                        <img src="${item.foto}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 1px solid #ddd;">
+                                        <div>
+                                            <div class="fw-bold fs-13 mb-0" style="line-height: 1.2;">${item.nama}</div>
+                                            <small class="text-muted" style="font-size: 11px;">${item.kode}</small>
+                                        </div>
+                                    </li>
+                                `);
+                            });
+                            list.show();
+                        } else {
+                            list.hide();
+                        }
+                    }
+                });
+            }, 250);
+        });
+
+        // Hide list if clicked outside
+        $(document).click(function(e) {
+            if (!$(e.target).closest('.input-group').length) {
+                list.hide();
+            }
+        });
+    });
+
+    function pilihAutocomplete(item) {
+        $("input[name='kdbarang']").val(item.kode);
+        $("#nmbarang").val(item.nama);
+        $("#satuan").val(item.satuan);
+        $("#jenis").val(item.jenis);
+        $("#status").val("true");
+        $('#autocomplete-list').hide();
+        $("input[name='kode_barang_unik']").val('');
+        setSNSelect2('', '');
+        fetchAvailableSNs(item.kode);
     }
 </script>
 @endsection

@@ -18,17 +18,54 @@
     <div class="col-12">
         <div class="card filter-card">
             <div class="card-body pb-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-md-2">
                         <label class="form-label mb-1">Nama Barang</label>
                         <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang...">
                     </div>
-
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label mb-1">Serial Number</label>
                         <input type="text" id="filterSerial" class="form-control form-control-sm" placeholder="SN-xxxxx...">
                     </div>
-                    <div class="col-md-auto">
+                    <div class="col-md-2">
+                        <label class="form-label mb-1">Kondisi Stok</label>
+                        <select id="filterKondisiStok" class="form-control form-select form-select-sm">
+                            <option value="">Semua</option>
+                            <option value="Tersedia">Tersedia</option>
+                            <option value="Keluar/Habis">Keluar / Habis</option>
+                            <option value="Nonaktif">Nonaktif / Dihapus</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-1">Kondisi Barang</label>
+                        <select id="filterKondisiBarang" class="form-control form-select form-select-sm">
+                            <option value="">Semua</option>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                            <option value="Rusak Berat">Rusak Berat</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-1">Status Transaksi</label>
+                        <select id="filterStatusTransaksi" class="form-control form-select form-select-sm">
+                            <option value="">Semua</option>
+                            <option value="Tersedia">Tersedia / Masuk</option>
+                            <option value="Dipinjam">Sedang Dipinjam</option>
+                            <option value="Selesai">Sudah Kembali</option>
+                            <option value="Habis Pakai">Habis Pakai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label mb-1">Tgl Masuk/Kembali (Awal)</label>
+                        <input type="date" id="filterTglAwal" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-1">Tgl Masuk/Kembali (Akhir)</label>
+                        <input type="date" id="filterTglAkhir" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-auto ms-auto">
                         <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fe fe-search me-1"></i>Cari</button>
                         <button class="btn btn-light btn-sm ms-1" onclick="resetFilter()"><i class="fe fe-x me-1"></i>Reset</button>
                     </div>
@@ -56,13 +93,15 @@
                                 <th width="1%"><input type="checkbox" id="checkAllTracking"></th>
                                 <th width="1%">No</th>
                                 <th>Nama Barang</th>
+                                <th>Kode Unik</th>
                                 <th>Serial Number</th>
                                 <th>Satuan</th>
                                 <th>Jml Masuk</th>
-                                <th>Tersedia</th>
+                                <th>Kondisi Stok</th>
+                                <th>Kondisi Fisik</th>
                                 <th>Tgl Masuk</th>
                                 <th>Tgl Keluar</th>
-                                <th>Status</th>
+                                <th>Status Transaksi</th>
                                 <th width="1%">QR</th>
                             </tr>
                         </thead>
@@ -122,7 +161,11 @@
                 data: function(d) {
                     d.filter_nama   = $('#filterNama').val();
                     d.filter_serial = $('#filterSerial').val();
-                    d.filter_serial = $('#filterSerial').val();
+                    d.filter_kondisi_stok = $('#filterKondisiStok').val();
+                    d.filter_kondisi_barang = $('#filterKondisiBarang').val();
+                    d.filter_status_transaksi = $('#filterStatusTransaksi').val();
+                    d.filter_tglawal = $('#filterTglAwal').val();
+                    d.filter_tglakhir = $('#filterTglAkhir').val();
                 }
             },
             columns: [
@@ -139,14 +182,28 @@
                 },
                 { data:'DT_RowIndex',   orderable:false, searchable:false },
                 { data:'barang_nama' },
+                { data:'kode_unik', defaultContent:'-' },
                 { data:'serial_number', defaultContent:'-' },
                 { data:'satuan_id',     defaultContent:'-' },
                 { data:'bm_jumlah' },
                 {
                     data:'stok_real', orderable:false, searchable:false,
                     render: function(data) {
-                        if(data == 1) return '<span class="badge bg-success-light text-success">Tersedia</span>';
-                        return '<span class="badge bg-danger-light text-danger">Keluar/Habis</span>';
+                        if(data == 'Tersedia') return '<span class="badge bg-success-light text-success">Tersedia</span>';
+                        if(data == 'Keluar/Habis') return '<span class="badge bg-danger-light text-danger">Keluar/Habis</span>';
+                        if(data == 'Nonaktif') return '<span class="badge bg-dark-light text-dark">Nonaktif</span>';
+                        return '<span class="badge bg-secondary-light text-secondary">' + data + '</span>';
+                    }
+                },
+                {
+                    data: 'kondisi_terakhir', orderable: false, searchable: false,
+                    render: function(data) {
+                        if(data == 'Rusak Ringan') {
+                            return '<span class="text-info fw-bold">' + data + '</span><br><span class="badge bg-warning-light text-warning mt-1">Butuh Perbaikan</span>';
+                        } else if(data) {
+                            return '<span class="text-info fw-bold">' + data + '</span>';
+                        }
+                        return '<span class="text-muted">-</span>';
                     }
                 },
                 { data:'tgl_masuk',     orderable:false, searchable:false },
@@ -198,7 +255,16 @@
         });
 
         window.doFilter    = function(){ table.ajax.reload(); };
-        window.resetFilter = function(){ $('#filterNama,#filterSerial').val(''); table.ajax.reload(); };
+        window.resetFilter = function() {
+          $('#filterNama').val('');
+          $('#filterSerial').val('');
+          $('#filterKondisiStok').val('');
+          $('#filterKondisiBarang').val('');
+          $('#filterStatusTransaksi').val('');
+          $('#filterTglAwal').val('');
+          $('#filterTglAkhir').val('');
+          table.ajax.reload();
+        };
 
         $('#checkAllTracking').on('click', function() {
             $('.qr-checkbox').prop('checked', this.checked);

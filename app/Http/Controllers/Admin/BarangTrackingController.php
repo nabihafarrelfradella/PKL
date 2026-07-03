@@ -42,7 +42,9 @@ class BarangTrackingController extends Controller
                     'tbl_barangkeluar.user_nmlengkap_user',
                     'tbl_barangkeluar.bk_tujuan as customer_keluar',
                     'tbl_barangkeluar.keterangan as ket_keluar',
-                    'tbl_barangkeluar.bk_status'
+                    'tbl_barangkeluar.bk_status',
+                    'tbl_barangkeluar.bk_tgl_kembali',
+                    DB::raw('(SELECT bk_kondisi_kembali FROM tbl_barangkeluar AS tbk WHERE tbk.kode_barang_unik = tbl_barangmasuk.kode_barang_unik AND tbk.bk_kondisi_kembali IS NOT NULL ORDER BY tbk.bk_id DESC LIMIT 1) AS kondisi_terakhir')
                 )
                 ->orderBy('tbl_barangmasuk.bm_id', 'DESC');
 
@@ -56,10 +58,67 @@ class BarangTrackingController extends Controller
             if ($request->filter_nama) {
                 $query->where('tbl_barang.barang_nama', 'LIKE', '%' . $request->filter_nama . '%');
             }
+            if ($request->filter_tglawal && $request->filter_tglakhir) {
+                $query->whereBetween('tbl_barangmasuk.bm_tanggal', [$request->filter_tglawal, $request->filter_tglakhir]);
+            }
+            if ($request->filter_kondisi_barang) {
+                $query->having('kondisi_terakhir', $request->filter_kondisi_barang);
+            }
+            if ($request->filter_status_transaksi) {
+                $status = $request->filter_status_transaksi;
+                if ($status == 'Tersedia') {
+                    $query->whereNull('tbl_barangkeluar.bk_status')
+                          ->whereNull('tbl_barangmasuk.deleted_at');
+                } else if ($status == 'Habis Pakai') {
+                    $query->where('tbl_barangkeluar.bk_status', 'Selesai')
+                          ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%');
+                } else if ($status == 'Selesai') {
+                    $query->where('tbl_barangkeluar.bk_status', 'Selesai')
+                          ->where(function($q) {
+                              $q->whereNull('tbl_jenisbarang.jenisbarang_nama')
+                                ->orWhere('tbl_jenisbarang.jenisbarang_nama', 'NOT LIKE', '%habis%');
+                          });
+                } else {
+                    $query->where('tbl_barangkeluar.bk_status', $status);
+                }
+            }
+            if ($request->filter_kondisi_stok) {
+                $stok = $request->filter_kondisi_stok;
+                if ($stok == 'Nonaktif') {
+                    $query->havingRaw("kondisi_terakhir = 'Rusak Berat' OR tbl_barangmasuk.deleted_at IS NOT NULL");
+                } else if ($stok == 'Keluar/Habis') {
+                    $query->whereNull('tbl_barangmasuk.deleted_at')
+                          ->havingRaw("kondisi_terakhir != 'Rusak Berat' OR kondisi_terakhir IS NULL")
+                          ->where(function($q) {
+                              $q->where('tbl_barangkeluar.bk_status', 'Dipinjam')
+                                ->orWhere(function($q2) {
+                                    $q2->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                       ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%');
+                                });
+                          });
+                } else if ($stok == 'Tersedia') {
+                    $query->whereNull('tbl_barangmasuk.deleted_at')
+                          ->havingRaw("kondisi_terakhir != 'Rusak Berat' OR kondisi_terakhir IS NULL")
+                          ->where(function($q) {
+                              $q->whereNull('tbl_barangkeluar.bk_status')
+                                ->orWhere(function($q2) {
+                                    $q2->where('tbl_barangkeluar.bk_status', '!=', 'Dipinjam')
+                                       ->where(function($q3) {
+                                           $q3->where('tbl_barangkeluar.bk_status', '!=', 'Selesai')
+                                              ->orWhereNull('tbl_jenisbarang.jenisbarang_nama')
+                                              ->orWhere('tbl_jenisbarang.jenisbarang_nama', 'NOT LIKE', '%habis%');
+                                       });
+                                });
+                          });
+                }
+            }
 
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('tgl_masuk', function ($row) {
+                    if ($row->bk_status == 'Selesai' && $row->bk_tgl_kembali && !str_contains(strtolower($row->jenisbarang_nama), 'habis')) {
+                        return Carbon::parse($row->bk_tgl_kembali)->translatedFormat('d M Y H:i');
+                    }
                     if ($row->jam_masuk) {
                         return Carbon::parse($row->jam_masuk)->translatedFormat('d M Y H:i');
                     }
@@ -82,7 +141,9 @@ class BarangTrackingController extends Controller
                     if ($row->customer_keluar) $info[] = 'Tujuan: ' . htmlspecialchars($row->customer_keluar);
                     if ($row->ket_keluar) $info[] = 'Ket: ' . htmlspecialchars($row->ket_keluar);
                     
-                    if ($row->bk_status == 'Dipinjam') {
+                    if ($row->deleted_at) {
+                        $status = '<br><span class="badge bg-danger mt-1"><i class="fe fe-trash me-1"></i>Dihapus (' . \Carbon\Carbon::parse($row->deleted_at)->translatedFormat('d M Y H:i') . ')</span>';
+                    } else if ($row->bk_status == 'Dipinjam') {
                         $status = '<br><span class="badge bg-warning mt-1"><i class="fe fe-clock me-1"></i>Sedang Dipinjam</span>';
                     } else if ($row->bk_status == 'Selesai') {
                         // Cek apakah ini barang habis pakai atau kembali
@@ -98,10 +159,16 @@ class BarangTrackingController extends Controller
                     return !empty($info) ? implode('<br>', $info) . $status : $status;
                 })
                 ->addColumn('stok_real', function ($row) {
-                    // Jika barang dipinjam atau habis pakai, stok 0. Jika sudah kembali atau belum pernah keluar, stok 1.
-                    if ($row->bk_status == 'Dipinjam') return 0;
-                    if ($row->bk_status == 'Selesai' && str_contains(strtolower($row->jenisbarang_nama), 'habis')) return 0;
-                    return 1;
+                    if ($row->deleted_at) return 'Nonaktif';
+                    
+                    if ($row->bk_status == 'Dipinjam') return 'Keluar/Habis';
+                    if ($row->bk_status == 'Selesai' && str_contains(strtolower($row->jenisbarang_nama), 'habis')) return 'Keluar/Habis';
+                    
+                    if ($row->kondisi_terakhir == 'Rusak Berat') {
+                        return 'Nonaktif';
+                    }
+                    
+                    return 'Tersedia';
                 })
                 ->addColumn('qr_data', function ($row) {
                     $lines = [
@@ -112,7 +179,10 @@ class BarangTrackingController extends Controller
                     ];
                     return implode("\n", $lines);
                 })
-                ->rawColumns(['tgl_masuk', 'tgl_keluar', 'teknisi_ket'])
+                ->addColumn('kode_unik', function ($row) {
+                    return $row->kode_barang_unik ?? $row->bm_kode ?? '-';
+                })
+                ->rawColumns(['tgl_masuk', 'tgl_keluar', 'teknisi_ket', 'kode_unik'])
                 ->make(true);
         }
     }

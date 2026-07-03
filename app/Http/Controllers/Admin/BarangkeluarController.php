@@ -59,6 +59,9 @@ class BarangkeluarController extends Controller
                     DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total_unit'),
                     DB::raw('MAX(tbl_barangkeluar.bk_tujuan) as bk_tujuan'),
                     DB::raw('MAX(tbl_barangkeluar.bk_lokasi) as bk_lokasi'),
+                    DB::raw('MAX(tbl_barangkeluar.bk_lat) as bk_lat'),
+                    DB::raw('MAX(tbl_barangkeluar.bk_lng) as bk_lng'),
+                    DB::raw('MAX(tbl_barangkeluar.bk_map_url) as bk_map_url'),
                     DB::raw('MAX(tbl_barangkeluar.teknisi) as teknisi'),
                     DB::raw('MAX(tbl_user.user_nmlengkap) as teknisi_nama'),
                     DB::raw('MAX(tbl_user.user_foto) as teknisi_foto'),
@@ -113,7 +116,14 @@ class BarangkeluarController extends Controller
 
                     if ($lokasi && $lokasi != '-') {
                         $shortLokasi = \Illuminate\Support\Str::limit($lokasi, 35);
-                        $html .= '<br><span class="text-muted fs-12" style="cursor:help; border-bottom: 1px dotted #999;" data-bs-toggle="tooltip" title="' . htmlspecialchars($lokasi) . '"><i class="fe fe-map-pin me-1"></i>' . htmlspecialchars($shortLokasi) . '</span>';
+                        if (!empty($row->bk_map_url)) {
+                            $mapUrl = $row->bk_map_url;
+                        } else if (!empty($row->bk_lat) && !empty($row->bk_lng)) {
+                            $mapUrl = 'https://www.google.com/maps/place/' . $row->bk_lat . ',' . $row->bk_lng;
+                        } else {
+                            $mapUrl = 'https://www.google.com/maps/search/?api=1&query=' . urlencode($lokasi);
+                        }
+                        $html .= '<br><a href="' . $mapUrl . '" target="_blank" class="text-primary fs-12 text-decoration-none" data-bs-toggle="tooltip" title="Buka di Google Maps: ' . htmlspecialchars($lokasi) . '"><i class="fe fe-map-pin me-1"></i>' . htmlspecialchars($shortLokasi) . '</a>';
                     }
                     
                     return $html;
@@ -178,7 +188,9 @@ class BarangkeluarController extends Controller
 
         $rows = $query->get();
 
-        $result = $rows->map(function ($row) use ($roleId) {
+        $batchCount = $rows->count();
+
+        $result = $rows->map(function ($row) use ($roleId, $batchCount) {
             $barangNamaClean = str_replace(["'", '"'], "", $row->barang_nama);
             $tujuanClean     = str_replace(["'", '"', "\r", "\n"], "", $row->bk_tujuan);
             $teknisiUser     = UserModel::where('teknisi_sn', $row->teknisi)->first();
@@ -191,6 +203,8 @@ class BarangkeluarController extends Controller
                 "bk_tanggal"      => Carbon::parse($row->created_at)->format('Y-m-d'),
                 "bk_tujuan"       => $tujuanClean,
                 "bk_lokasi"       => $row->bk_lokasi ?? '-',
+                "bk_lat"          => $row->bk_lat,
+                "bk_lng"          => $row->bk_lng,
                 "bk_jumlah"       => $row->bk_jumlah,
                 "bk_status"       => $row->bk_status,
                 "serial_number"   => $row->serial_number,
@@ -198,6 +212,7 @@ class BarangkeluarController extends Controller
                 "teknisi"         => $row->teknisi,
                 "teknisi_nama"    => $teknisiUser ? $teknisiUser->user_nmlengkap : ($row->teknisi_nama ?? ''),
                 "keterangan"      => $row->keterangan,
+                "batch_count"     => $batchCount,
                 "created_at"      => $row->jam_keluar
                     ? Carbon::parse($row->jam_keluar)->format('Y-m-d H:i:s')
                     : ($row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d H:i:s') : null),
@@ -248,7 +263,7 @@ class BarangkeluarController extends Controller
             return [
                 'barang_kode'      => $row->barang_kode ?? '-',
                 'barang_nama'      => $row->barang_nama ?? '-',
-                'serial_number'    => $row->serial_number == '-' ? '<em>Tanpa SN</em>' : $row->serial_number,
+                'serial_number'    => empty($row->serial_number) || $row->serial_number == '-' ? '<span class="text-muted">-</span>' : $row->serial_number,
                 'kode_barang_unik' => $row->kode_barang_unik ?? '-',
                 'status'           => $statusBadge,
                 'action'           => $action,
@@ -348,6 +363,10 @@ class BarangkeluarController extends Controller
                     + (clone $baseQuery)
                         ->where('tbl_barangkeluar.bk_status', 'Selesai')
                         ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                        ->sum('tbl_barangkeluar.bk_jumlah')
+                    + (clone $baseQuery)
+                        ->where('tbl_barangkeluar.bk_status', 'Selesai')
+                        ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                         ->sum('tbl_barangkeluar.bk_jumlah');
 
                 $current_stok = intval($barang->barang_stok) + ($jmlmasuk - $jmlkeluar);
@@ -381,31 +400,42 @@ class BarangkeluarController extends Controller
                     foreach ($sns as $sn) {
                         if ($sn && $sn !== '-') {
                             // 1. Cek apakah SN sedang dipinjam/menunggu persetujuan
-                            $isBorrowed = BarangkeluarModel::where('serial_number', $sn)
+                            $isBorrowed = BarangkeluarModel::where(function($q) use ($sn) {
+                                    $q->where('serial_number', $sn)
+                                      ->orWhere('kode_barang_unik', $sn);
+                                })
                                 ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
                                 ->exists();
                             if ($isBorrowed) {
                                 DB::rollBack();
-                                return response()->json(['error' => "Serial Number {$sn} sedang dipinjam/menunggu persetujuan!"], 400);
+                                return response()->json(['error' => "Barang dengan identitas {$sn} sedang dipinjam/menunggu persetujuan!"], 400);
                             }
 
                             // 2. Cek apakah SN habis pakai sudah pernah digunakan
                             $isConsumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
                                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-                                ->where('tbl_barangkeluar.serial_number', $sn)
+                                ->where(function($q) use ($sn) {
+                                    $q->where('tbl_barangkeluar.serial_number', $sn)
+                                      ->orWhere('tbl_barangkeluar.kode_barang_unik', $sn);
+                                })
                                 ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
                                 ->exists();
                             if ($isConsumed) {
                                 DB::rollBack();
-                                return response()->json(['error' => "Serial Number {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
+                                return response()->json(['error' => "Barang dengan identitas {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
                             }
                         }
 
-                        // Get kbu from BM
+                        // Get real SN and KBU from BM based on the identifier passed from frontend
                         $bmRow = \App\Models\Admin\BarangmasukModel::where('barang_kode', $kode)
-                            ->where('serial_number', $sn)
+                            ->where(function($q) use ($sn) {
+                                $q->where('serial_number', $sn)
+                                  ->orWhere('kode_barang_unik', $sn);
+                            })
                             ->first();
+                        
                         $kbu = $bmRow ? $bmRow->kode_barang_unik : null;
+                        $real_sn = $bmRow ? $bmRow->serial_number : $sn; // fallback to $sn if not found
 
                         $bk = BarangkeluarModel::create([
                             'bk_kode'          => $bk_kode,
@@ -414,9 +444,12 @@ class BarangkeluarController extends Controller
                             'bk_tanggal'       => $tglkeluar->toDateString(),
                             'bk_tujuan'        => $customer,
                             'bk_lokasi'        => $lokasi,
+                            'bk_map_url'       => $request->map_url,
+                            'bk_lat'           => $request->lat,
+                            'bk_lng'           => $request->lng,
                             'bk_jumlah'        => 1,
                             'bk_status'        => $status,
-                            'serial_number'    => $sn,
+                            'serial_number'    => $real_sn,
                             'teknisi'          => $teknisiSN,
                             'teknisi_nama'     => $teknisiNm,
                             'keterangan'       => $request->keterangan,
@@ -434,6 +467,9 @@ class BarangkeluarController extends Controller
                         'bk_tanggal'       => $tglkeluar->toDateString(),
                         'bk_tujuan'        => $customer,
                         'bk_lokasi'        => $lokasi,
+                        'bk_map_url'       => $request->map_url,
+                        'bk_lat'           => $request->lat,
+                        'bk_lng'           => $request->lng,
                         'bk_jumlah'        => $jml,
                         'bk_status'        => $status,
                         'serial_number'    => null,
@@ -556,6 +592,9 @@ class BarangkeluarController extends Controller
             $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                        + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                            ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                           ->sum('tbl_barangkeluar.bk_jumlah')
+                       + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                           ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                            ->sum('tbl_barangkeluar.bk_jumlah');
 
             $current_stok = intval($barang->barang_stok) + ($jmlmasuk - $jmlkeluar);
@@ -590,11 +629,17 @@ class BarangkeluarController extends Controller
                     return response()->json(['error' => "Serial Number {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
                 }
 
-                // Fetch new KBU
+                // Fetch new KBU and Real SN
                 $bmRow = \App\Models\Admin\BarangmasukModel::where('barang_kode', $request->barang)
-                    ->where('serial_number', $sn)
+                    ->where(function($q) use ($sn) {
+                        $q->where('serial_number', $sn)
+                          ->orWhere('kode_barang_unik', $sn);
+                    })
                     ->first();
                 $kbu = $bmRow ? $bmRow->kode_barang_unik : null;
+                $real_sn = $bmRow ? $bmRow->serial_number : $sn;
+            } else {
+                $real_sn = null;
             }
 
             $tglkeluar = $request->tglkeluar ? Carbon::parse($request->tglkeluar) : now();
@@ -609,13 +654,32 @@ class BarangkeluarController extends Controller
                 'bk_tanggal'       => $tglkeluar->toDateString(),
                 'bk_tujuan'        => $request->tujuan,
                 'bk_lokasi'        => $request->lokasi ?? '-',
+                'bk_map_url'       => $request->map_url,
+                'bk_lat'           => $request->lat,
+                'bk_lng'           => $request->lng,
                 'bk_jumlah'        => $request->jml,
-                'serial_number'    => $request->serial_number,
+                'serial_number'    => $real_sn,
                 'teknisi'          => $request->teknisi,
                 'teknisi_nama'     => $teknisiNama,
                 'keterangan'       => $request->keterangan,
                 'jam_keluar'       => $tglkeluar,
             ]);
+
+            if ($request->applyToAll == 1) {
+                BarangkeluarModel::where('bk_kode', $request->bkkode)
+                    ->where('bk_id', '!=', $bk->bk_id)
+                    ->update([
+                        'bk_tanggal'   => $tglkeluar->toDateString(),
+                        'bk_tujuan'    => $request->tujuan,
+                        'bk_lokasi'    => $request->lokasi ?? '-',
+                        'bk_lat'       => $request->lat,
+                        'bk_lng'       => $request->lng,
+                        'teknisi'      => $request->teknisi,
+                        'teknisi_nama' => $teknisiNama,
+                        'jam_keluar'   => $tglkeluar,
+                    ]);
+            }
+
             return response()->json(['success' => 'Berhasil']);
         }
         return response()->json(['error' => 'Gagal'], 404);
@@ -652,37 +716,58 @@ class BarangkeluarController extends Controller
     {
         // 1. Ambil semua serial number dari tbl_barangmasuk untuk barang_kode ini
         $incomings = \App\Models\Admin\BarangmasukModel::where('barang_kode', $barang_kode)
-            ->whereNotNull('serial_number')
-            ->where('serial_number', '!=', '')
-            ->where('serial_number', '!=', '-')
             ->select('serial_number', 'kode_barang_unik')
             ->get();
 
         // 2. Cari serial number yang tidak tersedia (sedang dipinjam / proses pinjam / proses kembali / habis pakai)
-        $borrowedSNs = BarangkeluarModel::where('barang_kode', $barang_kode)
+        $borrowed = BarangkeluarModel::where('barang_kode', $barang_kode)
             ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
-            ->whereNotNull('serial_number')
-            ->pluck('serial_number')
-            ->toArray();
+            ->get();
+            
+        $borrowedSNs = $borrowed->pluck('serial_number')->filter()->toArray();
+        $borrowedKBUs = $borrowed->pluck('kode_barang_unik')->filter()->toArray();
 
-        $consumedSNs = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+        $consumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
             ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->where('tbl_barangkeluar.barang_kode', $barang_kode)
             ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
-            ->whereNotNull('tbl_barangkeluar.serial_number')
-            ->pluck('tbl_barangkeluar.serial_number')
-            ->toArray();
+            ->get();
+            
+        $consumedSNs = $consumed->pluck('serial_number')->filter()->toArray();
+        $consumedKBUs = $consumed->pluck('kode_barang_unik')->filter()->toArray();
 
-        $unavailableSNs = array_merge($borrowedSNs, $consumedSNs);
+        $unavailableSNs = array_unique(array_merge($borrowedSNs, $borrowedKBUs, $consumedSNs, $consumedKBUs));
+
+        // Cari kondisi terakhir dari masing-masing SN
+        $latestConditions = DB::table('tbl_barangkeluar')
+            ->select('kode_barang_unik', 'bk_kondisi_kembali')
+            ->whereNotNull('bk_kondisi_kembali')
+            ->whereIn('bk_id', function($query) {
+                $query->select(DB::raw('MAX(bk_id)'))
+                      ->from('tbl_barangkeluar')
+                      ->groupBy('kode_barang_unik');
+            })
+            ->pluck('bk_kondisi_kembali', 'kode_barang_unik')
+            ->toArray();
 
         // 3. Filter data ketersediaan
         $available = [];
         foreach ($incomings as $incoming) {
-            $sn = $incoming->serial_number;
-            if (!in_array($sn, $unavailableSNs)) {
+            // HANYA gunakan kode_barang_unik sebagai identifier utama
+            $identifier = $incoming->kode_barang_unik;
+            
+            if ($identifier && !in_array($identifier, $unavailableSNs)) {
+                $kondisi = $latestConditions[$identifier] ?? 'Baik';
+                
+                // Jangan tampilkan jika Rusak Berat (karena nonaktif)
+                if ($kondisi == 'Rusak Berat') {
+                    continue;
+                }
+                
                 $available[] = [
-                    'serial_number' => $sn,
-                    'kode_barang_unik' => $incoming->kode_barang_unik
+                    'serial_number' => $identifier,
+                    'kode_barang_unik' => $incoming->kode_barang_unik,
+                    'kondisi' => $kondisi
                 ];
             }
         }
@@ -736,5 +821,59 @@ class BarangkeluarController extends Controller
 
         $bk->update(['bk_status' => 'Dipinjam']);
         return response()->json(['success' => 'Pengembalian ditolak! Status dikembalikan ke Dipinjam.']);
+    }
+
+    public function resolveMapLink(Request $request)
+    {
+        $url = $request->input('url');
+        if (!$url) return response()->json(['error' => 'URL kosong'], 400);
+
+        try {
+            // Using cURL to follow redirect and get the final URL
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 5); 
+            
+            // Adding a user agent is important for some Google redirect endpoints
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+            
+            $response = curl_exec($ch);
+            $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+            curl_close($ch);
+
+            // Extract lat lng from the final URL
+            $lat = null;
+            $lng = null;
+
+            if (preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $finalUrl, $matches)) {
+                $lat = $matches[1];
+                $lng = $matches[2];
+            } elseif (preg_match('/search\/(-?\d+\.\d+),\+?(-?\d+\.\d+)/', $finalUrl, $matches)) {
+                $lat = $matches[1];
+                $lng = $matches[2];
+            } elseif (preg_match('/q=(-?\d+\.\d+),(-?\d+\.\d+)/', $finalUrl, $matches)) {
+                $lat = $matches[1];
+                $lng = $matches[2];
+            } elseif (preg_match('/ll=(-?\d+\.\d+),(-?\d+\.\d+)/', $finalUrl, $matches)) {
+                $lat = $matches[1];
+                $lng = $matches[2];
+            }
+
+            if ($lat && $lng) {
+                return response()->json([
+                    'success' => true,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'final_url' => $finalUrl
+                ]);
+            }
+            
+            return response()->json(['error' => 'Gagal mengekstrak koordinat. Pastikan link Google Maps menunjukkan lokasi spesifik (titik pin/alamat rinci), bukan link area atau kota.'], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

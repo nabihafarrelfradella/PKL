@@ -31,8 +31,8 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Daftar Akun Pegawai Teknisi</h3>
-                <small class="text-muted ms-2">Owner dapat menambah, mengedit, dan menghapus akun teknisi</small>
+                <h3 class="card-title">Daftar Data Pegawai Teknisi</h3>
+                <small class="text-muted ms-2">Owner dapat menambah, mengedit, dan menghapus data teknisi</small>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -40,8 +40,8 @@
                         <thead>
                             <tr>
                                 <th width="1%">No</th>
+                                <th width="5%">Foto</th>
                                 <th>Nama Lengkap</th>
-                                <th>Username</th>
                                 <th>Email</th>
                                 <th>No. Telepon</th>
                                 <th>Gender</th>
@@ -72,12 +72,8 @@
                     <input type="text" id="add_nmlengkap" class="form-control" placeholder="Nama lengkap teknisi">
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label">Username <span class="text-danger">*</span></label>
-                    <input type="text" id="add_username" class="form-control" placeholder="Username untuk login" autocomplete="off">
-                </div>
-                <div class="form-group mb-3">
-                    <label class="form-label">Email <span class="text-danger">*</span></label>
-                    <input type="email" id="add_email" class="form-control" placeholder="Alamat email">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="add_email" class="form-control" placeholder="Alamat email (opsional)">
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">No. Telepon</label>
@@ -102,8 +98,14 @@
                     </div>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label">Password <span class="text-danger">*</span></label>
-                    <input type="password" id="add_pwd" class="form-control" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                    <label class="form-label">Foto Teknisi (Opsional)</label>
+                    <div class="input-group">
+                        <input type="file" id="add_foto" class="form-control" accept="image/*" onclick="this.value=null;" onchange="previewFotoTeknisi(this, 'imgViewTeknisiTemp')">
+                        <button type="button" class="btn btn-primary" onclick="openWebcamModal('add_foto', 'imgViewTeknisiTemp', true)">
+                            <i class="fe fe-camera"></i> Buka Kamera
+                        </button>
+                    </div>
+                    <img id="imgViewTeknisiTemp" class="mt-2 d-none" style="max-height: 150px; object-fit: contain;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -131,12 +133,8 @@
                     <input type="text" id="edit_nmlengkap" class="form-control">
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label">Username <span class="text-danger">*</span></label>
-                    <input type="text" id="edit_username" class="form-control" autocomplete="off">
-                </div>
-                <div class="form-group mb-3">
-                    <label class="form-label">Email <span class="text-danger">*</span></label>
-                    <input type="email" id="edit_email" class="form-control">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="edit_email" class="form-control" placeholder="Alamat email (opsional)">
                 </div>
                 <div class="form-group mb-3">
                     <label class="form-label">No. Telepon</label>
@@ -160,8 +158,15 @@
                     </div>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="form-label">Password Baru <span class="text-muted">(kosongkan jika tidak diganti)</span></label>
-                    <input type="password" id="edit_pwd" class="form-control" placeholder="Masukkan password baru" autocomplete="new-password">
+                    <label class="form-label">Foto Teknisi (Opsional)</label>
+                    <div class="input-group">
+                        <input type="file" id="edit_foto" class="form-control" accept="image/*" onclick="this.value=null;" onchange="previewFotoTeknisi(this, 'imgViewTeknisiTempU')">
+                        <button type="button" class="btn btn-primary" onclick="openWebcamModal('edit_foto', 'imgViewTeknisiTempU', true)">
+                            <i class="fe fe-camera"></i> Buka Kamera
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-1">Biarkan kosong jika tidak ingin mengubah foto</small>
+                    <img id="imgViewTeknisiTempU" class="mt-2 d-none" style="max-height: 150px; object-fit: contain;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -184,7 +189,7 @@
             </div>
             <div class="modal-body text-center py-4">
                 <input type="hidden" id="hapus_user_id">
-                <p class="mb-1">Yakin hapus akun teknisi</p>
+                <p class="mb-1">Yakin hapus data teknisi ini?</p>
                 <strong id="hapus_nama" class="text-danger"></strong>
                 <p class="text-muted small mt-2">Tindakan ini tidak dapat dibatalkan!</p>
             </div>
@@ -197,11 +202,41 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL FOTO TEKNISI -->
+<div class="modal fade" id="modalFotoTeknisi" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="fe fe-image me-1"></i> Foto Profil Teknisi</h6>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="imgViewTeknisi" src="" alt="Foto Teknisi" class="img-fluid shadow-sm" style="max-height: 400px; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
+    function lihatFotoTeknisi(url) {
+        $('#imgViewTeknisi').attr('src', url);
+        $('#modalFotoTeknisi').modal('show');
+    }
+
+    function previewFotoTeknisi(input, imgId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#' + imgId).attr('src', e.target.result).removeClass('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 
     var table;
     $(document).ready(function () {
@@ -211,9 +246,9 @@
             ajax: { url: "{{ route('user-mgmt.teknisi.show') }}" },
             columns: [
                 { data: 'DT_RowIndex', searchable: false, orderable: false },
+                { data: 'foto', searchable: false, orderable: false },
                 { data: 'user_nmlengkap' },
-                { data: 'user_nama' },
-                { data: 'user_email' },
+                { data: 'user_email', defaultContent: '-' },
                 { data: 'user_phone', defaultContent: '-' },
                 { data: 'jenis_kelamin', defaultContent: '-' },
                 { data: 'tanggal_lahir', defaultContent: '-' },
@@ -225,29 +260,34 @@
 
     function editTeknisi(data) {
         $('#edit_user_id').val(data.user_id);
-        $('#edit_nmlengkap').val(data.user_nmlengkap.replace(/_/g, ' '));
-        $('#edit_username').val(data.user_nama.replace(/_/g, ' '));
+        $('#edit_nmlengkap').val((data.user_nmlengkap || '').replace(/_/g, ' '));
         $('#edit_email').val(data.user_email);
         $('#edit_phone').val(data.user_phone || '');
         $('#edit_jenis_kelamin').val(data.jenis_kelamin || 'M');
         $('#edit_tanggal_lahir').val(data.tanggal_lahir || '');
-        $('#edit_pwd').val('');
+        
+        // Load existing photo
+        if (data.user_foto && data.user_foto !== 'undraw_profile.svg') {
+            $('#imgViewTeknisiTempU').attr('src', '/storage/users/' + data.user_foto).removeClass('d-none');
+        } else {
+            $('#imgViewTeknisiTempU').attr('src', '/assets/default/users/undraw_profile.svg').removeClass('d-none');
+        }
+        // Clear file input
+        $('#edit_foto').val('');
     }
 
     function hapusTeknisi(data) {
         $('#hapus_user_id').val(data.user_id);
-        $('#hapus_nama').text(data.user_nmlengkap.replace(/_/g, ' ') + ' (' + data.user_nama.replace(/_/g, ' ') + ')');
+        $('#hapus_nama').text((data.user_nmlengkap || '').replace(/_/g, ' '));
     }
 
     function submitTambahTeknisi() {
         const nmlengkap     = $('#add_nmlengkap').val().trim();
-        const username      = $('#add_username').val().trim();
         const email         = $('#add_email').val().trim();
-        const pwd           = $('#add_pwd').val();
         const jenis_kelamin = $('#add_jenis_kelamin').val();
         const tanggal_lahir = $('#add_tanggal_lahir').val();
 
-        if (!nmlengkap || !username || !email || !pwd || !jenis_kelamin || !tanggal_lahir) {
+        if (!nmlengkap || !jenis_kelamin || !tanggal_lahir) {
             swal({ title: 'Form tidak lengkap!', type: 'warning' });
             return;
         }
@@ -257,26 +297,34 @@
         if (btn.prop('disabled')) return;
         btn.prop('disabled', true).text('Menyimpan...');
 
+        let formData = new FormData();
+        formData.append('_token', "{{ csrf_token() }}");
+        formData.append('nmlengkap', nmlengkap);
+        formData.append('email', email);
+        formData.append('phone', $('#add_phone').val());
+        formData.append('jenis_kelamin', jenis_kelamin);
+        formData.append('tanggal_lahir', tanggal_lahir);
+        
+        let file = $('#add_foto')[0].files[0];
+        if (file) {
+            formData.append('foto', file);
+        }
+
         $.ajax({
             type: 'POST',
             url: "{{ route('user-mgmt.teknisi.store') }}",
-            data: {
-                _token:        "{{ csrf_token() }}",
-                nmlengkap:     nmlengkap,
-                username:      username,
-                email:         email,
-                phone:         $('#add_phone').val(),
-                jenis_kelamin: jenis_kelamin,
-                tanggal_lahir: tanggal_lahir,
-                pwd:           pwd
-            },
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function (res) {
                 $('#modalTambahTeknisi').modal('hide');
                 swal({ title: res.success, type: 'success' });
                 table.ajax.reload(null, false);
-                $('#add_nmlengkap, #add_username, #add_email, #add_phone, #add_pwd').val('');
+                $('#add_nmlengkap, #add_email, #add_phone').val('');
                 $('#add_jenis_kelamin').val('');
                 $('#add_tanggal_lahir').val('');
+                $('#add_foto').val('');
+                $('#imgViewTeknisiTemp').addClass('d-none').attr('src', '');
             },
             error: function (xhr) {
                 let msg = 'Terjadi kesalahan!';
@@ -295,18 +343,24 @@
 
     function submitEditTeknisi() {
         const userId = $('#edit_user_id').val();
+        let formData = new FormData();
+        formData.append('nmlengkap', $('#edit_nmlengkap').val());
+        formData.append('email', $('#edit_email').val());
+        formData.append('phone', $('#edit_phone').val());
+        formData.append('jenis_kelamin', $('#edit_jenis_kelamin').val());
+        formData.append('tanggal_lahir', $('#edit_tanggal_lahir').val());
+        
+        let file = $('#edit_foto')[0].files[0];
+        if (file) {
+            formData.append('foto', file);
+        }
+
         $.ajax({
             type: 'POST',
             url: "{{ url('/admin/user-management/teknisi/update') }}/" + userId,
-            data: {
-                nmlengkap:     $('#edit_nmlengkap').val(),
-                username:      $('#edit_username').val(),
-                email:         $('#edit_email').val(),
-                phone:         $('#edit_phone').val(),
-                jenis_kelamin: $('#edit_jenis_kelamin').val(),
-                tanggal_lahir: $('#edit_tanggal_lahir').val(),
-                pwd:           $('#edit_pwd').val()
-            },
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function (res) {
                 $('#modalEditTeknisi').modal('hide');
                 swal({ title: res.success, type: 'success' });

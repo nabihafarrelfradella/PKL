@@ -141,17 +141,25 @@ class BarangmasukController extends Controller
             $items = [];
 
             if ($request->has('items') && is_array($request->items)) {
-                // Batch mode: items[] = [{kode, jumlah}, ...]
+                // Batch mode: items[] = [{kode, jumlah, sn}, ...]
                 foreach ($request->items as $item) {
                     $kode = $item['kode'] ?? null;
                     $jumlah = intval($item['jumlah'] ?? 0);
                     if ($kode && $jumlah > 0) {
-                        $items[] = ['kode' => $kode, 'jumlah' => $jumlah];
+                        $items[] = [
+                            'kode' => $kode, 
+                            'jumlah' => $jumlah, 
+                            'sn' => $item['sn'] ?? null
+                        ];
                     }
                 }
             } elseif ($request->barang && $request->jml) {
                 // Legacy single-item mode (backward-compatible)
-                $items[] = ['kode' => $request->barang, 'jumlah' => intval($request->jml)];
+                $items[] = [
+                    'kode' => $request->barang, 
+                    'jumlah' => intval($request->jml), 
+                    'sn' => $request->serial_number ?? null
+                ];
             }
 
             if (empty($items)) {
@@ -195,15 +203,21 @@ class BarangmasukController extends Controller
                 $prefix_sn = strtoupper(substr($barang->barang_kode, 0, 2));
                 $date_now  = now()->format('Ymd');
 
-                // Looping Simpan Berdasarkan Jumlah (Setiap baris punya Serial Number unik)
+                $existingCount = BarangmasukModel::where('barang_kode', $barangKode)->count();
+
+                // Looping Simpan Berdasarkan Jumlah
                 for ($i = 1; $i <= $jml; $i++) {
+                    $sn_input = !empty($item['sn']) ? $item['sn'] : null;
 
-                    $loop_index   = str_pad($totalSaved + 1, 2, '0', STR_PAD_LEFT);
-                    $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
-                    $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
+                    if ($sn_input) {
+                        // SN hanya sebagai catatan
+                        $serial_number = ($jml > 1) ? $sn_input . '-' . $i : $sn_input;
+                    } else {
+                        $serial_number = null;
+                    }
 
-                    // Generate Kode Barang Unik (Timestamp + Urutan)
-                    $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
+                    // Kode unik SELALU menggunakan Kode Barang + Auto Increment (meskipun ada SN)
+                    $kode_barang_unik = $barangKode . '-' . str_pad($existingCount + $i, 2, '0', STR_PAD_LEFT);
 
                     BarangmasukModel::create([
                         'bm_tanggal'       => $tglmasuk->toDateString(),
@@ -241,14 +255,18 @@ class BarangmasukController extends Controller
         try {
             $barangmasuk = BarangmasukModel::findOrFail($id);
             $oldSN = $barangmasuk->serial_number;
+            $oldKodeUnik = $barangmasuk->kode_barang_unik;
+
+            $newSN = $request->serial_number;
+            $kode_barang_unik = !empty($newSN) ? $newSN : $oldKodeUnik;
 
             $barangmasuk->update([
-                'bm_tanggal'    => $request->tglmasuk,
-                'bm_kode'       => $request->bmkode,
-                'barang_kode'   => $request->barang,
-                'bm_jumlah'     => $request->jml,
-                'serial_number' => $request->serial_number,
-                // kode_barang_unik & jam_masuk biasanya tidak diubah saat edit
+                'bm_tanggal'       => $request->tglmasuk,
+                'bm_kode'          => $request->bmkode,
+                'barang_kode'      => $request->barang,
+                'bm_jumlah'        => $request->jml,
+                'serial_number'    => $newSN,
+                'kode_barang_unik' => $kode_barang_unik,
             ]);
 
             // Cascade update to tbl_barangkeluar if the SN changed
@@ -287,11 +305,16 @@ class BarangmasukController extends Controller
     public function hapus_kelompok(Request $request)
     {
         try {
-            $bm_kode = $request->bm_kode;
-            if (!$bm_kode) {
+            $bm_kodes = $request->bm_kodes ?? [];
+            if ($request->bm_kode && empty($bm_kodes)) {
+                $bm_kodes[] = $request->bm_kode;
+            }
+
+            if (empty($bm_kodes)) {
                 return response()->json(['error' => 'Kode BM tidak valid!'], 400);
             }
-            $bms = BarangmasukModel::where('bm_kode', $bm_kode)->get();
+
+            $bms = BarangmasukModel::whereIn('bm_kode', $bm_kodes)->get();
             if ($bms->isEmpty()) {
                 return response()->json(['error' => 'Data tidak ditemukan!'], 404);
             }
@@ -305,7 +328,27 @@ class BarangmasukController extends Controller
                 }
                 $bm->delete();
             }
-            return response()->json(['success' => 'Berhasil menghapus seluruh transaksi ' . $bm_kode]);
+            return response()->json(['success' => 'Berhasil menghapus ' . count($bm_kodes) . ' transaksi.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function detail_sn_batch(Request $request)
+    {
+        try {
+            $bm_kodes = $request->bm_kodes ?? [];
+            if (empty($bm_kodes)) {
+                return response()->json([]);
+            }
+
+            $rows = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->whereIn('tbl_barangmasuk.bm_kode', $bm_kodes)
+                ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama')
+                ->orderBy('bm_id', 'ASC')
+                ->get();
+
+            return response()->json($rows);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

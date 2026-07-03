@@ -11,7 +11,7 @@
                     #modaldemo8 .my-3 { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
                     #modaldemo8 .form-label, #modaldemo8 label { margin-bottom: 0.25rem; font-size: 0.85rem; }
                 </style>
-                {{-- ── BAGIAN INPUT ── --}}
+                {{-- â”€â”€ BAGIAN INPUT â”€â”€ --}}
                 <div class="row g-3">
                     <div class="col-md-5">
                         <div class="form-group d-none">
@@ -22,10 +22,6 @@
                             <label for="tglmasuk" class="form-label">Tanggal Masuk <span class="text-danger">*</span></label>
                             <input type="datetime-local" name="tglmasuk" id="tglmasuk_input" class="form-control">
                         </div>
-                        <div class="form-group d-none">
-                            <label for="serial_number" class="form-label">Serial Number</label>
-                            <input type="text" name="serial_number" class="form-control" placeholder="Otomatis">
-                        </div>
                     </div>
                     <div class="col-md-7">
                         <div class="form-group">
@@ -35,10 +31,12 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" autocomplete="off" name="kdbarang" placeholder="">
+                            <div class="input-group" style="position: relative;">
+                                <input type="text" class="form-control" autocomplete="off" name="kdbarang" id="kdbarang" placeholder="">
                                 <button class="btn btn-primary-light" onclick="searchBarang()" type="button"><i class="fe fe-search"></i></button>
                                 <button class="btn btn-success-light" onclick="modalBarang()" type="button"><i class="fe fe-box"></i></button>
+
+                                <ul id="autocomplete-list" class="list-group position-absolute w-100" style="top: 100%; z-index: 1050; display: none; max-height: 300px; overflow-y: auto; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);"></ul>
                             </div>
                         </div>
                         <div class="row g-3">
@@ -51,12 +49,25 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="jml" class="form-label">Jumlah <span class="text-danger">*</span></label>
-                                    <input type="text" name="jml" value="1" class="form-control" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');" placeholder="">
+                                    <input type="text" name="jml" value="1" class="form-control" readonly style="background-color: #f3f6f9; cursor: not-allowed;" title="Jumlah tidak bisa diubah" placeholder="">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Jenis Barang</label>
+                                    <input type="text" class="form-control" id="jenis" readonly placeholder="Otomatis">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="serial_number" class="form-label">Serial Number</label>
+                                    <input type="text" name="serial_number" class="form-control" placeholder="Isi manual (Opsional)">
                                 </div>
                             </div>
                         </div>
                         <input type="hidden" id="satuan">
-                        <input type="hidden" id="jenis">
                         <div class="text-end">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="addToBatch()">
                                 <i class="fe fe-plus me-1"></i>Tambah ke Daftar
@@ -67,7 +78,7 @@
 
                 <hr class="my-3">
 
-                {{-- ── DAFTAR BARANG YANG AKAN DISIMPAN ── --}}
+                {{-- â”€â”€ DAFTAR BARANG YANG AKAN DISIMPAN â”€â”€ --}}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="mb-0">
                         <i class="fe fe-list me-1 text-primary"></i>Daftar Barang
@@ -87,6 +98,7 @@
                                 <th>Nama Barang</th>
                                 <th>Satuan</th>
                                 <th>Jenis</th>
+                                <th>Serial Number</th>
                                 <th width="8%">Jumlah</th>
                                 <th width="1%">Aksi</th>
                             </tr>
@@ -117,7 +129,7 @@
 
 @section('formTambahJS')
 <script>
-    // ── Batch Items Storage ──
+    // â”€â”€ Batch Items Storage â”€â”€
     var batchItems = [];
     function getLocalDateTimeString() {
         const now = new Date();
@@ -140,7 +152,7 @@
         }
     });
 
-    // Enter pada field jumlah → langsung tambah ke daftar
+    // Enter pada field jumlah â†’ langsung tambah ke daftar
     $('input[name="jml"]').keypress(function(event) {
         if (event.keyCode == '13') {
             addToBatch();
@@ -186,13 +198,14 @@
         });
     }
 
-    // ── Tambah item ke daftar batch ──
+    // â”€â”€ Tambah item ke daftar batch â”€â”€
     function addToBatch() {
         const status = $("#status").val();
         const kdbarang = $("input[name='kdbarang']").val().trim();
         const nmbarang = $("#nmbarang").val();
         const satuan = $("#satuan").val();
         const jenis = $("#jenis").val();
+        const sn = $("input[name='serial_number']").val().trim();
         const jml = parseInt($("input[name='jml']").val()) || 0;
 
         resetValid();
@@ -208,11 +221,21 @@
             return;
         }
 
-        // Cek apakah barang sudah ada di daftar
+        // Cek apakah barang sudah ada di daftar (berdasarkan kode barang saja)
         const existingIndex = batchItems.findIndex(item => item.kode === kdbarang);
+        const displaySn = sn === '' ? '-' : sn;
+
         if (existingIndex >= 0) {
-            // Jika sudah ada, tambahkan jumlahnya
-            batchItems[existingIndex].jumlah += jml;
+            // Jika sudah ada, tambahkan totalJumlahnya
+            batchItems[existingIndex].totalJumlah += jml;
+
+            // Cek apakah SN tersebut sudah ada di daftar details untuk barang ini
+            const detailIndex = batchItems[existingIndex].details.findIndex(d => d.sn === displaySn);
+            if (detailIndex >= 0) {
+                batchItems[existingIndex].details[detailIndex].jumlah += jml;
+            } else {
+                batchItems[existingIndex].details.push({ sn: displaySn, jumlah: jml });
+            }
         } else {
             // Tambah item baru
             batchItems.push({
@@ -220,7 +243,10 @@
                 nama: nmbarang,
                 satuan: satuan,
                 jenis: jenis,
-                jumlah: jml
+                totalJumlah: jml,
+                details: [
+                    { sn: displaySn, jumlah: jml }
+                ]
             });
         }
 
@@ -228,7 +254,7 @@
         clearItemInput();
     }
 
-    // ── Render tabel batch ──
+    // â”€â”€ Render tabel batch â”€â”€
     function renderBatchTable() {
         const tbody = $('#batchItemsBody');
         tbody.empty();
@@ -251,16 +277,28 @@
 
         let totalItems = 0;
         batchItems.forEach(function(item, index) {
-            totalItems += item.jumlah;
+            totalItems += item.totalJumlah;
+
+            let snHtml = item.details.map((d, dIdx) => {
+                let badge = d.sn === '-' ? '<span class="text-muted">-</span>' : `<code>${d.sn}</code>`;
+                return `<div class="d-flex align-items-center justify-content-between mb-1">
+                            <div style="min-width: 100px;">${badge}</div>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="removeBatchDetail(${index}, ${dIdx})" title="Hapus SN">
+                                <i class="fe fe-trash-2 fs-12"></i>
+                            </button>
+                        </div>`;
+            }).join('');
+
             tbody.append(`
                 <tr>
-                    <td class="text-center">${index + 1}</td>
-                    <td><code>${item.kode}</code></td>
-                    <td>${item.nama}</td>
-                    <td>${item.satuan}</td>
-                    <td>${item.jenis}</td>
-                    <td class="text-center fw-bold">${item.jumlah}</td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">${index + 1}</td>
+                    <td class="align-middle"><code>${item.kode}</code></td>
+                    <td class="align-middle">${item.nama}</td>
+                    <td class="align-middle">${item.satuan}</td>
+                    <td class="align-middle">${item.jenis}</td>
+                    <td class="align-middle">${snHtml}</td>
+                    <td class="text-center fw-bold align-middle">${item.totalJumlah}</td>
+                    <td class="text-center align-middle">
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBatchItem(${index})" title="Hapus">
                             <i class="fe fe-trash-2"></i>
                         </button>
@@ -272,13 +310,26 @@
         $('#batchCount').text(batchItems.length + ' jenis, ' + totalItems + ' unit');
     }
 
-    // ── Hapus satu item dari batch ──
+    // â”€â”€ Hapus satu item dari batch â”€â”€
     function removeBatchItem(index) {
         batchItems.splice(index, 1);
         renderBatchTable();
     }
 
-    // ── Hapus semua item batch ──
+    // â”€â”€ Hapus detail SN dari batch â”€â”€
+    function removeBatchDetail(itemIndex, detailIndex) {
+        let item = batchItems[itemIndex];
+        let detail = item.details[detailIndex];
+        item.totalJumlah -= detail.jumlah;
+        item.details.splice(detailIndex, 1);
+        
+        if (item.details.length === 0) {
+            batchItems.splice(itemIndex, 1);
+        }
+        renderBatchTable();
+    }
+
+    // â”€â”€ Hapus semua item batch â”€â”€
     function clearBatch() {
         swal({
             title: "Yakin hapus semua?",
@@ -295,17 +346,13 @@
         });
     }
 
-    // ── Clear form input barang (tanpa reset tanggal & daftar) ──
+    // â”€â”€ Clear form input barang (tanpa reset tanggal & daftar) â”€â”€
     function clearItemInput() {
-        $("input[name='kdbarang']").val('');
         $("input[name='jml']").val('1');
-        $("#nmbarang").val('');
-        $("#satuan").val('');
-        $("#jenis").val('');
-        $("#status").val('false');
+        $("input[name='serial_number']").val('');
         resetValid();
-        // Focus kembali ke field kode barang
-        $("input[name='kdbarang']").focus();
+        // Focus kembali ke field serial number agar cepat menginput SN berikutnya
+        $("input[name='serial_number']").focus();
     }
 
     function checkForm() {
@@ -330,6 +377,18 @@
     function submitForm() {
         const tglmasuk = $("input[name='tglmasuk']").val();
 
+        // Flatten payload sebelum dikirim
+        let payload = [];
+        batchItems.forEach(item => {
+            item.details.forEach(detail => {
+                payload.push({
+                    kode: item.kode,
+                    jumlah: detail.jumlah,
+                    sn: detail.sn === '-' ? '' : detail.sn
+                });
+            });
+        });
+
         $.ajax({
             type: 'POST',
             url: "{{ route('barang-masuk.store') }}",
@@ -338,7 +397,7 @@
             },
             data: {
                 tglmasuk: tglmasuk,
-                items: batchItems
+                items: payload
             },
             success: function(data) {
                 $('#modaldemo8').modal('hide');
@@ -393,6 +452,73 @@
             $('#btnSimpan').removeClass('d-none');
             $('#btnLoader').addClass('d-none');
         }
+    }
+
+    // â”€â”€ Autocomplete Logic â”€â”€
+    $(document).ready(function() {
+        let timer;
+        const inputKd = $('#kdbarang');
+        const list = $('#autocomplete-list');
+
+        // Add CSS for autocomplete hover
+        $("<style>")
+            .prop("type", "text/css")
+            .html(`
+                #autocomplete-list .list-group-item { background-color: #fff; transition: all 0.2s; }
+                #autocomplete-list .list-group-item:hover { background-color: #f8f9fa !important; }
+            `)
+            .appendTo("head");
+
+        inputKd.on('keyup focus', function() {
+            clearTimeout(timer);
+            let val = $(this).val();
+            if (val.length < 1) {
+                list.hide();
+                return;
+            }
+            timer = setTimeout(function() {
+                $.ajax({
+                    url: "{{ route('barang.autocomplete') }}",
+                    data: { term: val },
+                    success: function(data) {
+                        list.empty();
+                        if (data.length > 0) {
+                            data.forEach(item => {
+                                list.append(`
+                                    <li class="list-group-item list-group-item-action d-flex align-items-center" style="cursor: pointer;" onclick='pilihAutocomplete(${JSON.stringify(item)})'>
+                                        <img src="${item.foto}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 1px solid #ddd;">
+                                        <div>
+                                            <div class="fw-bold fs-13 mb-0" style="line-height: 1.2;">${item.nama}</div>
+                                            <small class="text-muted" style="font-size: 11px;">${item.kode}</small>
+                                        </div>
+                                    </li>
+                                `);
+                            });
+                            list.show();
+                        } else {
+                            list.hide();
+                        }
+                    }
+                });
+            }, 250);
+        });
+
+        // Hide list if clicked outside
+        $(document).click(function(e) {
+            if (!$(e.target).closest('.input-group').length) {
+                list.hide();
+            }
+        });
+    });
+
+    function pilihAutocomplete(item) {
+        $("input[name='kdbarang']").val(item.kode);
+        $("#nmbarang").val(item.nama);
+        $("#satuan").val(item.satuan);
+        $("#jenis").val(item.jenis);
+        $("#status").val("true");
+        $('#autocomplete-list').hide();
+        $("input[name='serial_number']").focus();
     }
 </script>
 @endsection

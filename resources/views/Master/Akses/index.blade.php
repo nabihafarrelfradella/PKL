@@ -1,4 +1,4 @@
-@extends('Master.Layouts.app', ['title' => $title])
+﻿@extends('Master.Layouts.app', ['title' => $title])
 <?php
 
 use App\Models\Admin\AksesModel;

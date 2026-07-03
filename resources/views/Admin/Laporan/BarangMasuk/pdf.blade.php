@@ -40,12 +40,12 @@
             <tr>
                 <th align="center" width="1%">NO</th>
                 <th>TGL MASUK</th>
-                <th>KODE UNIK / RESI</th>
+                <th>KODE UNIK</th>
+                <th>SN</th>
                 <th>KODE BM</th>
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
-                <th>SERIAL NUMBER</th>
-                <th align="center">JML</th>
+                <th>STATUS</th>
             </tr>
         </thead>
         <tbody>
@@ -53,13 +53,19 @@
             @foreach($data as $d)
             <tr>
                 <td align="center">{{$no++}}</td>
-                <td>{{Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}</td>
-                <td>{{$d->kode_barang_unik ?? '-'}}</td>
+                <td>
+                    @if($d->jam_masuk)
+                        {{\Carbon\Carbon::parse($d->jam_masuk)->translatedFormat('d M Y H:i')}}
+                    @else
+                        {{\Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}
+                    @endif
+                </td>
+                <td>{{$d->kode_barang_unik ?: ($d->bm_kode ?: '-')}}</td>
+                <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
                 <td>{{$d->bm_kode}}</td>
                 <td>{{$d->barang_kode}}</td>
                 <td>{{$d->barang_nama}}</td>
-                <td>{{$d->serial_number ?? '-'}}</td>
-                <td align="center">{{$d->bm_jumlah}}</td>
+                <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : 'Aktif' }}</td>
             </tr>
             @endforeach
         </tbody>

@@ -1,4 +1,4 @@
-<!-- MODAL EFFECTS -->
+﻿<!-- MODAL EFFECTS -->
 <div class="modal fade" data-bs-backdrop="static" id="Umodaldemo8">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">

@@ -5,9 +5,11 @@ namespace App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class BarangkeluarModel extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'tbl_barangkeluar';
     protected $primaryKey = 'bk_id';
@@ -20,6 +22,9 @@ class BarangkeluarModel extends Model
         'bk_tanggal',
         'bk_tujuan',
         'bk_lokasi',
+        'bk_map_url',
+        'bk_lat',
+        'bk_lng',
         'bk_jumlah',
         'bk_status', // 'Dipinjam' atau 'Selesai'
         'serial_number',

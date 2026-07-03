@@ -14,7 +14,7 @@
 <!-- PAGE-HEADER END -->
 
 @php
-    // Helper sebagai Closure — hindari error "Cannot redeclare function" pada Blade
+    // Helper sebagai Closure â€” hindari error "Cannot redeclare function" pada Blade
     $hasAccess = function($aksesCollection, $refType, $refId, $aksesType) {
         if (!$refId) return false;
         $key = ($refType === 'menu' ? 'menu_' : 'sub_') . $refId . '_' . $aksesType;
@@ -25,12 +25,11 @@
 <!-- Toast Notification -->
 <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>
 
-<!-- Info Banner -->
 <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="alert">
     <i class="fe fe-shield fs-18 text-warning"></i>
     <div>
         <strong>Hak akses Owner</strong> tidak dapat diubah melalui antarmuka ini. 
-        Ubah akses <strong>Admin Gudang</strong> dan <strong>Pegawai Teknisi</strong> dengan toggle di bawah ini.
+        Ubah akses <strong>Admin Gudang</strong> dengan toggle di bawah ini.
     </div>
 </div>
 
@@ -51,21 +50,16 @@
             <table class="table table-bordered mb-0 align-middle" style="font-size:13.5px;">
                 <thead style="background:#f8f9fa;">
                     <tr>
-                        <th class="text-start ps-3" style="width:26%;">Fitur / Modul</th>
-                        <th class="text-center" style="width:12%;">Tipe Akses</th>
-                        <th class="text-center" style="width:20%;">
+                        <th class="text-start ps-3" style="width:35%;">Fitur / Modul</th>
+                        <th class="text-center" style="width:15%;">Tipe Akses</th>
+                        <th class="text-center" style="width:25%;">
                             <span class="badge bg-danger fs-12 px-2 py-1">
                                 <i class="fe fe-crown me-1"></i>OWNER
                             </span>
                         </th>
-                        <th class="text-center" style="width:21%;">
+                        <th class="text-center" style="width:25%;">
                             <span class="badge bg-primary fs-12 px-2 py-1">
                                 <i class="fe fe-shield me-1"></i>ADMIN GUDANG
-                            </span>
-                        </th>
-                        <th class="text-center" style="width:21%;">
-                            <span class="badge bg-success fs-12 px-2 py-1">
-                                <i class="fe fe-tool me-1"></i>PEGAWAI TEKNISI
                             </span>
                         </th>
                     </tr>
@@ -102,7 +96,7 @@
                                 </span>
                             </td>
 
-                            {{-- OWNER — selalu aktif, tidak bisa diubah --}}
+                            {{-- OWNER â€” selalu aktif, tidak bisa diubah --}}
                             <td class="text-center">
                                 <i class="fe fe-check-circle text-success fs-18" title="Owner selalu punya akses penuh"></i>
                                 <div style="font-size:10px;color:#aaa;">Terkunci</div>
@@ -128,33 +122,10 @@
                                         </span>
                                     </div>
                                 @else
-                                    <span class="text-muted small">—</span>
+                                    <span class="text-muted small">â€”</span>
                                 @endif
                             </td>
 
-                            {{-- PEGAWAI TEKNISI (role_id=3) --}}
-                            <td class="text-center">
-                                @if($refId)
-                                    @php $isOn3 = $hasAccess($aksesRole3, $mod['ref_type'], $refId, $type); @endphp
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input rbac-toggle" type="checkbox"
-                                                id="toggle_r3_{{ $mod['ref_type'] }}_{{ $refId }}_{{ $type }}"
-                                                {{ $isOn3 ? 'checked' : '' }}
-                                                data-role-id="3"
-                                                data-ref-type="{{ $mod['ref_type'] }}"
-                                                data-ref-id="{{ $refId }}"
-                                                data-akses-type="{{ $type }}"
-                                                style="cursor:pointer;width:42px;height:22px;">
-                                        </div>
-                                        <span class="toggle-label-r3-{{ $mod['ref_type'] }}_{{ $refId }}_{{ $type }} text-{{ $isOn3 ? 'success' : 'danger' }} fw-semibold" style="font-size:11px;min-width:30px;">
-                                            {{ $isOn3 ? 'ON' : 'OFF' }}
-                                        </span>
-                                    </div>
-                                @else
-                                    <span class="text-muted small">—</span>
-                                @endif
-                            </td>
                         </tr>
                         @endforeach
                     @endforeach
@@ -167,8 +138,8 @@
 
 <!-- Keterangan Singkat -->
 <div class="row row-sm mt-2">
-    <div class="col-md-4">
-        <div class="card border-danger border-2">
+    <div class="col-md-6 mb-3">
+        <div class="card border-danger border-2 h-100 mb-0">
             <div class="card-header bg-danger text-white py-2">
                 <h6 class="mb-0"><i class="fe fe-crown me-1"></i> OWNER</h6>
             </div>
@@ -182,8 +153,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-primary border-2">
+    <div class="col-md-6 mb-3">
+        <div class="card border-primary border-2 h-100 mb-0">
             <div class="card-header bg-primary text-white py-2">
                 <h6 class="mb-0"><i class="fe fe-shield me-1"></i> ADMIN GUDANG</h6>
             </div>
@@ -196,22 +167,9 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-success border-2">
-            <div class="card-header bg-success text-white py-2">
-                <h6 class="mb-0"><i class="fe fe-tool me-1"></i> PEGAWAI TEKNISI</h6>
-            </div>
-            <div class="card-body py-3">
-                <ul class="list-unstyled mb-0 small">
-                    <li><i class="fe fe-check text-success me-1"></i> Default: akses terbatas</li>
-                    <li><i class="fe fe-edit-2 text-info me-1"></i> Barang Masuk: lihat + input</li>
-                    <li><i class="fe fe-edit-2 text-info me-1"></i> Barang Keluar: lihat + ajukan</li>
-                    <li><i class="fe fe-edit-2 text-primary me-1"></i> Dapat dikonfigurasi via toggle di atas</li>
-                </ul>
-            </div>
-        </div>
-    </div>
 </div>
+
+
 
 @endsection
 
@@ -253,7 +211,7 @@ $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('cont
 
 function showToast(msg, type) {
     const color = type === 'success' ? '#28a745' : '#dc3545';
-    const icon  = type === 'success' ? '✓' : '✗';
+    const icon  = type === 'success' ? 'âœ“' : 'âœ—';
     const id    = 'toast_' + Date.now();
     const html  = `
         <div id="${id}" class="toast-rbac p-3 mb-2 text-white d-flex align-items-center gap-2"

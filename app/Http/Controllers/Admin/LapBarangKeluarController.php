@@ -19,8 +19,7 @@ class LapBarangKeluarController extends Controller
 
     public function print(Request $request)
     {
-        // Gunakan select agar kolom serial_number dari tbl_barangkeluar tidak tertimpa
-        $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+        $query = BarangkeluarModel::withTrashed()->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
                 ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
                 ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
@@ -38,8 +37,7 @@ class LapBarangKeluarController extends Controller
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            // Tambahkan select('tbl_barangkeluar.*') untuk memastikan SN ditarik dari tabel transaksi
-            $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            $query = BarangkeluarModel::withTrashed()->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
                     ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
                     ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_barang.barang_id', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
@@ -52,6 +50,9 @@ class LapBarangKeluarController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
+                    if ($row->jam_keluar) {
+                        return Carbon::parse($row->jam_keluar)->translatedFormat('d F Y H:i');
+                    }
                     return $row->bk_tanggal == '' ? '-' : Carbon::parse($row->bk_tanggal)->translatedFormat('d F Y');
                 })
                 ->addColumn('tujuan', function ($row) {
@@ -69,6 +70,9 @@ class LapBarangKeluarController extends Controller
                     return $row->serial_number ?? '-';
                 })
                 ->addColumn('status_badge', function ($row) {
+                    if ($row->deleted_at) {
+                        return '<span class="badge bg-danger">Dihapus (' . \Carbon\Carbon::parse($row->deleted_at)->translatedFormat('d M Y H:i') . ')</span>';
+                    }
                     if ($row->bk_status == 'Dipinjam') {
                         return '<span class="badge bg-warning text-dark">Dipinjam</span>';
                     } elseif ($row->bk_status == 'Selesai') {
@@ -76,9 +80,7 @@ class LapBarangKeluarController extends Controller
                     } elseif ($row->bk_status == 'Ditolak') {
                         return '<span class="badge bg-danger">Ditolak</span>';
                     } elseif ($row->bk_status == 'Menunggu Persetujuan Pinjam') {
-                        return '<span class="badge bg-info">Menunggu Pinjam</span>';
-                    } elseif ($row->bk_status == 'Menunggu Persetujuan Kembali') {
-                        return '<span class="badge bg-info">Menunggu Kembali</span>';
+                        return '<span class="badge bg-info">Menunggu Persetujuan Pinjam</span>';
                     }
                     return '<span class="badge bg-secondary">' . htmlspecialchars($row->bk_status) . '</span>';
                 })
@@ -90,7 +92,7 @@ class LapBarangKeluarController extends Controller
 
     public function pdf(Request $request)
     {
-        $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+        $query = BarangkeluarModel::withTrashed()->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
                 ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
                 ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
 
@@ -114,7 +116,7 @@ class LapBarangKeluarController extends Controller
 
     public function excel(Request $request)
     {
-        $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+        $query = BarangkeluarModel::withTrashed()->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
                 ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
                 ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_user.user_nmlengkap as user_nmlengkap');
 

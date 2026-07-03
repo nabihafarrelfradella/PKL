@@ -56,7 +56,12 @@
                                 <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImgU" class="">
                             </center>
                             <input type="hidden" name="hapus_foto" id="hapus_foto" value="0">
-                            <input class="form-control mt-4" id="GetFileU" name="photo" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
+                            <div class="input-group mt-4">
+                                <input class="form-control" id="GetFileU" name="photo" type="file" onclick="this.value=null;" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
+                                <button type="button" class="btn btn-primary" onclick="openWebcamModal('GetFileU', 'outputImgU')">
+                                    <i class="fe fe-camera"></i> Buka Kamera
+                                </button>
+                            </div>
                             <button type="button" class="btn btn-danger btn-sm mt-2 w-100" onclick="removePhotoU()"><i class="fe fe-trash me-1"></i>Hapus Foto</button>
                         </div>
                     </div>

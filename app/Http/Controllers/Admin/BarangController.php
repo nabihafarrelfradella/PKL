@@ -75,7 +75,7 @@ class BarangController extends Controller
                     return $img;
                 })
                 ->addColumn('jenisbarang', function ($row) {
-                    $jenisbarang = $row->jenisbarang_id == '' ? '-' : $row->jenisbarang_nama;
+                    $jenisbarang = empty($row->tipe_barang) ? '-' : $row->tipe_barang;
 
                     return $jenisbarang;
                 })
@@ -113,6 +113,9 @@ class BarangController extends Controller
                     $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                                + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                                    ->sum('tbl_barangkeluar.bk_jumlah');
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
@@ -190,7 +193,7 @@ class BarangController extends Controller
                     return $img;
                 })
                 ->addColumn('jenisbarang', function ($row) {
-                    $jenisbarang = $row->jenisbarang_id == '' ? '-' : $row->jenisbarang_nama;
+                    $jenisbarang = empty($row->tipe_barang) ? '-' : $row->tipe_barang;
 
                     return $jenisbarang;
                 })
@@ -228,6 +231,9 @@ class BarangController extends Controller
                     $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                                + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                                    ->sum('tbl_barangkeluar.bk_jumlah');
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
@@ -277,6 +283,33 @@ class BarangController extends Controller
         }
     }
 
+    public function autocomplete(Request $request)
+    {
+        $term = $request->get('term', '');
+
+        $barang = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->where('tbl_barang.barang_kode', 'LIKE', '%' . $term . '%')
+            ->orWhere('tbl_barang.barang_nama', 'LIKE', '%' . $term . '%')
+            ->select('tbl_barang.*', 'tbl_jenisbarang.jenisbarang_nama')
+            ->limit(10)
+            ->get();
+
+        $results = [];
+        foreach ($barang as $b) {
+            $foto = $b->barang_gambar == 'image.png' || $b->barang_gambar == '' ? url('assets/default/barang/image.png') : url('storage/barang/' . $b->barang_gambar);
+            $results[] = [
+                'id' => $b->barang_kode,
+                'kode' => $b->barang_kode,
+                'nama' => $b->barang_nama,
+                'satuan' => $b->satuan_id,
+                'jenis' => $b->tipe_barang,
+                'foto' => $foto
+            ];
+        }
+
+        return response()->json($results);
+    }
+
     public function proses_tambah(Request $request)
     {
         $request->validate([
@@ -304,23 +337,6 @@ class BarangController extends Controller
             $img = $filename;
         }
 
-        // Generate KODE BARANG: [BK/HP]-[MMYY]-[001]
-        $prefix = strtoupper($request->jenisbarang);
-        $monthYear = now()->format('my'); // format MMYY
-        
-        $lastBarang = BarangModel::where('barang_kode', 'LIKE', $prefix . '-' . $monthYear . '-%')
-            ->orderBy('barang_kode', 'DESC')
-            ->first();
-
-        if ($lastBarang) {
-            $lastNo = intval(substr($lastBarang->barang_kode, -3));
-            $nextNo = str_pad($lastNo + 1, 3, '0', STR_PAD_LEFT);
-        } else {
-            $nextNo = '001';
-        }
-
-        $barang_kode = $prefix . '-' . $monthYear . '-' . $nextNo;
-
         // Map "bk/hp" to jenisbarang_id via jenisbarang_keterangan
         $jenisName = ($request->jenisbarang == 'bk') ? 'Barang Kembali' : 'Barang Habis Pakai';
         $jenis = JenisBarangModel::where('jenisbarang_keterangan', $jenisName)->first();
@@ -328,13 +344,13 @@ class BarangController extends Controller
 
         $stok = intval($request->stok);
 
-        //create
-        BarangModel::create([
+        //create dengan kode sementara
+        $barang = BarangModel::create([
             'barang_gambar'  => $img,
             'jenisbarang_id' => $jenis_id,
             'satuan_id'      => $request->satuan,
             'merk_id'        => $request->merk,
-            'barang_kode'    => $barang_kode,
+            'barang_kode'    => 'TEMP',
             'barang_nama'    => $request->nama,
             'barang_slug'    => $slug,
             'barang_stok'    => 0, // Set to 0 so total stock is calculated from transactions
@@ -342,6 +358,17 @@ class BarangController extends Controller
             'barang_harga'   => '0',
             'serial_number'  => '-',
         ]);
+
+        // Generate KODE BARANG: [JENIS]-[YYYYMMDD]-[IDBARANG][IDMERK]
+        $prefix = strtoupper($request->jenisbarang);
+        $dateNow = now()->format('Ymd');
+        $idBarangPad = str_pad($barang->barang_id, 2, '0', STR_PAD_LEFT);
+        $idMerkPad = str_pad($request->merk ?? 0, 2, '0', STR_PAD_LEFT);
+        
+        $barang_kode = $prefix . '-' . $dateNow . '-' . $idBarangPad . $idMerkPad;
+
+        // Update kode barang
+        $barang->update(['barang_kode' => $barang_kode]);
 
         if ($stok > 0) {
             $prefix_sn = strtoupper(substr($barang_kode, 0, 2));
@@ -491,6 +518,10 @@ class BarangController extends Controller
                       ->orWhere(function($q2) {
                           $q2->where('tbl_barangkeluar.bk_status', 'Selesai')
                              ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%');
+                      })
+                      ->orWhere(function($q3) {
+                          $q3->where('tbl_barangkeluar.bk_status', 'Selesai')
+                             ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat');
                       });
                 })
                 ->sum('tbl_barangkeluar.bk_jumlah');

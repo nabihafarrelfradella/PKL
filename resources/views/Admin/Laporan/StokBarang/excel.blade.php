@@ -43,6 +43,7 @@ header("Content-Disposition: attachment; filename=LapStokBarang_".date('Y-m-d').
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">JUMLAH MASUK</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">JUMLAH KELUAR</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">TOTAL STOK</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">STATUS</th>
         </tr>
     </thead>
     <tbody>
@@ -83,6 +84,7 @@ header("Content-Disposition: attachment; filename=LapStokBarang_".date('Y-m-d').
             <td style="text-align: center;">{{$jmlmasuk}}</td>
             <td style="text-align: center;">{{$jmlkeluar}}</td>
             <td style="text-align: center;">{{$totalstok}}</td>
+            <td style="text-align: center;">{{ $d->deleted_at ? 'Dihapus' : 'Aktif' }}</td>
         </tr>
         @endforeach
     </tbody>

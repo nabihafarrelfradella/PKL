@@ -1,4 +1,4 @@
-<!-- MODAL BARANG -->
+﻿<!-- MODAL BARANG -->
 <div class="modal fade" data-bs-backdrop="static" style="overflow-y:scroll;" id="modalBarang">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content modal-content-demo">
@@ -81,7 +81,7 @@
             "info": false,
             "order": [],
             "ordering": false,
-            "scrollX": false,
+
             // "lengthMenu": [
             //     [5, 10, 25, 50, 100],
             //     [5, 10, 25, 50, 100]

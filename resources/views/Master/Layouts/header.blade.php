@@ -1,16 +1,16 @@
 <!-- app-Header -->
 <div class="app-header header sticky">
     <div class="container-fluid main-container">
-        <div class="d-flex">
-            <a aria-label="Hide Sidebar" class="app-sidebar__toggle" data-bs-toggle="sidebar" href="javascript:void(0)"></a>
+        <div class="d-flex align-items-center" style="height: 100%;">
+            <a aria-label="Hide Sidebar" class="app-sidebar__toggle" data-bs-toggle="sidebar" href="javascript:void(0)" style="position: relative; z-index: 99;"></a>
             <!-- sidebar-toggle-->
             <!-- <a class="logo-horizontal d-flex justify-center" href="index.html">
                 <img src="../assets/images/brand/logo.png" class="header-brand-img desktop-logo" alt="logo">
                 <img src="../assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
             </a> -->
-            <a class="logo-horizontal" href="{{url('/')}}">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain;" alt="logo">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain;" alt="logo">
+            <a class="logo-horizontal" href="{{url('/')}}" style="pointer-events: none;">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: auto;" alt="logo">
+                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: auto;" alt="logo">
             </a>
 
             <!-- LOGO -->
@@ -22,7 +22,7 @@
                 <div class="navbar navbar-collapse responsive-navbar p-0">
                     <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
                         <div class="d-flex justify-content-between order-lg-2">
-                            {{-- NOTIFIKASI BELL — hanya untuk Owner & Admin Gudang --}}
+                            {{-- NOTIFIKASI BELL â€” hanya untuk Owner & Admin Gudang --}}
                             @if(in_array(Session::get('user')->role_id, [1, 2]))
                             <div class="dropdown d-flex notifications" id="notifDropdown">
                                 <a class="nav-link icon position-relative" data-bs-toggle="dropdown" href="javascript:void(0)" id="notifBell" onclick="markAllRead()">

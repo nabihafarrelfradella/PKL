@@ -72,7 +72,7 @@
         
         // Pilih Jenis Barang
         let selectJ = $("select[name='jenisbarangU']");
-        let jName = (data.jenisbarang_nama || "").toLowerCase();
+        let jName = (data.tipe_barang || data.jenisbarang_nama || "").toLowerCase();
         if (jName.includes('kembali')) {
             selectJ.val('bk');
         } else if (jName.includes('habis')) {
@@ -131,7 +131,7 @@
             "info": true,
             "order": [],
             "stateSave": true,
-            "scrollX": true,
+
             "lengthMenu": [
                 [5, 10, 25, 50, 100],
                 [5, 10, 25, 50, 100]
@@ -145,7 +145,7 @@
                 }
             },
             "columns": [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false , orderable: false },
                 { data: 'img', name: 'barang_gambar', searchable: false, orderable: false },
                 { data: 'barang_kode', name: 'barang_kode' },
                 { data: 'barang_nama', name: 'barang_nama' },

@@ -21,7 +21,7 @@ class LapStokBarangController extends Controller
     public function print(Request $request)
     {
         // Query dibersihkan dari filter tipe
-        $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+        $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->orderBy('barang_id', 'DESC');
         
@@ -36,7 +36,7 @@ class LapStokBarangController extends Controller
     public function pdf(Request $request)
     {
         // Query dibersihkan dari filter tipe
-        $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+        $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->orderBy('barang_id', 'DESC');
         
@@ -56,7 +56,7 @@ class LapStokBarangController extends Controller
 
     public function excel(Request $request)
     {
-        $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+        $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->orderBy('barang_id', 'DESC');
         
@@ -70,7 +70,7 @@ class LapStokBarangController extends Controller
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $query = BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
                 ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
                 ->orderBy('barang_id', 'DESC');
             
@@ -105,6 +105,9 @@ class LapStokBarangController extends Controller
                     $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                                + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                                    ->sum('tbl_barangkeluar.bk_jumlah');
                     return '<span>'.$jmlkeluar.'</span>';
                 })
@@ -132,6 +135,9 @@ class LapStokBarangController extends Controller
                     $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                                + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                                    ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                                   ->sum('tbl_barangkeluar.bk_jumlah')
+                               + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                                   ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                                    ->sum('tbl_barangkeluar.bk_jumlah');
 
                     $totalstok = $row->barang_stok + ($jmlmasuk - $jmlkeluar);
@@ -146,7 +152,13 @@ class LapStokBarangController extends Controller
                     
                     return $result;
                 })
-                ->rawColumns(['stokawal', 'jmlmasuk', 'jmlkeluar', 'totalstok']) // 'tipe' dihapus dari sini
+                ->addColumn('status', function ($row) {
+                    if ($row->deleted_at) {
+                        return '<span class="badge bg-danger">Dihapus (' . \Carbon\Carbon::parse($row->deleted_at)->translatedFormat('d M Y') . ')</span>';
+                    }
+                    return '<span class="badge bg-success">Aktif</span>';
+                })
+                ->rawColumns(['stokawal', 'jmlmasuk', 'jmlkeluar', 'totalstok', 'status']) // 'tipe' dihapus dari sini
                 ->make(true);
         }
     }

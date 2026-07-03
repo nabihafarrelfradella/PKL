@@ -54,7 +54,12 @@
                             <center>
                                 <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImg" class="">
                             </center>
-                            <input class="form-control mt-5" id="GetFile" name="photo" type="file" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
+                            <div class="input-group mt-5">
+                                <input class="form-control" id="GetFile" name="photo" type="file" onclick="this.value=null;" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
+                                <button type="button" class="btn btn-primary" onclick="openWebcamModal('GetFile', 'outputImg')">
+                                    <i class="fe fe-camera"></i> Buka Kamera
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

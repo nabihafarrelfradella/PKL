@@ -51,6 +51,7 @@
                                 <th class="border-bottom-0">Jumlah Masuk</th>
                                 <th class="border-bottom-0">Jumlah Keluar</th>
                                 <th class="border-bottom-0">Total Stok</th>
+                                <th class="border-bottom-0">Status</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -81,7 +82,7 @@
             "serverSide": true,
             "info": true,
             "order": [],
-            "scrollX": true,
+
             "stateSave": true,
             "lengthMenu": [
                 [5, 10, 25, 50, 100, -1],
@@ -97,7 +98,7 @@
                 }
             },
             "columns": [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false , orderable: false },
                 { data: 'barang_kode', name: 'barang_kode' },
                 { data: 'barang_nama', name: 'barang_nama' },
                 { data: 'stokawal', name: 'barang_stok' },
@@ -125,6 +126,7 @@
                         return `<span style="color: ${color} !important; font-weight: bold;">${stok}</span>`;
                     }
                 },
+                { data: 'status', name: 'status', orderable: false, searchable: false }
             ],
         });
     }

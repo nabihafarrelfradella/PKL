@@ -77,6 +77,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         // Barang
         Route::get('/admin/barang', [BarangController::class, 'index']);
         Route::get('/admin/barang/show/', [BarangController::class, 'show'])->name('barang.getbarang');
+        Route::get('/admin/barang/autocomplete', [BarangController::class, 'autocomplete'])->name('barang.autocomplete');
         Route::post('/admin/barang/proses_tambah/', [BarangController::class, 'proses_tambah'])->name('barang.store');
         Route::post('/admin/barang/proses_ubah/{barang}', [BarangController::class, 'proses_ubah']);
         Route::post('/admin/barang/proses_hapus/{id}', [BarangController::class, 'proses_hapus']);
@@ -100,6 +101,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-masuk/proses_ubah/{barangmasuk}', [BarangmasukController::class, 'proses_ubah']);
         Route::post('/admin/barang-masuk/proses_hapus/{barangmasuk}', [BarangmasukController::class, 'proses_hapus']);
         Route::post('/admin/barang-masuk/hapus-kelompok', [BarangmasukController::class, 'hapus_kelompok']);
+        Route::post('/admin/barang-masuk/detail-sn/batch', [BarangmasukController::class, 'detail_sn_batch']);
         Route::get('/admin/barang-masuk/detail-sn/all/{barang_kode}', [BarangmasukController::class, 'detailSN'])->name('barang-masuk.detailSN');
         Route::get('/admin/barang/getbarang/{id}', [BarangController::class, 'getbarang']);
         Route::get('/admin/barang/getunit/{id}', [BarangController::class, 'getunit']);
@@ -110,6 +112,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         // Barang Keluar
         Route::resource('/admin/barang-keluar', \App\Http\Controllers\Admin\BarangkeluarController::class);
         Route::get('/admin/barang-keluar/show/', [BarangkeluarController::class, 'show'])->name('barang-keluar.getbarang-keluar');
+        Route::post('/admin/barang-keluar/resolve-map-link', [BarangkeluarController::class, 'resolveMapLink'])->name('barang-keluar.resolve-map-link');
         Route::post('/admin/barang-keluar/proses_tambah/', [BarangkeluarController::class, 'proses_tambah'])->name('barang-keluar.store');
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);

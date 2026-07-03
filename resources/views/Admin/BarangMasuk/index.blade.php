@@ -31,7 +31,7 @@
                 <div class="table-responsive">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%"></th>
+                            <th class="border-bottom-0" width="1%"><input type="checkbox" id="checkAllBMMain"></th>
                             <th class="border-bottom-0" width="1%"></th>
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Tanggal & Jam Masuk</th>
@@ -126,14 +126,26 @@
 
     function hapus(data) {
         $("input[name='idbm']").val(data.bm_id);
-        $("#vbm").html("Kode BM " + "<b>" + data.bm_kode + "</b>");
+        
+        let identifier = "";
+        if (data.serial_number && data.serial_number !== '-') {
+            identifier = "SN <b>" + data.serial_number + "</b>";
+        } else if (data.kode_barang_unik && data.kode_barang_unik !== '-') {
+            identifier = "Kode Unik <b>" + data.kode_barang_unik + "</b>";
+        } else {
+            identifier = "Kode BM <b>" + data.bm_kode + "</b>";
+        }
+        
+        $("#vbm").html(identifier);
     }
 
     function showQR(data) {
-        const kode = data.kode_barang_unik;
+        // QR Code selalu menggunakan Kode Unik
+        const kode = data.kode_barang_unik || data.barang_kode;
         const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(kode);
         $("#qrImage").attr("src", qrUrl);
         $("#qrKodeUnik").text(kode);
+        $("#Qmodaldemo8").modal('show');
     }
 
     function printQR() {
@@ -155,50 +167,54 @@
         var tr = btn.closest('tr');
         var row = table.row(tr);
         
-        if (row.child.isShown()) {
+        if (row.child.isShown() && row.child().find('.qr-checkbox-sn:checked').length > 0) {
             row.child().find('.qr-checkbox-sn:checked').each(function() {
                 selected.push(JSON.parse(decodeURIComponent($(this).val())));
             });
-            
-            if (selected.length === 0) {
-                swal("Pilih Data", "Silakan pilih setidaknya satu SN untuk dicetak QR-nya.", "warning");
-                return;
-            }
             processBatchPrint(selected);
-        } else {
-            var isParentChecked = tr.find('.parent-checkbox').prop('checked');
-            if (!isParentChecked) {
-                swal("Pilih Data", "Silakan centang transaksi ini atau buka detail untuk memilih SN yang akan dicetak.", "warning");
-                return;
-            }
-            swal({
-                title: 'Sedang Memproses...',
-                text: 'Mengambil data QR Code...',
-                showConfirmButton: false
-            });
-            $.ajax({
-                url: "{{ url('admin/barang-masuk/detail-sn/all') }}/" + encodeURIComponent(bmKode),
-                method: 'GET',
-                success: function(data) {
-                    swal.close();
-                    if (!data || data.length === 0) {
-                        swal("Gagal", "Tidak ada Serial Number untuk transaksi ini.", "error");
-                        return;
-                    }
-                    data.forEach(function(item) {
-                        selected.push({
-                            kode_unik: item.kode_barang_unik || item.bm_kode,
-                            nama: item.barang_nama,
-                            sn: item.serial_number
-                        });
-                    });
-                    processBatchPrint(selected);
-                },
-                error: function() {
-                    swal("Gagal", "Gagal mengambil data Serial Number.", "error");
-                }
-            });
+            return;
         }
+
+        var checkedParents = $('.parent-checkbox:checked');
+        var bmKodes = [];
+        if (checkedParents.length > 0) {
+            checkedParents.each(function() {
+                bmKodes.push($(this).data('bm-kode'));
+            });
+        } else {
+            bmKodes.push(bmKode);
+        }
+
+        swal({
+            title: 'Sedang Memproses...',
+            text: 'Mengambil data QR Code...',
+            showConfirmButton: false
+        });
+        
+        $.ajax({
+            url: "{{ url('admin/barang-masuk/detail-sn/batch') }}",
+            method: 'POST',
+            data: { _token: "{{ csrf_token() }}", bm_kodes: bmKodes },
+            success: function(data) {
+                swal.close();
+                if (!data || data.length === 0) {
+                    swal("Gagal", "Tidak ada Serial Number untuk transaksi ini.", "error");
+                    return;
+                }
+                data.forEach(function(item) {
+                    selected.push({
+                        kode_unik: item.kode_barang_unik || item.bm_kode,
+                        barang_kode: item.barang_kode,
+                        nama: item.barang_nama,
+                        sn: item.serial_number
+                    });
+                });
+                processBatchPrint(selected);
+            },
+            error: function() {
+                swal("Gagal", "Gagal mengambil data Serial Number.", "error");
+            }
+        });
     }
 
     function processBatchPrint(selected) {
@@ -218,12 +234,14 @@
         printWindow.document.write('</head><body>');
         
         selected.forEach(function(item, index) {
+            // QR Code selalu menggunakan Kode Unik
+            var printKode = item.kode_unik || item.kode_barang_unik || item.barang_kode;
+
             printWindow.document.write('<div class="qr-container">');
             printWindow.document.write('<div id="qrcode-' + index + '" class="qr-code"></div>');
             printWindow.document.write('<div class="qr-info">');
-            printWindow.document.write('<p class="qr-kode">' + (item.kode_unik || '-') + '</p>');
-            printWindow.document.write('<p>' + item.nama + '</p>');
-            printWindow.document.write('<p>SN: ' + (item.sn && item.sn !== '-' ? item.sn : 'N/A') + '</p>');
+            printWindow.document.write('<p class="qr-kode">' + printKode + '</p>');
+            printWindow.document.write('<p>' + (item.nama || item.barang_nama) + '</p>');
             printWindow.document.write('</div>');
             printWindow.document.write('</div>');
         });
@@ -231,7 +249,10 @@
         printWindow.document.write('<script>');
         printWindow.document.write('window.onload = function() {');
         selected.forEach(function(item, index) {
-            printWindow.document.write('new QRCode(document.getElementById("qrcode-' + index + '"), { text: "' + (item.sn && item.sn !== '-' ? item.sn : item.kode_unik) + '", width: 120, height: 120 });');
+            // QR Code selalu menggunakan Kode Unik
+            var printKode = item.kode_unik || item.kode_barang_unik || item.barang_kode;
+            
+            printWindow.document.write('new QRCode(document.getElementById("qrcode-' + index + '"), { text: "' + printKode + '", width: 120, height: 120 });');
         });
         printWindow.document.write('setTimeout(function() { window.print(); }, 500);');
         printWindow.document.write('};');
@@ -312,6 +333,7 @@
         data.forEach(function(row, i) {
             var val = encodeURIComponent(JSON.stringify({
                 kode_unik: row.kode_barang_unik || row.bm_kode,
+                barang_kode: row.barang_kode,
                 nama: row.barang_nama,
                 sn: row.serial_number
             }));
@@ -336,7 +358,7 @@
             "serverSide": true,
             "info": true,
             "order": [],
-            "scrollX": true,
+
             "stateSave": true,
             "lengthMenu": [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
             "pageLength": 10,
@@ -345,14 +367,14 @@
                 "url": "{{ route('barang-masuk.getbarang-masuk') }}",
             },
             "columns": [
+                { data: 'chk', name: 'chk', orderable: false, searchable: false },
                 {
                     data: 'expand',
                     orderable: false,
                     searchable: false,
                     render: function(data) { return data; }
                 },
-                { data: 'chk', name: 'chk', orderable: false, searchable: false },
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false , orderable: false },
                 { data: 'tgl', name: 'jam_masuk' },
                 { data: 'bm_kode', name: 'bm_kode' },
                 { data: 'serial_number', name: 'serial_number' },
@@ -394,16 +416,34 @@
         $('#checkAllBM').on('click', function() {
             $('.qr-checkbox').prop('checked', this.checked);
         });
+        $('#checkAllBMMain').on('change', function() {
+            var isChecked = $(this).prop('checked');
+            $('.parent-checkbox').prop('checked', isChecked);
+        });
     });
 
     function hapusSemuaBM(bmKode) {
-        hapusKelompok(bmKode, '');
+        hapusKelompok(bmKode);
     }
 
-    function hapusKelompok(bmKode, barangKode) {
+    function hapusKelompok(bmKode) {
+        var checkedParents = $('.parent-checkbox:checked');
+        var bmKodes = [];
+        if (checkedParents.length > 0) {
+            checkedParents.each(function() {
+                bmKodes.push($(this).data('bm-kode'));
+            });
+        } else {
+            bmKodes.push(bmKode);
+        }
+
+        var textMsg = bmKodes.length > 1 
+            ? 'Semua unit barang dalam ' + bmKodes.length + ' transaksi yang dipilih akan dihapus!'
+            : 'Semua unit barang dalam transaksi ' + bmKodes[0] + ' akan dihapus!';
+
         swal({
-            title: 'Hapus semua unit?',
-            text: 'Semua unit barang dalam transaksi ' + bmKode + ' akan dihapus!',
+            title: 'Hapus data?',
+            text: textMsg,
             type: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -414,10 +454,11 @@
                 $.ajax({
                     url: '/admin/barang-masuk/hapus-kelompok',
                     method: 'POST',
-                    data: { bm_kode: bmKode, barang_kode: barangKode },
+                    data: { _token: "{{ csrf_token() }}", bm_kodes: bmKodes },
                     success: function(res) {
                         swal('Terhapus!', res.success, 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
+                        $('#checkAllBMMain').prop('checked', false);
                     },
                     error: function(xhr) {
                         swal('Gagal!', xhr.responseJSON ? xhr.responseJSON.error : 'Terjadi kesalahan', 'error');
@@ -429,6 +470,12 @@
 
     $(document).on('change', '.parent-checkbox', function() {
         var isChecked = $(this).prop('checked');
+        
+        if (!isChecked) {
+            $('#checkAllBMMain').prop('checked', false);
+        } else if ($('.parent-checkbox:checked').length === $('.parent-checkbox').length) {
+            $('#checkAllBMMain').prop('checked', true);
+        }
         var tr = $(this).closest('tr');
         var row = table.row(tr);
         if (row.child.isShown()) {

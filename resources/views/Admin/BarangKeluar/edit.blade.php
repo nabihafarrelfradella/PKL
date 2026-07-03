@@ -45,6 +45,9 @@
                                     <label for="lokasiU" class="form-label">Lokasi Instalasi <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <input type="text" name="lokasiU" id="lokasiU" class="form-control" placeholder="Lokasi..." autocomplete="off">
+                                        <input type="hidden" name="latU" id="latInputU">
+                                        <input type="hidden" name="lngU" id="lngInputU">
+                                        <input type="hidden" name="map_urlU" id="mapUrlInputU">
                                         <button class="btn btn-primary-light border" type="button" onclick="openLocationPicker('lokasiU')" title="Pilih di Peta"><i class="fe fe-map"></i></button>
                                     </div>
                                 </div>
@@ -76,6 +79,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <input type="hidden" name="idbkU">
+                                    <input type="hidden" name="batchCountU" id="batchCountU">
                                     <label>Satuan</label>
                                     <input type="text" class="form-control" id="satuanU" readonly>
                                 </div>
@@ -88,10 +93,10 @@
                             </div>
                         </div>
                         <div class="form-group" id="sn_select_groupU">
-                            <label for="serial_numberU" class="form-label">SN Barang</label>
+                            <label for="serial_numberU" class="form-label">Kode Unik</label>
                             <div class="select2-wrapper" id="sn_wrapperU" style="position: relative; display: none;">
                                 <select name="serial_numberU" id="sn_listU" class="form-control select2U" style="width: 100%;">
-                                    <option value="">-- Pilih SN... --</option>
+                                    <option value="">-- Pilih Kode Unik... --</option>
                                 </select>
                             </div>
                             <input type="text" id="serial_number_inputU" readonly class="form-control" style="background:#f0f8ff;">
@@ -266,11 +271,29 @@
             setLoadingU(false);
             return false;
         } else {
-            submitFormU();
+            const batchCount = parseInt($("#batchCountU").val()) || 1;
+            if (batchCount > 1) {
+                swal({
+                    title: "Terapkan Perubahan ke Semua?",
+                    text: "Terdapat " + batchCount + " barang dalam transaksi ini.\nApakah Anda ingin menerapkan perubahan teknisi, tujuan, dan lokasi ini untuk seluruh barang pada transaksi ini?",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Ya, Terapkan Semua",
+                    cancelButtonText: "Hanya SN Ini",
+                    closeOnConfirm: true,
+                    closeOnCancel: true
+                }, function(isConfirm) {
+                    submitFormU(isConfirm ? 1 : 0);
+                });
+            } else {
+                submitFormU(0);
+            }
         }
     }
 
-    function submitFormU() {
+    function submitFormU(applyToAll = 0) {
         const id = $("input[name='idbkU']").val();
         const bkkode = $("input[name='bkkodeU']").val();
         const tglkeluar = $("input[name='tglkeluarU']").val();
@@ -297,7 +320,11 @@
                 teknisi: teknisi,
                 keterangan: keterangan,
                 serial_number: serial_number,
-                jml: jml
+                jml: jml,
+                lat: $('#latInputU').val(),
+                lng: $('#lngInputU').val(),
+                map_url: $('#mapUrlInputU').val(),
+                applyToAll: applyToAll
             },
             success: function(data) {
                 swal({

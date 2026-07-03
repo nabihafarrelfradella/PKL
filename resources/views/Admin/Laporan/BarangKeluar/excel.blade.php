@@ -39,14 +39,15 @@ header("Content-Disposition: attachment; filename=LapBarangKeluar_".date('Y-m-d'
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">NO</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">TGL KELUAR</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE BK</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE BM</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE UNIK / RESI</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE BARANG</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">NAMA BARANG</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">SN.BARANG</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">NAMA PELANGGAN</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">JML KELUAR</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE UNIK</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">SN</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">TUJUAN / CUSTOMER</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">LOKASI</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">TEKNISI (ID)</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">STATUS</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KETERANGAN</th>
         </tr>
     </thead>
     <tbody>
@@ -54,15 +55,22 @@ header("Content-Disposition: attachment; filename=LapBarangKeluar_".date('Y-m-d'
         @foreach($data as $d)
         <tr>
             <td style="text-align: center;">{{$no++}}</td>
-            <td>{{\Carbon\Carbon::parse($d->bk_tanggal)->translatedFormat('d M Y')}}</td>
+            <td>
+                @if($d->jam_keluar)
+                    {{\Carbon\Carbon::parse($d->jam_keluar)->translatedFormat('d M Y H:i')}}
+                @else
+                    {{\Carbon\Carbon::parse($d->bk_tanggal)->translatedFormat('d M Y')}}
+                @endif
+            </td>
             <td>{{$d->bk_kode}}</td>
             <td>{{$d->barang_kode}}</td>
             <td>{{$d->barang_nama}}</td>
-            <td>{{$d->serial_number ?? '-'}}</td>
-            <td style="text-align: center;">{{$d->bk_jumlah}}</td>
+            <td>{{$d->kode_barang_unik ?? '-'}}</td>
+            <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
             <td>{{$d->bk_tujuan ?? '-'}}</td>
+            <td>{{$d->bk_lokasi ?? '-'}}</td>
             <td>{{($d->user_nmlengkap ?? $d->teknisi_nama) ? ($d->user_nmlengkap ?? $d->teknisi_nama) . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
-            <td>{{$d->bk_status}}</td>
+            <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : $d->bk_status }}</td>
             <td>{{$d->keterangan ?? '-'}}</td>
         </tr>
         @endforeach

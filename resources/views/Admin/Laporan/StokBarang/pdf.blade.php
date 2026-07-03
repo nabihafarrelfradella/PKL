@@ -52,6 +52,7 @@ use Carbon\Carbon;
                 <th align="center">JML MASUK</th>
                 <th align="center">JML KELUAR</th>
                 <th align="center">TOTAL STOK</th>
+                <th align="center">STATUS</th>
             </tr>
         </thead>
         <tbody>
@@ -90,6 +91,7 @@ use Carbon\Carbon;
                 <td align="center">{{$jmlmasuk}}</td>
                 <td align="center">{{$jmlkeluar}}</td>
                 <td align="center" class="{{$colorClass}}">{{$totalStok}}</td>
+                <td align="center">{{ $d->deleted_at ? 'Dihapus' : 'Aktif' }}</td>
             </tr>
             @endforeach
         </tbody>

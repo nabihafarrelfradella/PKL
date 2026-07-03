@@ -5,9 +5,11 @@ namespace App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class BarangModel extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $table = "tbl_barang";
     protected $primaryKey = 'barang_id';
     protected $fillable = [

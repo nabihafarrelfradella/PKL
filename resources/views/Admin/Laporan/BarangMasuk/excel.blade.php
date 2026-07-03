@@ -24,10 +24,10 @@ header("Content-Disposition: attachment; filename=LapBarangMasuk_".date('Y-m-d')
 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
     <thead>
         <tr>
-            <th colspan="8" style="background-color: #002b5e; color: white; font-size: 18px; font-weight: bold; text-align: center;">LAPORAN BARANG MASUK</th>
+            <th colspan="7" style="background-color: #002b5e; color: white; font-size: 18px; font-weight: bold; text-align: center;">LAPORAN BARANG MASUK</th>
         </tr>
         <tr>
-            <th colspan="8" style="background-color: #002b5e; color: white; font-size: 14px; text-align: center;">
+            <th colspan="7" style="background-color: #002b5e; color: white; font-size: 14px; text-align: center;">
                 @if($tglawal == '')
                 Periode: Semua Tanggal
                 @else
@@ -39,11 +39,11 @@ header("Content-Disposition: attachment; filename=LapBarangMasuk_".date('Y-m-d')
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">NO</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">TGL MASUK</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE BM</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE UNIK / RESI</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE UNIK</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">SN</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">KODE BARANG</th>
             <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">NAMA BARANG</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">SN.BARANG</th>
-            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">JML MASUK</th>
+            <th style="background-color: #e0e0e0; color: black; font-weight: bold; text-align: center;">STATUS</th>
         </tr>
     </thead>
     <tbody>
@@ -51,13 +51,19 @@ header("Content-Disposition: attachment; filename=LapBarangMasuk_".date('Y-m-d')
         @foreach($data as $d)
         <tr>
             <td style="text-align: center;">{{$no++}}</td>
-            <td>{{\Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}</td>
+            <td>
+                @if($d->jam_masuk)
+                    {{\Carbon\Carbon::parse($d->jam_masuk)->translatedFormat('d M Y H:i')}}
+                @else
+                    {{\Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}
+                @endif
+            </td>
             <td>{{$d->bm_kode}}</td>
-            <td>{{$d->kode_barang_unik ?? '-'}}</td>
+            <td>{{$d->kode_barang_unik ?: ($d->bm_kode ?: '-')}}</td>
+            <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
             <td>{{$d->barang_kode}}</td>
             <td>{{$d->barang_nama}}</td>
-            <td>{{$d->serial_number ?? '-'}}</td>
-            <td style="text-align: center;">{{$d->bm_jumlah}}</td>
+            <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : 'Aktif' }}</td>
         </tr>
         @endforeach
     </tbody>

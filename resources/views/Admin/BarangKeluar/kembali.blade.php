@@ -19,7 +19,7 @@
                         </div>
                         <div class="form-group">
                             <label for="tglkembali" class="form-label">Tanggal Kembali <span class="text-danger">*</span></label>
-                            <input type="date" name="tglkembali" class="form-control">
+                            <input type="datetime-local" name="tglkembali" class="form-control">
                         </div>
                         <div class="form-group d-none">
                             <label for="jmlK" class="form-label">Jumlah Kembali <span class="text-danger">*</span></label>
@@ -56,6 +56,13 @@
     $("input[name='bkkodeK']").val(data.bk_kode);
     $("#nmbarangK").val(data.barang_nama);
     $("input[name='jmlK']").val(data.bk_jumlah);
+    
+    // Auto-populate current date and time
+    var now = new Date();
+    // Format to YYYY-MM-DDTHH:mm
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    var dateTimeString = now.toISOString().slice(0, 16);
+    $("input[name='tglkembali']").val(dateTimeString);
     }
 
     function checkFormK() {

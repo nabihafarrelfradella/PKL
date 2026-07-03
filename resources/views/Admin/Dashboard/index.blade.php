@@ -96,6 +96,24 @@
                 font-size: 2rem;
             }
         }
+
+        /* ===== MOBILE: Chart filter buttons ===== */
+        @media (max-width: 768px) {
+            .btn-group.d-flex.w-100 {
+                flex-wrap: wrap !important;
+                gap: 5px !important;
+                max-width: 100% !important;
+            }
+
+            .btn-group.d-flex.w-100 .btn-filter-chart {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                font-size: 0.62rem !important;
+                padding: 3px 7px !important;
+                white-space: nowrap;
+                border-radius: 6px !important;
+            }
+        }
     </style>
 
     <div class="page-header d-flex flex-column flex-sm-row align-items-sm-center">
@@ -212,14 +230,14 @@
         </div>
         <div class="col-lg-12 col-md-12 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                     <h3 class="card-title mb-0">Barang Sering Dipinjam</h3>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart" data-chart="dipinjam" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="dipinjam" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="dipinjam" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="dipinjam" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="dipinjam" data-filter="tahun">Tahun Ini</button>
+                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
+                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="semua">Semua</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="hari">Hari Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="minggu">Minggu Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="bulan">Bulan Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="tahun">Tahun Ini</button>
                     </div>
                 </div>
                 <div class="card-body position-relative">
@@ -230,14 +248,14 @@
         </div>
         <div class="col-lg-12 col-md-12 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                     <h3 class="card-title mb-0">Barang Paling Sering Habis</h3>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart" data-chart="habis" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="habis" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="habis" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="habis" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="habis" data-filter="tahun">Tahun Ini</button>
+                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
+                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="semua">Semua</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="hari">Hari Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="minggu">Minggu Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="bulan">Bulan Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="tahun">Tahun Ini</button>
                     </div>
                 </div>
                 <div class="card-body position-relative">
@@ -248,14 +266,14 @@
         </div>
         <div class="col-lg-12 col-md-12 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                     <h3 class="card-title mb-0">Barang Sering Rusak</h3>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart" data-chart="rusak" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="rusak" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="rusak" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="rusak" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart" data-chart="rusak" data-filter="tahun">Tahun Ini</button>
+                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
+                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="semua">Semua</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="hari">Hari Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="minggu">Minggu Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="bulan">Bulan Ini</button>
+                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="tahun">Tahun Ini</button>
                     </div>
                 </div>
                 <div class="card-body position-relative">
@@ -267,7 +285,7 @@
     </div>
     @endif
     
-    {{-- PANEL BARANG DIPINJAM — hanya untuk Owner & Admin Gudang --}}
+    {{-- PANEL BARANG DIPINJAM â€” hanya untuk Owner & Admin Gudang --}}
     @php $userRole = Session::get('user')->role_id ?? 0; @endphp
     @if(in_array($userRole, [1, 2]))
     <div class="row row-sm mb-4">

@@ -43,11 +43,12 @@
                 <th>KODE BK</th>
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
-                <th>SN.BARANG</th>
-                <th align="center">JML</th>
+                <th>KODE UNIK</th>
+                <th>SN</th>
                 <th>TUJUAN / CUSTOMER</th>
                 <th>LOKASI</th>
                 <th>TEKNISI (ID)</th>
+                <th>STATUS</th>
                 <th>KETERANGAN</th>
             </tr>
         </thead>
@@ -56,15 +57,26 @@
             @foreach($data as $d)
             <tr>
                 <td align="center">{{$no++}}</td>
-                <td>{{Carbon::parse($d->bk_tanggal)->translatedFormat('d M Y')}}</td>
+                <td>
+                    @if($d->jam_keluar)
+                        {{\Carbon\Carbon::parse($d->jam_keluar)->translatedFormat('d M Y H:i')}}
+                    @else
+                        {{\Carbon\Carbon::parse($d->bk_tanggal)->translatedFormat('d M Y')}}
+                    @endif
+                </td>
                 <td>{{$d->bk_kode}}</td>
                 <td>{{$d->barang_kode}}</td>
                 <td>{{$d->barang_nama}}</td>
-                <td>{{$d->serial_number ?? '-'}}</td>
-                <td align="center">{{$d->bk_jumlah}}</td>
+                @php
+                    $cleanSN = ($d->serial_number && is_string($d->serial_number)) ? strip_tags($d->serial_number) : $d->serial_number;
+                    $hasSN = $cleanSN && $cleanSN !== '-' && $cleanSN !== 'Tanpa SN';
+                @endphp
+                <td>{{$d->kode_barang_unik ?? '-'}}</td>
+                <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
                 <td>{{$d->bk_tujuan ?? '-'}}</td>
                 <td>{{$d->bk_lokasi ?? '-'}}</td>
                 <td>{{($d->user_nmlengkap ?? $d->teknisi_nama) ? ($d->user_nmlengkap ?? $d->teknisi_nama) . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
+                <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : $d->bk_status }}</td>
                 <td>{{$d->keterangan ?? '-'}}</td>
             </tr>
             @endforeach

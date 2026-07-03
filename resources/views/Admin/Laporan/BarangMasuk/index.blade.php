@@ -47,11 +47,11 @@
                                 <th class="border-bottom-0" width="1%">No</th>
                                 <th class="border-bottom-0">Tanggal Masuk</th>
                                 <th class="border-bottom-0">Kode BM</th>
-                                <th class="border-bottom-0">Kode Unik / Resi</th>
+                                <th class="border-bottom-0">Kode Unik</th>
+                                <th class="border-bottom-0">SN</th>
                                 <th class="border-bottom-0">Kode Barang</th>
                                 <th class="border-bottom-0">Nama Barang</th>
-                                <th class="border-bottom-0">Serial Number</th>
-                                <th class="border-bottom-0">Jumlah Masuk</th>
+                                <th class="border-bottom-0">Status</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -86,7 +86,7 @@
             "serverSide": true,
             "info": true,
             "order": [],
-            "scrollX": true,
+
             "stateSave": false,
             "lengthMenu": [
                 [5, 10, 25, 50, 100, -1],
@@ -121,6 +121,10 @@
                     name: 'tbl_barangmasuk.kode_barang_unik' 
                 },
                 { 
+                    data: 'sn', 
+                    name: 'tbl_barangmasuk.serial_number' 
+                },
+                { 
                     data: 'barang_kode', 
                     name: 'tbl_barangmasuk.barang_kode' 
                 },
@@ -128,13 +132,11 @@
                     data: 'barang', 
                     name: 'tbl_barang.barang_nama' 
                 },
-                { 
-                    data: 'serial_number', 
-                    name: 'tbl_barangmasuk.serial_number' 
-                },
-                { 
-                    data: 'bm_jumlah', 
-                    name: 'tbl_barangmasuk.bm_jumlah' 
+                {
+                    data: 'status',
+                    name: 'tbl_barangmasuk.deleted_at',
+                    orderable: false,
+                    searchable: false
                 }
             ],
         });

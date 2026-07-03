@@ -49,10 +49,10 @@
                                 <th class="border-bottom-0">Tanggal Keluar</th>
                                 <th class="border-bottom-0">Kode BK</th>
                                 <th class="border-bottom-0">Nama Barang</th>
-                                <th class="border-bottom-0">Serial Number</th>
+                                <th class="border-bottom-0">Kode Unik</th>
+                                <th class="border-bottom-0">SN</th>
                                 <th class="border-bottom-0">Tujuan</th>
                                 <th class="border-bottom-0">Teknisi</th>
-                                <th class="border-bottom-0">Jumlah</th>
                                 <th class="border-bottom-0">Status</th>
                             </tr>
                         </thead>
@@ -87,7 +87,7 @@
             "serverSide": true,
             "info": true,
             "order": [],
-            "scrollX": true,
+
             "stateSave": false,
             "lengthMenu": [
                 [5, 10, 25, 50, 100, -1],
@@ -103,14 +103,29 @@
                 }
             },
             "columns": [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false , orderable: false },
                 { data: 'tgl', name: 'bk_tanggal' },
                 { data: 'bk_kode', name: 'bk_kode' },
                 { data: 'barang', name: 'barang_nama' },
-                { data: 'serial_number', name: 'serial_number', defaultContent: '-' },
+                {
+                    data: null,
+                    render: function(data, type, row) {
+                        return row.kode_barang_unik || '-';
+                    }
+                },
+                { 
+                    data: null, 
+                    name: 'serial_number',
+                    render: function(data, type, row) {
+                        var cleanSN = (row.serial_number && typeof row.serial_number === 'string') ? row.serial_number.replace(/<[^>]*>?/gm, '') : row.serial_number;
+                        if (cleanSN && cleanSN !== '-' && cleanSN !== 'Tanpa SN') {
+                            return cleanSN;
+                        }
+                        return '-';
+                    }
+                },
                 { data: 'tujuan', name: 'bk_tujuan' },
                 { data: 'teknisi', name: 'teknisi' },
-                { data: 'bk_jumlah', name: 'bk_jumlah' },
                 { data: 'status_badge', name: 'bk_status', orderable: false, searchable: false }
             ],
         });

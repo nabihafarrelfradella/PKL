@@ -266,6 +266,22 @@ class UserController extends Controller
 
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('foto', function ($row) {
+                    if ($row->user_foto == 'undraw_profile.svg' || empty($row->user_foto)) {
+                        $imgUrl = url('/assets/default/users/undraw_profile.svg');
+                    } else {
+                        $imgUrl = asset('storage/users/' . $row->user_foto);
+                    }
+                    return '<a href="javascript:void(0)" onclick="lihatFotoTeknisi(\'' . $imgUrl . '\')">
+                                <span class="avatar avatar-md brround cover-image" style="background: url(&quot;' . $imgUrl . '&quot;) center center;"></span>
+                            </a>';
+                })
+                ->editColumn('user_email', function ($row) {
+                    return str_contains($row->user_email, '@no-email.local') ? '' : $row->user_email;
+                })
+                ->editColumn('jenis_kelamin', function ($row) {
+                    return $row->jenis_kelamin == 'M' ? 'Laki-laki (M)' : 'Perempuan (F)';
+                })
                 ->addColumn('action', function ($row) {
                     $array = [
                         'user_id'        => $row->user_id,
@@ -276,6 +292,7 @@ class UserController extends Controller
                         'jenis_kelamin'  => $row->jenis_kelamin,
                         'tanggal_lahir'  => $row->tanggal_lahir,
                         'teknisi_sn'     => $row->teknisi_sn,
+                        'user_foto'      => $row->user_foto,
                     ];
                     return '
                     <div class="d-flex gap-1">
@@ -287,7 +304,7 @@ class UserController extends Controller
                         </a>
                     </div>';
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'foto'])
                 ->make(true);
         }
     }
@@ -296,28 +313,27 @@ class UserController extends Controller
     {
         $request->validate([
             'nmlengkap'     => 'required|string|max:255',
-            'username'      => 'required|string|max:100|unique:tbl_user,user_nama',
-            'email'         => 'required|email|unique:tbl_user,user_email',
-            'pwd'           => 'required|min:6',
+            'email'         => 'nullable|email|unique:tbl_user,user_email',
             'jenis_kelamin' => 'required|in:M,F',
             'tanggal_lahir' => 'required|date',
+            'foto'          => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ], [
             'nmlengkap.required'     => 'Nama Lengkap wajib diisi',
-            'username.required'      => 'Username wajib diisi',
-            'username.unique'        => 'Username sudah digunakan',
             'email.required'         => 'Email wajib diisi',
             'email.unique'           => 'Email sudah digunakan',
-            'pwd.required'           => 'Password wajib diisi',
-            'pwd.min'                => 'Password minimal 6 karakter',
             'jenis_kelamin.required' => 'Jenis Kelamin wajib diisi',
             'jenis_kelamin.in'       => 'Jenis Kelamin harus M atau F',
             'tanggal_lahir.required' => 'Tanggal Lahir wajib diisi',
             'tanggal_lahir.date'     => 'Format Tanggal Lahir tidak valid',
         ]);
 
-        // Generate SN TEKNISI: [M/F]-[DD]-[YYYY]
         $dob = \Carbon\Carbon::parse($request->tanggal_lahir);
         $teknisi_sn = $request->jenis_kelamin . '-' . $dob->format('d') . '-' . $dob->format('Y');
+
+        $email = $request->email;
+        if (empty($email)) {
+            $email = strtolower($teknisi_sn) . '_' . time() . '@no-email.local';
+        }
 
         // Proteksi Duplikasi Teknisi SN
         $cekDuplikat = UserModel::where('teknisi_sn', $teknisi_sn)->exists();
@@ -325,37 +341,48 @@ class UserController extends Controller
             return response()->json(['error' => 'Gagal! Sudah ada Teknisi lain dengan kombinasi Jenis Kelamin dan Tanggal Lahir yang sama.'], 400);
         }
 
+        $foto = 'undraw_profile.svg';
+        if ($request->hasFile('foto')) {
+            $image = $request->file('foto');
+            $foto = $image->hashName();
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $image->move($destinationPath, $foto);
+        }
+
         $user = UserModel::create([
-            'user_foto'      => 'undraw_profile.svg',
+            'user_foto'      => $foto,
             'user_nmlengkap' => $request->nmlengkap,
-            'user_nama'      => $request->username,
-            'user_email'     => $request->email,
+            'user_nama'      => 'teknisi_' . time() . rand(100,999), // Auto-generate dummy username
+            'user_email'     => $email,
             'user_phone'     => $request->phone ?? null,
             'jenis_kelamin'  => $request->jenis_kelamin,
             'tanggal_lahir'  => $request->tanggal_lahir,
             'teknisi_sn'     => $teknisi_sn,
             'role_id'        => 3, // Pegawai Teknisi — hardcoded
-            'user_password'  => md5($request->pwd),
+            'user_password'  => md5(\Illuminate\Support\Str::random(12)), // Auto-generate random password
         ]);
 
         $this->logActivity('CREATE_TEKNISI', "Owner created Teknisi account: {$user->user_nama} ({$user->user_email}) with ID: {$teknisi_sn}");
 
-        return response()->json(['success' => 'Akun Teknisi berhasil ditambahkan!']);
+        return response()->json(['success' => 'Data Teknisi berhasil ditambahkan!']);
     }
 
     public function teknisiUpdate(Request $request, UserModel $user)
     {
         // Ensure we only update teknisi accounts
         if ($user->role_id != 3) {
-            return response()->json(['error' => 'Akun ini bukan Pegawai Teknisi!'], 403);
+            return response()->json(['error' => 'Data ini bukan Pegawai Teknisi!'], 403);
         }
 
         $request->validate([
             'nmlengkap'     => 'required|string|max:255',
-            'username'      => 'required|string|max:100|unique:tbl_user,user_nama,' . $user->user_id . ',user_id',
-            'email'         => 'required|email|unique:tbl_user,user_email,' . $user->user_id . ',user_id',
+            'email'         => 'nullable|email|unique:tbl_user,user_email,' . $user->user_id . ',user_id',
             'jenis_kelamin' => 'required|in:M,F',
             'tanggal_lahir' => 'required|date',
+            'foto'          => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $oldSn = $user->teknisi_sn;
@@ -370,18 +397,36 @@ class UserController extends Controller
             }
         }
 
+        $email = $request->email;
+        if (empty($email)) {
+            $email = $user->user_email;
+        }
+
         $updateData = [
             'user_nmlengkap' => $request->nmlengkap,
-            'user_nama'      => $request->username,
-            'user_email'     => $request->email,
+            'user_email'     => $email,
             'user_phone'     => $request->phone ?? null,
             'jenis_kelamin'  => $request->jenis_kelamin,
             'tanggal_lahir'  => $request->tanggal_lahir,
             'teknisi_sn'     => $teknisi_sn,
         ];
 
-        if ($request->pwd && $request->pwd != '') {
-            $updateData['user_password'] = md5($request->pwd);
+        if ($request->hasFile('foto')) {
+            $image = $request->file('foto');
+            $filename = $image->hashName();
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $image->move($destinationPath, $filename);
+            
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = $filename;
         }
 
         $user->update($updateData);
@@ -393,14 +438,14 @@ class UserController extends Controller
 
         $this->logActivity('UPDATE_TEKNISI', "Owner updated Teknisi account: {$user->user_nama} (user_id: {$user->user_id})");
 
-        return response()->json(['success' => 'Akun Teknisi berhasil diperbarui!']);
+        return response()->json(['success' => 'Data Teknisi berhasil diperbarui!']);
     }
 
     public function teknisiDestroy(Request $request, UserModel $user)
     {
         // Ensure we only delete teknisi accounts
         if ($user->role_id != 3) {
-            return response()->json(['error' => 'Akun ini bukan Pegawai Teknisi!'], 403);
+            return response()->json(['error' => 'Data ini bukan Pegawai Teknisi!'], 403);
         }
 
         $nama = $user->user_nama;
@@ -408,7 +453,7 @@ class UserController extends Controller
         $user->delete();
 
         $this->logActivity('DELETE_TEKNISI', "Owner deleted Teknisi account: {$nama} (user_id: {$id})");
-        return response()->json(['success' => 'Akun Teknisi berhasil dihapus!']);
+        return response()->json(['success' => 'Data Teknisi berhasil dihapus!']);
     }
 
     // =========================================================
@@ -434,6 +479,7 @@ class UserController extends Controller
             'nmlengkap' => 'required|string|max:255',
             'username'  => 'required|string|max:100|unique:tbl_user,user_nama,' . $user->user_id . ',user_id',
             'email'     => 'required|email|unique:tbl_user,user_email,' . $user->user_id . ',user_id',
+            'foto'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $updateData = [
@@ -444,6 +490,32 @@ class UserController extends Controller
 
         if ($request->pwd && $request->pwd != '') {
             $updateData['user_password'] = md5($request->pwd);
+        }
+
+        if ($request->has('remove_photo') && $request->remove_photo == '1') {
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = 'undraw_profile.svg';
+        } elseif ($request->hasFile('foto')) {
+            $image           = $request->file('foto');
+            $filename        = $image->hashName();
+            $destinationPath = public_path('storage/users');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            $image->move($destinationPath, $filename);
+            // Hapus foto lama jika bukan default
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = $filename;
         }
 
         $user->update($updateData);

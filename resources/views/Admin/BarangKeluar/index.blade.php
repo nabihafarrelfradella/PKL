@@ -148,6 +148,7 @@
     function update(data) {
         $("input[name='idbkU']").val(data.bk_id);
         $("input[name='bkkodeU']").val(data.bk_kode);
+        $("input[name='batchCountU']").val(data.batch_count);
         $("input[name='kdbarangU']").val(data.barang_kode);
         $("select[name='tujuanU']").val(data.teknisi_nama || '').trigger('change');
         $("input[name='teknisiU']").val(data.teknisi);
@@ -193,27 +194,50 @@
             success: function(data) {
                 var list = $("#sn_listU");
                 list.empty();
-                if (currentSN && currentSN !== '-') {
-                    var hasCurrent = data.some(item => item.serial_number === currentSN);
+                
+                var displayKBU = (currentKBU && currentKBU !== '-') ? currentKBU : currentSN;
+                
+                if (displayKBU && displayKBU !== '-') {
+                    var hasCurrent = data.some(item => item.serial_number === displayKBU || item.kode_barang_unik === displayKBU);
                     if (!hasCurrent) {
-                        var unikText = currentKBU ? ` (Unik: ${currentKBU})` : '';
-                        list.append(`<option value="${currentSN}">${currentSN}${unikText}</option>`);
+                        list.append(`<option value="${displayKBU}">${displayKBU}</option>`);
                     }
                 }
+                
                 data.forEach(function(item) {
-                    var unikText = item.kode_barang_unik ? ` (Unik: ${item.kode_barang_unik})` : '';
-                    list.append(`<option value="${item.serial_number}">${item.serial_number}${unikText}</option>`);
+                    var optionValue = item.kode_barang_unik || item.serial_number;
+                    var labelText = optionValue;
+                    if (item.kondisi) {
+                        labelText += ' - ' + item.kondisi;
+                    }
+                    list.append(`<option value="${optionValue}">${labelText}</option>`);
                 });
                 
                 // Select the current SN and update Select2 display
-                list.val(currentSN).trigger('change');
+                list.val(displayKBU).trigger('change');
             }
         });
     }
 
     function hapus(data) {
         $("input[name='idbk']").val(data.bk_id);
-        $("#vbk").html("Kode BK " + "<b>" + data.bk_kode + "</b>");
+        
+        let identifier = "";
+        if (data.serial_number && data.serial_number !== '-') {
+            // hapus html span atau em yang mungkin terbawa dari controller
+            let cleanSN = data.serial_number.replace(/<[^>]*>?/gm, ''); 
+            if(cleanSN === 'Tanpa SN' || cleanSN === '-') {
+                identifier = "Kode Unik <b>" + data.kode_barang_unik + "</b>";
+            } else {
+                identifier = "SN <b>" + cleanSN + "</b>";
+            }
+        } else if (data.kode_barang_unik && data.kode_barang_unik !== '-') {
+            identifier = "Kode Unik <b>" + data.kode_barang_unik + "</b>";
+        } else {
+            identifier = "Kode BK <b>" + data.bk_kode + "</b>";
+        }
+
+        $("#vbk").html(identifier);
     }
 
     // Fungsi kembali() ada di kembali.blade.php (di-include di bawah)
@@ -306,7 +330,7 @@
             "serverSide": true,
             "info": true,
             "order": [],
-            "scrollX": true,
+
             "stateSave": true,
             "lengthMenu": [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
             "pageLength": 10,
@@ -360,7 +384,7 @@
                     searchable: false,
                     render: function(data) { return data || ''; }
                 },
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false , orderable: false },
                 { data: 'tgl',       name: 'created_at' },
                 { data: 'bk_kode',   name: 'bk_kode' },
                 { data: 'teknisi',   name: 'teknisi_nama' },
