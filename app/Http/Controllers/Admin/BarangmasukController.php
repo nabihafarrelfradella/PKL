@@ -24,16 +24,28 @@ class BarangmasukController extends Controller
     public function show(Request $request)
     {
         if ($request->ajax()) {
+            $searchTerm = $request->search_term ?? '';
+
             // Kelompokkan HANYA per bm_kode (1 baris = 1 transaksi penerimaan barang/surat jalan)
-            $data = BarangmasukModel::select(
+            $query = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->select(
                     'tbl_barangmasuk.bm_kode',
                     DB::raw('MAX(tbl_barangmasuk.bm_id) as bm_id'),
                     DB::raw('MAX(tbl_barangmasuk.jam_masuk) as jam_masuk'),
                     DB::raw('MAX(tbl_barangmasuk.bm_tanggal) as bm_tanggal'),
                     DB::raw('COUNT(tbl_barangmasuk.bm_id) as total_unit')
-                )
-                ->groupBy('tbl_barangmasuk.bm_kode')
-                ->orderBy('bm_id', 'DESC');
+                );
+
+            if ($searchTerm) {
+                // Filter by bm_kode, barang_nama, or kode_barang_unik within the group
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('tbl_barangmasuk.bm_kode', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('tbl_barang.barang_nama', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('tbl_barangmasuk.kode_barang_unik', 'LIKE', "%{$searchTerm}%");
+                });
+            }
+
+            $data = $query->groupBy('tbl_barangmasuk.bm_kode')->orderBy('bm_id', 'DESC');
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -83,8 +95,9 @@ class BarangmasukController extends Controller
     {
         // Filter HANYA berdasarkan bm_kode (semua barang di transaksi tsb)
         $rows = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->where('tbl_barangmasuk.bm_kode', $bm_kode)
-            ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama')
+            ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama', 'tbl_merk.merk_nama')
             ->orderBy('bm_id', 'DESC')
             ->get();
 
@@ -93,11 +106,16 @@ class BarangmasukController extends Controller
         $hakDelete = $this->checkAccess($user->role_id ?? 0, '/barang-masuk', 'delete');
 
         $result = $rows->map(function ($row) use ($hakEdit, $hakDelete) {
+            $parts = explode(' - ', $row->barang_nama);
+            $namaBarang = trim($parts[0] ?? $row->barang_nama);
+            $merkBarang = count($parts) > 1 ? trim($parts[1]) : ($row->merk_nama ?? '-');
+
             $array = [
                 "bm_id"            => $row->bm_id,
                 "bm_kode"          => $row->bm_kode,
                 "barang_kode"      => $row->barang_kode,
-                "barang_nama"      => str_replace(["'", '"'], "", $row->barang_nama),
+                "barang_nama"      => str_replace(["'", '"'], "", $namaBarang),
+                "merk_nama"        => $merkBarang,
                 "bm_tanggal"       => $row->bm_tanggal,
                 "jam_masuk"        => $row->jam_masuk,
                 "bm_jumlah"        => $row->bm_jumlah,
@@ -123,7 +141,8 @@ class BarangmasukController extends Controller
 
             return [
                 'barang_kode'      => $row->barang_kode ?? '-',
-                'barang_nama'      => $row->barang_nama ?? '-',
+                'barang_nama'      => $namaBarang ?? '-',
+                'merk_nama'        => $merkBarang ?? '-',
                 'serial_number'    => $row->serial_number ?? '-',
                 'kode_barang_unik' => $row->kode_barang_unik ?? '-',
                 'action'           => $action,
@@ -343,12 +362,20 @@ class BarangmasukController extends Controller
             }
 
             $rows = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+                ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
                 ->whereIn('tbl_barangmasuk.bm_kode', $bm_kodes)
-                ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama')
+                ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama', 'tbl_merk.merk_nama')
                 ->orderBy('bm_id', 'ASC')
                 ->get();
 
-            return response()->json($rows);
+            $mappedRows = $rows->map(function($row) {
+                $parts = explode(' - ', $row->barang_nama);
+                $row->barang_nama = trim($parts[0] ?? $row->barang_nama);
+                $row->merk_nama = count($parts) > 1 ? trim($parts[1]) : ($row->merk_nama ?? '-');
+                return $row;
+            });
+
+            return response()->json($mappedRows);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

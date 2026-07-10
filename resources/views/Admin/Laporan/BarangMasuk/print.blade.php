@@ -29,7 +29,7 @@
 
     <div class="header">
         <img src="{{url('/assets/default/web/default.png')}}" alt="Alfatindo">
-        <h1>Laporan Barang Masuk</h1>
+        <h1>Laporan Barang Masuk<br><small style="font-size: 16px; font-weight: normal; color: #333;">PT ALFATINDO TEKNOLOGI</small></h1>
         @if($tglawal == '')
         <h4>Semua Tanggal</h4>
         @else
@@ -44,11 +44,13 @@
             <tr>
                 <th align="center" width="1%">NO</th>
                 <th>TGL MASUK</th>
+                <th>KODE BM</th>
+                <th>NAMA BARANG</th>
+                <th>MERK</th>
+                <th>JENIS</th>
+                <th>SATUAN</th>
                 <th>KODE UNIK</th>
                 <th>SN</th>
-                <th>KODE BM</th>
-                <th>KODE BARANG</th>
-                <th>NAMA BARANG</th>
                 <th>STATUS</th>
             </tr>
         </thead>
@@ -64,11 +66,18 @@
                         {{\Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}
                     @endif
                 </td>
+                @php
+                    $parts = explode(' - ', $d->barang_nama ?? '-');
+                    $nama = $parts[0] ?? '-';
+                    $merk = $parts[1] ?? '-';
+                @endphp
+                <td>{{$d->bm_kode}}</td>
+                <td>{{$nama}}</td>
+                <td>{{$merk}}</td>
+                <td>{{$d->jenisbarang_nama ?? '-'}}</td>
+                <td>{{$d->satuan_id ?? 'Unit'}}</td>
                 <td>{{$d->kode_barang_unik ?: ($d->bm_kode ?: '-')}}</td>
                 <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
-                <td>{{$d->bm_kode}}</td>
-                <td>{{$d->barang_kode}}</td>
-                <td>{{$d->barang_nama}}</td>
                 <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : 'Aktif' }}</td>
             </tr>
             @endforeach

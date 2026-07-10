@@ -10,7 +10,7 @@
                 @else
                     <h6 class="modal-title">Tambah Barang Keluar</h6>
                 @endif
-                <button aria-label="Close" onclick="reset()" class="btn-close @if(($roleId ?? 0) == 3) btn-close-white @endif" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <button aria-label="Close" onclick="reset()" class="btn-close @if(($roleId ?? 0) == 3) btn-close-white @endif" data-bs-dismiss="modal"></button>
             </div>
 
             @if(($roleId ?? 0) == 3)
@@ -137,13 +137,19 @@
                             <small class="text-muted">Bisa scan QR Code atau input Serial Number</small>
                         </div>
                         <div class="row g-3">
-                            <div class="col-12 col-sm-8">
+                            <div class="col-12 col-sm-5">
                                 <div class="form-group">
                                     <label>Nama Barang</label>
                                     <input type="text" class="form-control" id="nmbarang" readonly>
                                 </div>
                             </div>
                             <div class="col-12 col-sm-4">
+                                <div class="form-group">
+                                    <label>Merk</label>
+                                    <input type="text" class="form-control" id="merkbarang" readonly placeholder="-">
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-3">
                                 <div class="form-group">
                                     <label>Jumlah Keluar <span class="text-danger">*</span></label>
                                     <div class="input-group flex-nowrap">
@@ -247,7 +253,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="fe fe-map-pin me-2"></i>Pilih Lokasi Instalasi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-3">
                 <div class="position-relative">
@@ -547,7 +553,9 @@
                 if (data.length > 0) {
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("true");
-                    $("#nmbarang").val(data[0].barang_nama);
+                    let parts = data[0].barang_nama.split(' - ');
+                    $("#nmbarang").val(parts[0]);
+                    $("#merkbarang").val(parts[1] || '-');
                     $("#satuan").val(data[0].satuan_id);
                     $("#jenis").val(data[0].tipe_barang);
                     // Set SN dari scan/QR ke Select2
@@ -567,7 +575,9 @@
                             if (resp.length > 0) {
                                 $("#loaderkd").addClass('d-none');
                                 $("#status").val("true");
-                                $("#nmbarang").val(resp[0].barang_nama);
+                                let parts2 = resp[0].barang_nama.split(' - ');
+                                $("#nmbarang").val(parts2[0]);
+                                $("#merkbarang").val(parts2[1] || '-');
                                 $("#satuan").val(resp[0].satuan_id);
                                 $("#jenis").val(resp[0].tipe_barang);
                                 $("input[name='kode_barang_unik']").val('');
@@ -577,6 +587,7 @@
                                 $("#loaderkd").addClass('d-none');
                                 $("#status").val("false");
                                 $("#nmbarang").val('');
+                                $("#merkbarang").val('');
                                 $("#satuan").val('');
                                 $("#jenis").val('');
                                 setSNSelect2('', '');
@@ -726,7 +737,7 @@
     function addToBatch() {
         const status = $("#status").val();
         const kdbarang = $("input[name='kdbarang']").val().trim();
-        const nmbarang = $("#nmbarang").val();
+        const nmbarang = $("#nmbarang").val() + ($("#merkbarang").val() !== '-' && $("#merkbarang").val() !== '' ? ' - ' + $("#merkbarang").val() : '');
         const jml = parseInt($("input[name='jml']").val()) || 0;
         
         var selectedSNs = [];
@@ -993,6 +1004,7 @@
         $("#latInput").val('');
         $("#lngInput").val('');
         $("#nmbarang").val('');
+        $("#merkbarang").val('');
         
         batchItems = [];
         renderBatchTable();

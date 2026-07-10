@@ -19,26 +19,26 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     <!-- FAVICON -->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ url('/assets/default/web/default.png') }}" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/default/web/default.png') }}" />
 
     <!-- TITLE -->
     <title>{{ $title }} | Manajemen Alfatindo</title>
 
     <!-- BOOTSTRAP CSS -->
-    <link id="style" href="{{ url('/assets/plugins/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link id="style" href="{{ asset('assets/plugins/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" />
 
     <!-- STYLE CSS -->
-    <link href="{{ url('/assets/css/style.css') }}" rel="stylesheet" />
-    <link href="{{ url('/assets/css/dark-style.css') }}" rel="stylesheet" />
-    <link href="{{ url('/assets/css/transparent-style.css') }}" rel="stylesheet">
-    <link href="{{ url('/assets/css/skin-modes.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/dark-style.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/transparent-style.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/skin-modes.css') }}" rel="stylesheet" />
 
     <!--- FONT-ICONS CSS -->
-    <link href="{{ url('/assets/css/icons.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/icons.css') }}" rel="stylesheet" />
 
     <!-- COLOR SKIN CSS -->
     <link id="theme" rel="stylesheet" type="text/css" media="all"
-        href="{{ url('/assets/colors/color1.css') }}" />
+        href="{{ asset('assets/colors/color1.css') }}" />
     <style>
         modal.fade {
             z-index: 1050 !important;
@@ -364,7 +364,7 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
         }
 
         /* Tighter form controls */
-        .form-control, .form-select {
+        .form-control:not(.select2-hidden-accessible), .form-select:not(.select2-hidden-accessible) {
             padding: 5px 10px !important;
             font-size: 0.825rem !important;
         }
@@ -565,7 +565,9 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
         /* --- GLOBAL MOBILE UI TWEAKS (Compact Shopee-style & iPhone XR Friendly) --- */
         @media (max-width: 767.98px) {
             /* 1. LAYOUT & CONTAINERS */
-            .main-container { padding-left: 10px !important; padding-right: 10px !important; overflow-x: hidden; }
+            .main-container { padding-left: 10px !important; padding-right: 10px !important; }
+            .app-content .main-container { overflow-x: hidden; }
+            .app-header .main-container { overflow: visible !important; }
             .card-body { padding: 12px 10px !important; }
             .card-header { padding: 10px 12px !important; min-height: 40px !important; }
             .row-sm > .col, .row-sm > [class*="col-"] {
@@ -577,15 +579,33 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
             .page-header { margin-bottom: 0.8rem !important; flex-direction: column; align-items: flex-start !important; }
 
             /* 2. FORM CONTROLS & LABELS */
-            .form-control, .form-select, .select2-container .select2-selection--single {
-                font-size: 0.85rem !important; height: 36px !important; padding: 0.3rem 0.6rem !important; border-radius: 6px !important;
+            .form-control:not(.select2-hidden-accessible), .form-select:not(.select2-hidden-accessible) {
+                font-size: 0.85rem !important; height: 34px !important; padding: 0.3rem 0.6rem !important; border-radius: 6px !important;
             }
-            .select2-container .select2-selection--single .select2-selection__rendered {
-                line-height: 34px !important; font-size: 0.85rem !important; padding-left: 0.4rem !important;
-            }
-            .select2-container .select2-selection--single .select2-selection__arrow { height: 34px !important; }
             label, .form-label { font-size: 0.8rem !important; margin-bottom: 0.3rem !important; font-weight: 600 !important; }
             .form-group, .mb-3, .mb-4 { margin-bottom: 10px !important; }
+
+            /* Fix date inputs on mobile to look like PC instead of iOS dropdowns */
+            input[type="date"] {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                position: relative;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") !important;
+                background-repeat: no-repeat !important;
+                background-position: right 0.6rem center !important;
+                background-size: 14px !important;
+                padding-right: 2rem !important;
+            }
+            input[type="date"]::-webkit-calendar-picker-indicator {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+                cursor: pointer;
+                background: transparent;
+            }
 
             /* 3. BUTTONS & ICON BUTTONS */
             .btn:not(.d-none) {
@@ -597,24 +617,56 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
             .d-flex.align-items-end > .btn:not(.d-none), .d-flex.align-items-center > .btn:not(.d-none) { margin-right: 5px !important; margin-bottom: 5px !important; }
             
             /* 4. MODALS & POP-UPS */
-            .modal-dialog { margin: 0.5rem !important; max-width: calc(100% - 1rem) !important; }
+            .modal-dialog { margin: 1rem auto !important; max-width: calc(100% - 2rem) !important; }
+            .modal-dialog.modal-sm { max-width: 300px !important; margin: 1.5rem auto !important; }
             .modal-content { border-radius: 10px !important; border: none !important; }
             .modal-header, .modal-footer { padding: 10px 15px !important; }
             .modal-body { padding: 15px !important; }
             .modal-title { font-size: 1.1rem !important; font-weight: 700 !important; }
-            /* SweetAlert */
-            .swal2-popup { width: 90% !important; padding: 1rem !important; font-size: 0.9rem !important; border-radius: 10px !important; }
-            .swal2-title { font-size: 1.25rem !important; margin-bottom: 0.5rem !important; }
-            .swal2-content { font-size: 0.9rem !important; }
-            .swal2-actions { margin-top: 1rem !important; }
-            .swal2-actions button { font-size: 0.85rem !important; padding: 0.4rem 1rem !important; }
+            /* SweetAlert 1 & 2 */
+            .sweet-overlay { touch-action: none !important; }
+            .swal2-popup { width: 85% !important; max-width: 320px !important; padding: 1rem !important; border-radius: 12px !important; touch-action: none !important; }
+            .sweet-alert { width: 85% !important; max-width: 320px !important; padding: 1rem !important; border-radius: 12px !important; margin: 0 !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; touch-action: none !important; }
+            .sweet-alert [style*="overflow-y: auto"], .sweet-alert [style*="overflow-y: scroll"] { touch-action: pan-y !important; overscroll-behavior: contain !important; }
+            .swal2-title, .sweet-alert h2 { font-size: 1.15rem !important; margin-top: 10px !important; margin-bottom: 0.5rem !important; line-height: 1.3 !important; }
+            .swal2-content, .sweet-alert p { font-size: 0.85rem !important; line-height: 1.4 !important; }
+            .sweet-alert .sa-icon { transform: scale(0.75); margin: 0 auto -15px auto !important; }
+            .swal2-actions, .sweet-alert .sa-button-container { display: flex !important; justify-content: center !important; gap: 10px; margin-top: 1rem !important; }
+            .swal2-actions button, .sweet-alert button { font-size: 0.85rem !important; padding: 0.4rem 1rem !important; margin: 0 !important; }
+
+            /* Modal Konfirmasi Hapus Global */
+            #Hmodaldemo8 .modal-dialog { width: 85% !important; max-width: 320px !important; margin: auto !important; }
+            #Hmodaldemo8 .modal-body { padding: 1.5rem !important; }
+            #Hmodaldemo8 .icon-exclamation { font-size: 3.5rem !important; margin: 1rem 0 1.5rem 0 !important; }
+            #Hmodaldemo8 h3 { font-size: 1.15rem !important; margin-bottom: 1.5rem !important; line-height: 1.4 !important; }
+            #Hmodaldemo8 .btn { margin: 0 5px !important; }
 
             /* 5. TABLES & DATATABLES */
             .table-responsive { margin-bottom: 10px !important; border-radius: 6px; overflow-x: auto; }
             .table-responsive .table { font-size: 0.8rem !important; }
             .table th, .table td { padding: 0.5rem 0.4rem !important; white-space: nowrap; }
             .dataTables_wrapper .dataTables_filter input { height: 32px !important; font-size: 0.8rem !important; margin-left: 0.5em !important; width: 140px !important; }
-            div.dataTables_wrapper div.dataTables_info, div.dataTables_wrapper div.dataTables_paginate { font-size: 0.75rem !important; padding-top: 0.5rem !important; }
+            .dataTables_length label { display: flex; align-items: center; gap: 5px; margin-bottom: 0 !important; }
+            /* Center and fit Pagination & Info on Mobile */
+            div.dataTables_wrapper div.dataTables_info { 
+                font-size: 0.75rem !important; 
+                padding-top: 0.5rem !important; 
+                text-align: center !important; 
+                margin-bottom: 8px !important; 
+            }
+            div.dataTables_wrapper div.dataTables_paginate {
+                display: flex !important;
+                justify-content: center !important;
+                margin-top: 5px !important;
+            }
+            div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+                justify-content: center !important;
+                gap: 3px !important;
+            }
+            div.dataTables_wrapper div.dataTables_paginate .page-link {
+                padding: 0.35rem 0.55rem !important;
+                font-size: 0.75rem !important;
+            }
 
             /* 6. MISC / IMAGES */
             img, .img-fluid, #photoPreview { max-width: 100% !important; height: auto !important; object-fit: contain; }
@@ -638,7 +690,7 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
 @else
     <div id="global-loader" style="display: none !important;">
 @endif
-<!-- <img src="{{ url('/assets/images/loader.svg') }}" class="loader-img" alt="Loader"> -->
+<!-- <img src="{{ asset('assets/images/loader.svg') }}" class="loader-img" alt="Loader"> -->
 </div>
 <!-- /GLOBAL-LOADER -->
 
@@ -687,7 +739,7 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
                 @csrf
                 <div class="modal-body text-center p-4 pb-5">
                     <button type="reset" aria-label="Close" class="btn-close position-absolute"
-                        data-bs-dismiss="modal"><span aria-hidden="true">Ã—</span></button>
+                        data-bs-dismiss="modal"></button>
                     <br>
                     <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
                     <h3 class="mb-5">Yakin logout ?</h3>
@@ -703,106 +755,111 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
 <a href="#top" id="back-to-top"><i class="fa fa-angle-up"></i></a>
 
 <!-- JQUERY JS -->
-<script src="{{ url('/assets/js/jquery.min.js') }}"></script>
+<script src="{{ asset('assets/js/jquery.min.js') }}"></script>
 
 <!-- BOOTSTRAP JS -->
-<script src="{{ url('/assets/plugins/bootstrap/js/popper.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap/js/popper.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
 
 <!-- Sticky js -->
-<script src="{{ url('/assets/js/sticky.js') }}"></script>
+<script src="{{ asset('assets/js/sticky.js') }}"></script>
 
 <!-- INPUT MASK JS-->
-<script src="{{ url('/assets/plugins/input-mask/jquery.mask.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/input-mask/jquery.mask.min.js') }}"></script>
 
 <!-- SIDE-MENU JS-->
-<script src="{{ url('/assets/plugins/sidemenu/sidemenu.js') }}"></script>
+<script src="{{ asset('assets/plugins/sidemenu/sidemenu.js') }}"></script>
 
 <!-- SIDEBAR JS -->
-<script src="{{ url('/assets/plugins/sidebar/sidebar.js') }}"></script>
+<script src="{{ asset('assets/plugins/sidebar/sidebar.js') }}"></script>
 
 <!-- Perfect SCROLLBAR JS-->
-<script src="{{ url('/assets/plugins/p-scroll/perfect-scrollbar.js') }}"></script>
-<script src="{{ url('/assets/plugins/p-scroll/pscroll.js') }}"></script>
+<script src="{{ asset('assets/plugins/p-scroll/perfect-scrollbar.js') }}"></script>
+<script src="{{ asset('assets/plugins/p-scroll/pscroll.js') }}"></script>
 
 <!-- FILE UPLOADES JS -->
-<script src="{{ url('/assets/plugins/fileuploads/js/fileupload.js') }}"></script>
-<script src="{{ url('/assets/plugins/fileuploads/js/file-upload.js') }}"></script>
+<script src="{{ asset('assets/plugins/fileuploads/js/fileupload.js') }}"></script>
+<script src="{{ asset('assets/plugins/fileuploads/js/file-upload.js') }}"></script>
 
 <!-- INTERNAL Bootstrap-Datepicker js-->
-<script src="{{ url('/assets/plugins/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 
 <!-- SELECT2 JS -->
-<script src="{{ url('/assets/plugins/select2/select2.full.min.js') }}"></script>
-<script src="{{ url('/assets/js/select2.js') }}"></script>
+<script src="{{ asset('assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ asset('assets/js/select2.js') }}"></script>
 
 <!-- BOOTSTRAP-DATERANGEPICKER JS -->
-<script src="{{ url('/assets/plugins/bootstrap-daterangepicker/moment.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap-daterangepicker/moment.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 
 <!-- INTERNAL Bootstrap-Datepicker js-->
-<script src="{{ url('/assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<script src="{{ asset('assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
 
 <!-- INTERNAL Sumoselect js-->
-<script src="{{ url('/assets/plugins/sumoselect/jquery.sumoselect.js') }}"></script>
+<script src="{{ asset('assets/plugins/sumoselect/jquery.sumoselect.js') }}"></script>
 
 <!-- TIMEPICKER JS -->
-<script src="{{ url('/assets/plugins/time-picker/jquery.timepicker.js') }}"></script>
-<script src="{{ url('/assets/plugins/time-picker/toggles.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/time-picker/jquery.timepicker.js') }}"></script>
+<script src="{{ asset('assets/plugins/time-picker/toggles.min.js') }}"></script>
 
 <!-- INTERNAL intlTelInput js-->
 
 <!-- INTERNAL jquery transfer js-->
-<script src="{{ url('/assets/plugins/jQuerytransfer/jquery.transfer.js') }}"></script>
+<script src="{{ asset('assets/plugins/jQuerytransfer/jquery.transfer.js') }}"></script>
 
 <!-- INTERNAL multi js-->
-<script src="{{ url('/assets/plugins/multi/multi.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/multi/multi.min.js') }}"></script>
 
 <!-- DATEPICKER JS -->
-<script src="{{ url('/assets/plugins/date-picker/date-picker.js') }}"></script>
-<script src="{{ url('/assets/plugins/date-picker/jquery-ui.js') }}"></script>
-<script src="{{ url('/assets/plugins/input-mask/jquery.maskedinput.js') }}"></script>
+<script src="{{ asset('assets/plugins/date-picker/date-picker.js') }}"></script>
+<script src="{{ asset('assets/plugins/date-picker/jquery-ui.js') }}"></script>
+<script src="{{ asset('assets/plugins/input-mask/jquery.maskedinput.js') }}"></script>
 
 <!-- COLOR PICKER JS -->
-<script src="{{ url('/assets/plugins/pickr-master/pickr.es5.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/pickr-master/pickr.es5.min.js') }}"></script>
 <!-- MULTI SELECT JS-->
-<script src="{{ url('/assets/plugins/multipleselect/multiple-select.js') }}"></script>
-<script src="{{ url('/assets/plugins/multipleselect/multi-select.js') }}"></script>
+<script src="{{ asset('assets/plugins/multipleselect/multiple-select.js') }}"></script>
+<script src="{{ asset('assets/plugins/multipleselect/multi-select.js') }}"></script>
 
 <!-- SWEET-ALERT JS -->
-<script src="{{ url('/assets/plugins/sweet-alert/sweetalert.min.js') }}"></script>
-<script src="{{ url('/assets/js/sweet-alert.js') }}"></script>
+<script src="{{ asset('assets/plugins/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/sweet-alert.js') }}"></script>
 
 <!-- INTERNAL CHARTJS CHART JS-->
-<script src="{{ url('/assets/plugins/chart/Chart.bundle.js') }}"></script>
-<script src="{{ url('/assets/plugins/chart/rounded-barchart.js') }}"></script>
-<script src="{{ url('/assets/plugins/chart/utils.js') }}"></script>
+<script src="{{ asset('assets/plugins/chart/Chart.bundle.js') }}"></script>
+<script src="{{ asset('assets/plugins/chart/rounded-barchart.js') }}"></script>
+<script src="{{ asset('assets/plugins/chart/utils.js') }}"></script>
 
 <!-- DATA TABLE JS-->
-<script src="{{ url('/assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/dataTables.bootstrap5.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/dataTables.buttons.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/buttons.bootstrap5.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/jszip.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/pdfmake/pdfmake.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/pdfmake/vfs_fonts.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/buttons.html5.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/buttons.print.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/js/buttons.colVis.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/dataTables.responsive.min.js') }}"></script>
-<script src="{{ url('/assets/plugins/datatable/responsive.bootstrap5.min.js') }}"></script>
-<script src="{{ url('/assets/js/table-data.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/dataTables.bootstrap5.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/buttons.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/jszip.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/pdfmake/pdfmake.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/pdfmake/vfs_fonts.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/buttons.html5.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/buttons.print.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/js/buttons.colVis.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/dataTables.responsive.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datatable/responsive.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('assets/js/table-data.js') }}"></script>
 
 
 <!-- INTERNAL INDEX JS -->
 
 <!-- Color Theme js -->
-<script src="{{ url('/assets/js/themeColors.js') }}"></script>
+<script src="{{ asset('assets/js/themeColors.js') }}"></script>
 
 <!-- CUSTOM JS -->
-<script src="{{ url('/assets/js/custom.js') }}"></script>
+<script src="{{ asset('assets/js/custom.js') }}"></script>
 
 <script>
+    // Global mobile Datatables pagination tweaks
+    if (window.innerWidth <= 767.98) {
+        $.fn.dataTable.ext.pager.numbers_length = 5;
+    }
+
     $(document).ready(function() {
         // BOOTSTRAP DATEPICKER
         $('.datepicker-date').bootstrapdatepicker({

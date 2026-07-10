@@ -43,10 +43,10 @@
     <div class="app-sidebar">
         <div class="side-header">
             <a class="header-brand1" href="{{url('/admin')}}">
-                <img src="{{url('/assets/default/web/logo-icon.png')}}" height="65px" class="header-brand-img toggle-logo" alt="logo">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" alt="logo">
-                <img src="{{url('/assets/default/web/logo-icon.png')}}" class="header-brand-img light-logo" alt="logo">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" alt="logo">
+                <img src="{{ asset('assets/default/web/logo-icon.png') }}" height="65px" class="header-brand-img toggle-logo" alt="logo">
+                <img src="{{ asset('assets/default/web/default.png') }}" class="header-brand-img desktop-logo" alt="logo">
+                <img src="{{ asset('assets/default/web/logo-icon.png') }}" class="header-brand-img light-logo" alt="logo">
+                <img src="{{ asset('assets/default/web/default.png') }}" class="header-brand-img light-logo1" alt="logo">
             </a>
         </div>
         <div class="main-sidemenu">

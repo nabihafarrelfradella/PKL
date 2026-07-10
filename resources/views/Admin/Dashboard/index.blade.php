@@ -189,18 +189,9 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #e83e8c 0%, #c23375 100%);">
-                <div class="stat-info">
-                    <h3>{{$bk_menunggu}}</h3>
-                    <p>Menunggu Persetujuan</p>
-                </div>
-                <div class="stat-icon"><i class="fe fe-clock"></i></div>
-            </div>
-        </div>
 
         @if(Session::get('user')->role_id != 3)
-        <div class="col-sm-6 col-xl-6">
+        <div class="col-sm-6 col-xl-4">
             <div class="stat-card" style="background: linear-gradient(135deg, #9b3fdb 0%, #7e2db8 100%);">
                 <div class="stat-info">
                     <h3>{{$teknisi}}</h3>
@@ -209,82 +200,10 @@
                 <div class="stat-icon"><i class="fe fe-users"></i></div>
             </div>
         </div>
-
-        <div class="col-sm-6 col-xl-6">
-            <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);">
-                <div class="stat-info">
-                    <h3>{{$user}}</h3>
-                    <p>Total Akun User</p>
-                </div>
-                <div class="stat-icon"><i class="fe fe-user"></i></div>
-            </div>
-        </div>
         @endif
     </div>
 
-    <!-- CHART SECTION -->
-    @if(Session::get('user')->role_id != 3)
-    <div class="row row-sm mb-4">
-        <div class="col-12 mb-3">
-            <h4 class="mb-0 fw-bold">Statistik Pergerakan Barang</h4>
-        </div>
-        <div class="col-lg-12 col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                    <h3 class="card-title mb-0">Barang Sering Dipinjam</h3>
-                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="dipinjam" data-filter="tahun">Tahun Ini</button>
-                    </div>
-                </div>
-                <div class="card-body position-relative">
-                    <div id="chartDipinjam-empty" class="position-absolute w-100 h-100 justify-content-center align-items-center text-muted" style="top:0; left:0; font-size: 14px; display: none;">Tidak ada data</div>
-                    <canvas id="chartDipinjam" style="height: 350px;"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-12 col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                    <h3 class="card-title mb-0">Barang Paling Sering Habis</h3>
-                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="habis" data-filter="tahun">Tahun Ini</button>
-                    </div>
-                </div>
-                <div class="card-body position-relative">
-                    <div id="chartHabis-empty" class="position-absolute w-100 h-100 justify-content-center align-items-center text-muted" style="top:0; left:0; font-size: 14px; display: none;">Tidak ada data</div>
-                    <canvas id="chartHabis" style="height: 350px;"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-12 col-md-12 mb-4">
-            <div class="card">
-                <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                    <h3 class="card-title mb-0">Barang Sering Rusak</h3>
-                    <div class="btn-group mt-2 mt-md-0 d-flex w-100" style="max-width: 450px;">
-                        <button type="button" class="btn btn-outline-primary active btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="semua">Semua</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="hari">Hari Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="minggu">Minggu Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="bulan">Bulan Ini</button>
-                        <button type="button" class="btn btn-outline-primary btn-filter-chart px-1 py-1 flex-fill" style="font-size: 0.7rem; white-space: nowrap;" data-chart="rusak" data-filter="tahun">Tahun Ini</button>
-                    </div>
-                </div>
-                <div class="card-body position-relative">
-                    <div id="chartRusak-empty" class="position-absolute w-100 h-100 justify-content-center align-items-center text-muted" style="top:0; left:0; font-size: 14px; display: none;">Tidak ada data</div>
-                    <canvas id="chartRusak" style="height: 350px;"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    
+
     {{-- PANEL BARANG DIPINJAM â€” hanya untuk Owner & Admin Gudang --}}
     @php $userRole = Session::get('user')->role_id ?? 0; @endphp
     @if(in_array($userRole, [1, 2]))
@@ -360,13 +279,12 @@
     @endif
 
 
-    <div class="modal fade" data-bs-backdrop="static" id="modalTracking">
+    <div class="modal fade" id="modalTracking">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content modal-content-demo">
                 <div class="modal-header">
                     <h6 class="modal-title"><i class="fe fe-search me-1"></i> Tracking Serial Number / Resi</h6>
-                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="form-group mb-4">
@@ -418,9 +336,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-light" data-bs-dismiss="modal">Tutup <i class="fe fe-x"></i></button>
-                </div>
             </div>
         </div>
     </div>
@@ -467,7 +382,8 @@
                         html: true,
                         text: htmlList,
                         type: "warning",
-                        confirmButtonText: "Tutup"
+                        confirmButtonText: "Tutup",
+                        allowOutsideClick: true
                     });
                 }
             }
@@ -540,127 +456,6 @@
             });
         }
 
-        // INIT CHART.JS
-        let chartDipinjamInstance = null;
-        let chartHabisInstance = null;
-        let chartRusakInstance = null;
 
-        function loadChartData(chartType, filter) {
-            $.ajax({
-                url: "{{ route('dashboard.chart-data') }}",
-                type: 'GET',
-                data: { type: chartType, filter: filter },
-                success: function(res) {
-                    if (chartType === 'dipinjam' || chartType === 'semua') {
-                        renderLineChart('chartDipinjam', 'Frekuensi Dipinjam', res.chartDipinjam, '#3b82f6', 'rgba(59, 130, 246, 0.1)', chartDipinjamInstance, function(inst) { chartDipinjamInstance = inst; });
-                    }
-                    if (chartType === 'habis' || chartType === 'semua') {
-                        renderLineChart('chartHabis', 'Kuantitas Keluar', res.chartHabis, '#ef4444', 'rgba(239, 68, 68, 0.1)', chartHabisInstance, function(inst) { chartHabisInstance = inst; });
-                    }
-                    if (chartType === 'rusak' || chartType === 'semua') {
-                        renderLineChart('chartRusak', 'Frekuensi Rusak', res.chartRusak, '#f59e0b', 'rgba(245, 158, 11, 0.1)', chartRusakInstance, function(inst) { chartRusakInstance = inst; });
-                    }
-                },
-                error: function() {
-                    console.error("Gagal memuat data grafik");
-                }
-            });
-        }
-
-        function renderLineChart(canvasId, label, dataArray, borderColor, bgColor, existingInstance, setInstance) {
-            const canvas = document.getElementById(canvasId);
-            const ctx = canvas.getContext('2d');
-            const emptyDiv = document.getElementById(canvasId + '-empty');
-            
-            if (existingInstance) {
-                existingInstance.destroy();
-            }
-
-            if (!dataArray || dataArray.length === 0) {
-                // Show empty state div, hide canvas
-                canvas.style.display = 'none';
-                if (emptyDiv) emptyDiv.style.display = 'flex';
-                setInstance(null);
-                return;
-            } else {
-                // Hide empty state div, show canvas
-                canvas.style.display = 'block';
-                if (emptyDiv) emptyDiv.style.display = 'none';
-            }
-
-            const labels = dataArray.map(item => {
-                let name = item.barang_nama || '';
-                return name.length > 12 ? name.substring(0, 12) + '...' : name;
-            });
-            const values = dataArray.map(item => item.total);
-            const fullLabels = dataArray.map(item => item.barang_nama || '');
-
-            const newChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: label,
-                        data: values,
-                        borderColor: borderColor,
-                        backgroundColor: bgColor,
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                precision: 0
-                            }
-                        }],
-                        xAxes: [{
-                            ticks: {
-                                autoSkip: false,
-                                maxRotation: 0,
-                                minRotation: 0
-                            }
-                        }]
-                    },
-                    legend: { display: false },
-                    tooltips: {
-                        callbacks: {
-                            title: function(tooltipItem, data) {
-                                return fullLabels[tooltipItem[0].index];
-                            },
-                            label: function(tooltipItem, data) {
-                                return ' ' + tooltipItem.yLabel + ' (Unit/Kali)';
-                            }
-                        }
-                    }
-                }
-            });
-
-            setInstance(newChart);
-        }
-
-        $(document).ready(function() {
-            // Initial load for all charts
-            loadChartData('semua', 'semua');
-
-            // Individual Filter Button click
-            $('.btn-filter-chart').click(function() {
-                const chartType = $(this).data('chart');
-                // Remove active state only for buttons belonging to the same chart
-                $(`.btn-filter-chart[data-chart="${chartType}"]`).removeClass('active');
-                // Set clicked button to active
-                $(this).addClass('active');
-                
-                const filter = $(this).data('filter');
-                loadChartData(chartType, filter);
-            });
-        });
     </script>
 @endsection

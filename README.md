@@ -29,19 +29,13 @@ npm install
 npm run dev
 ```
 
-### 3. Buat Symbolic Link Storage (Penting untuk Gambar Barang!)
-Jalankan perintah berikut agar file gambar barang yang diunggah dapat diakses dari browser:
-```bash
-php artisan storage:link
-```
-
-### 4. Jalankan Migrasi & Seeding Database (Penting!)
+### 3. Jalankan Migrasi & Seeding Database (Penting!)
 Untuk membuat semua tabel database baru dan mengisi data awal (seperti Role, Menu, Akses Hak, serta Akun Bawaan), jalankan perintah berikut:
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-### 5. Jalankan Server Lokal
+### 4. Jalankan Server Lokal
 Setelah migrasi selesai, jalankan server pengembangan lokal Laravel dengan perintah:
 ```bash
 php artisan serve
@@ -53,14 +47,10 @@ Aplikasi sekarang dapat diakses melalui browser di alamat: [http://127.0.0.1:800
 ## Informasi Akun Bawaan (Default Login)
 Setelah proses seeding database di atas selesai, Anda dapat login menggunakan kredensial bawaan berikut sesuai role hak akses masing-masing:
 
-### 1. Akun Owner (Akses Penuh & User Management)
-- **Email**: `owner@alfatindo.com`
-- **Password**: `12345678`
-
-### 2. Akun Admin Gudang (Manajemen Barang, Transaksi, & Laporan)
+### 1. Akun Admin Gudang (Manajemen Barang, Transaksi, & Laporan)
 - **Email**: `admingudang@alfatindo.com`
 - **Password**: `12345678`
 
-### 3. Akun Pegawai Teknisi (Akses Terbatas & Form Pengajuan Pinjam Barang)
+### 2. Akun Pegawai Teknisi (Akses Terbatas & Form Pengajuan Pinjam Barang)
 - **Email**: `teknisi1@alfatindo.com`
 - **Password**: `12345678`

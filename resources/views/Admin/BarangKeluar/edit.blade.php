@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Ubah Barang Keluar</h6><button aria-label="Close" onclick="resetU()" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Ubah Barang Keluar</h6><button aria-label="Close" onclick="resetU()" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -72,9 +72,19 @@
                                 <button class="btn btn-success-light" onclick="modalBarangU()" type="button"><i class="fe fe-box"></i></button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Nama Barang</label>
-                            <input type="text" class="form-control" id="nmbarangU" readonly>
+                        <div class="row">
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label>Nama Barang</label>
+                                    <input type="text" class="form-control" id="nmbarangU" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>Merk</label>
+                                    <input type="text" class="form-control" id="merkbarangU" readonly placeholder="-">
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -211,13 +221,16 @@
                 if (data.length > 0) {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("true");
-                    $("#nmbarangU").val(data[0].barang_nama);
+                    let partsU = data[0].barang_nama.split(' - ');
+                    $("#nmbarangU").val(partsU[0]);
+                    $("#merkbarangU").val(partsU[1] || '-');
                     $("#satuanU").val(data[0].satuan_id);
                     $("#jenisU").val(data[0].tipe_barang);
                 } else {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("false");
                     $("#nmbarangU").val('');
+                    $("#merkbarangU").val('');
                     $("#satuanU").val('');
                     $("#jenisU").val('');
                     validasi('Barang dengan kode "' + id + '" tidak ditemukan!', 'warning');
@@ -364,6 +377,7 @@
         $("#serial_number_inputU").val('');
         $("input[name='jmlU']").val('0');
         $("#nmbarangU").val('');
+        $("#merkbarangU").val('');
         $("#satuanU").val('');
         $("#jenisU").val('');
         $("#statusU").val('false');

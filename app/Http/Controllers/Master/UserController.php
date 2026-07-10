@@ -427,6 +427,14 @@ class UserController extends Controller
                 }
             }
             $updateData['user_foto'] = $filename;
+        } elseif ($request->input('delete_foto') == '1') {
+            if ($user->user_foto != 'undraw_profile.svg' && $user->user_foto != '') {
+                $oldPath = public_path('storage/users/' . $user->user_foto);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $updateData['user_foto'] = 'undraw_profile.svg';
         }
 
         $user->update($updateData);

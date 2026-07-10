@@ -2,39 +2,39 @@
 
 @section('content')
 <div class="page-header">
-    <h1 class="page-title">{{$title}}</h1>
     <div>
+        <h1 class="page-title">{{$title}}</h1>
         <ol class="breadcrumb">
             <li class="breadcrumb-item text-gray">Master Data</li>
             <li class="breadcrumb-item active" aria-current="page">{{$title}}</li>
         </ol>
     </div>
+    @if($hakTambah > 0)
+    <div class="ms-auto">
+        <a class="modal-effect btn btn-primary" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">
+            <i class="fe fe-plus me-1"></i> Tambah Data
+        </a>
+    </div>
+    @endif
 </div>
 <div class="row row-sm">
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header justify-content-between">
                 <h3 class="card-title">Data</h3>
-                @if($hakTambah > 0)
-                <div>
-                    <a class="modal-effect btn btn-primary-light" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">Tambah Data <i class="fe fe-plus"></i></a>
-                </div>
-                @endif
-            </div>
-            <div class="card-body border-bottom pb-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label mb-1">Nama Barang</label>
-                        <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang...">
-                    </div>
-                    <div class="col-md-auto">
-                        <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fe fe-search me-1"></i>Cari</button>
-                        <button class="btn btn-light btn-sm ms-1" onclick="resetFilter()"><i class="fe fe-x me-1"></i>Reset</button>
-                    </div>
-                </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Search/Filter Bar Template (injected via DataTables DOM) -->
+                <div id="custom-search-html" style="display: none;">
+                    <div class="d-flex align-items-center w-100">
+                        <div class="input-group input-group-sm w-100" style="min-width: 250px;">
+                            <input type="text" id="filterNama" class="form-control" placeholder="Pencarian...">
+                            <button class="btn btn-primary" onclick="doFilter()"><i class="fe fe-search"></i></button>
+                            <button class="btn btn-light border" onclick="resetFilter()"><i class="fe fe-x"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-100">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
                             <tr>
@@ -42,9 +42,9 @@
                                 <th class="border-bottom-0">Gambar</th>
                                 <th class="border-bottom-0">Kode Barang</th>
                                 <th class="border-bottom-0">Nama Barang</th>
+                                <th class="border-bottom-0">Merk</th>
                                 <th class="border-bottom-0">Jenis</th>
                                 {{-- Kolom Tipe sudah dihapus --}}
-                                <th class="border-bottom-0">Merk</th>
                                 <th class="border-bottom-0">Stok Sekarang</th>
                                 <th class="border-bottom-0" width="1%">Action</th>
                             </tr>
@@ -74,23 +74,25 @@
         let selectJ = $("select[name='jenisbarangU']");
         let jName = (data.tipe_barang || data.jenisbarang_nama || "").toLowerCase();
         if (jName.includes('kembali')) {
-            selectJ.val('bk');
+            selectJ.val('bk').trigger('change');
         } else if (jName.includes('habis')) {
-            selectJ.val('hp');
+            selectJ.val('hp').trigger('change');
         } else {
-            selectJ.val(data.jenisbarang_id);
+            selectJ.val(data.jenisbarang_id).trigger('change');
         }
 
         // Pilih Satuan & Merk
-        $("select[name='satuanU']").val(data.satuan_id);
-        $("select[name='merkU']").val(data.merk_id);
+        $("select[name='satuanU']").val(data.satuan_id).trigger('change');
+        $("select[name='merkU']").val(data.merk_id).trigger('change');
         
         $("input[name='stokU']").val(data.barang_stok);
         
         if(data.barang_gambar != 'image.png'){
-            $("#outputImgU").attr("src", "{{ asset('storage/barang') }}/" + data.barang_gambar);    
+            $("#outputImgU").attr("src", "{{ asset('storage/barang') }}/" + data.barang_gambar);
+            $('#btnHapusFotoU').removeClass('d-none');
         } else {
             $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
+            $('#btnHapusFotoU').addClass('d-none');
         }
     }
     function hapus(data) {
@@ -101,7 +103,7 @@
         if(data.barang_gambar != 'image.png'){
             $("#outputImgG").attr("src", "{{asset('storage/barang/')}}"+"/"+data.barang_gambar);
         }else{
-            $("#outputImgG").attr("src", "{{url('/assets/default/barang/image.png')}}");
+            $("#outputImgG").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         }
     }
     function validasi(judul, status) {
@@ -138,6 +140,20 @@
             ],
             "pageLength": 10,
             "lengthChange": true,
+            "searching": false,
+            "language": {
+                "lengthMenu": "Show _MENU_"
+            },
+            "dom": "<'row mb-2'<'col-12 d-flex flex-nowrap justify-content-between align-items-center gap-2'l<'#custom-search-container.flex-grow-1.ms-auto'>>>" +
+                   "<'row'<'col-sm-12 table-responsive'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "initComplete": function() {
+                $('#custom-search-container').html($('#custom-search-html').html());
+                $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '55px' });
+                $('#custom-search-container').find('#filterNama').on('keypress', function(e) {
+                    if (e.which === 13) doFilter();
+                });
+            },
             "ajax": {
                 "url": "{{route('barang.getbarang')}}", // KEMBALI KE ROUTE LAMA
                 "data": function(d) {
@@ -149,13 +165,13 @@
                 { data: 'img', name: 'barang_gambar', searchable: false, orderable: false },
                 { data: 'barang_kode', name: 'barang_kode' },
                 { data: 'barang_nama', name: 'barang_nama' },
-                { data: 'jenisbarang', name: 'tbl_jenisbarang.jenisbarang_nama' },
                 { data: 'merk', name: 'tbl_merk.merk_nama' },
+                { data: 'jenisbarang', name: 'tbl_jenisbarang.jenisbarang_nama' },
                 { 
                     data: 'totalstok', 
                     render: function (data, type, row) {
-                        let cleanNumber = String(data).replace(/<[^>]*>?/gm, '').trim();
-                        let stok = parseInt(cleanNumber);
+                        let cleanText = String(data).replace(/<[^>]*>?/gm, '').trim();
+                        let stok = parseInt(cleanText);
                         
                         let color = "#09ad95"; // default green
                         if (stok < 5) {
@@ -164,7 +180,7 @@
                             color = "#f7b731"; // yellow/orange for low (5 - 10)
                         }
                         
-                        return `<span style="color: ${color} !important; font-weight: bold;">${stok}</span>`;
+                        return `<span style="color: ${color} !important; font-weight: bold;">${cleanText}</span>`;
                     }
                 },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
@@ -209,7 +225,8 @@
                         html: true,
                         text: htmlList,
                         type: "warning",
-                        confirmButtonText: "Tutup"
+                        confirmButtonText: "Tutup",
+                        allowOutsideClick: true
                     });
                 }
             }

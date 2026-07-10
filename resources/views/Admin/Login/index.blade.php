@@ -7,7 +7,7 @@
 
     <!-- Left: Illustration -->
     <div class="left-panel">
-        <img src="{{url('/assets/default/web/warehouse_illustration.png')}}" alt="Warehouse Illustration" class="illus-img">
+        <img src="{{ asset('assets/default/web/warehouse_illustration.png') }}" alt="Warehouse Illustration" class="illus-img">
 
         <!-- Decorative overlays (pointer-events:none so illustration stays clickable) -->
         <div class="deco deco-blob-tl"></div>
@@ -22,7 +22,7 @@
 
             <!-- Logo + Title -->
             <div class="brand-block">
-                <img src="{{url('/assets/default/web/logo-login.png')}}" alt="Alfatindo Logo" class="brand-logo">
+                <img src="{{ asset('assets/default/web/logo-login.png') }}" alt="Alfatindo Logo" class="brand-logo">
                 <h1 class="brand-name">MANAJEMEN GUDANG</h1>
             </div>
 

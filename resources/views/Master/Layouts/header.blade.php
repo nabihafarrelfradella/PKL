@@ -1,6 +1,30 @@
+<style>
+@media (max-width: 991px) {
+    .app-header, .main-container, .header {
+        overflow: visible !important;
+    }
+    .header-right-icons .dropdown-menu {
+        position: absolute !important;
+        top: 100% !important;
+        margin-top: -5px !important; /* Bawa dropdown sedikit lebih dekat (ke atas) */
+        right: -5px !important;
+        left: auto !important;
+        transform: none !important;
+        max-width: 90vw !important;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2) !important;
+    }
+    .header-right-icons .notifications .dropdown-menu {
+        width: 280px !important; /* Perkecil lebar notifikasi di mobile */
+        max-height: 350px !important; /* Perkecil tinggi dropdown notifikasi */
+    }
+    .header-right-icons .profile-1 .dropdown-menu {
+        min-width: 170px !important; /* Perkecil lebar profil di mobile */
+    }
+}
+</style>
 <!-- app-Header -->
-<div class="app-header header sticky">
-    <div class="container-fluid main-container">
+<div class="app-header header sticky" style="overflow: visible !important;">
+    <div class="container-fluid main-container" style="overflow: visible !important;">
         <div class="d-flex align-items-center" style="height: 100%;">
             <a aria-label="Hide Sidebar" class="app-sidebar__toggle" data-bs-toggle="sidebar" href="javascript:void(0)" style="position: relative; z-index: 99;"></a>
             <!-- sidebar-toggle-->
@@ -9,19 +33,13 @@
                 <img src="../assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
             </a> -->
             <a class="logo-horizontal" href="{{url('/')}}" style="pointer-events: none;">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img desktop-logo" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: auto;" alt="logo">
-                <img src="{{url('/assets/default/web/default.png')}}" class="header-brand-img light-logo1" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: auto;" alt="logo">
+                <img src="{{ asset('assets/default/web/default.png') }}" class="header-brand-img desktop-logo" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: none !important;" alt="logo">
+                <img src="{{ asset('assets/default/web/default.png') }}" class="header-brand-img light-logo1" style="height: 40px !important; width: auto !important; max-width: 180px; object-fit: contain; pointer-events: none !important;" alt="logo">
             </a>
 
             <!-- LOGO -->
-            <div class="d-flex order-lg-2 ms-auto header-right-icons">
-                <!-- SEARCH -->
-                <button class="navbar-toggler navresponsive-toggler d-lg-none ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent-4" aria-controls="navbarSupportedContent-4" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon fe fe-more-vertical"></span>
-                </button>
-                <div class="navbar navbar-collapse responsive-navbar p-0">
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
-                        <div class="d-flex justify-content-between order-lg-2">
+            <div class="d-flex order-lg-2 ms-auto header-right-icons" style="position: relative; z-index: 99;">
+                <div class="d-flex justify-content-end align-items-center">
                             {{-- NOTIFIKASI BELL â€” hanya untuk Owner & Admin Gudang --}}
                             @if(in_array(Session::get('user')->role_id, [1, 2]))
                             <div class="dropdown d-flex notifications" id="notifDropdown">
@@ -55,12 +73,12 @@
                             <!-- SIDE-MENU -->
                             <div class="dropdown d-flex profile-1">
                                 <a href="javascript:void(0)" data-bs-toggle="dropdown" class="nav-link leading-none d-flex">
-                                    <div class="text-end">
+                                    <div class="text-end d-none d-md-block">
                                         <h5 class="text-dark mb-0 me-4 fs-14 fw-semibold">{{Session::get('user')->user_nmlengkap}}</h5>
                                         <small class="text-muted me-4">{{Session::get('user')->role_title}}</small>
                                     </div>
                                     @if(Session::get('user')->user_foto == 'undraw_profile.svg')
-                                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user" class="avatar profile-user brround cover-image" style="object-fit: cover;">
+                                    <img src="{{ asset('assets/default/users/undraw_profile.svg') }}" alt="profile-user" class="avatar profile-user brround cover-image" style="object-fit: cover;">
                                     @else
                                     <img class="avatar profile-user brround cover-image" src="{{asset('storage/users/'.Session::get('user')->user_foto)}}" alt="avatar" style="object-fit: cover;">
                                     @endif
@@ -82,8 +100,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

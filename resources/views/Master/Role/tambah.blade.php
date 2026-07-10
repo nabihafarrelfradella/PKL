@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Tambah Role</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Tambah Role</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ route('role.store') }}" name="myForm" enctype="multipart/form-data" onsubmit="return validateForm()">
                 @csrf

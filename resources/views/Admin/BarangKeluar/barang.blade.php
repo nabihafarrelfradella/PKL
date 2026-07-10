@@ -1,9 +1,9 @@
-﻿<!-- MODAL BARANG -->
+<!-- MODAL BARANG -->
 <div class="modal fade" data-bs-backdrop="static" style="overflow-y:scroll;" id="modalBarang">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Pilih Barang</h6><button onclick="resetB('tambah')" aria-label="Close" class="btn-close"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Pilih Barang</h6><button onclick="resetB('tambah')" aria-label="Close" class="btn-close"></button>
             </div>
             <div class="modal-body p-4 pb-5">
                 <input type="hidden" value="tambah" name="param">
@@ -49,7 +49,12 @@
         const key = $("#randkey").val();
         $("#status").val("true");
         $("input[name='kdbarang']").val(data.barang_kode);
-        $("#nmbarang").val(data.barang_nama.replace(/_/g, ' '));
+        
+        let rawNama = data.barang_nama.replace(/_/g, ' ');
+        let parts = rawNama.split(' - ');
+        $("#nmbarang").val(parts[0]);
+        $("#merkbarang").val(parts[1] || '-');
+        
         $("#satuan").val(data.satuan_nama.replace(/_/g, ' '));
         $("#jenis").val(data.tipe_barang.replace(/_/g, ' '));
         setSNSelect2('', '');
@@ -62,7 +67,10 @@
         const key = $("#randkey").val();
         $("#statusU").val("true");
         $("input[name='kdbarangU']").val(data.barang_kode);
-        $("#nmbarangU").val(data.barang_nama.replace(/_/g, ' '));
+        let rawNamaU = data.barang_nama.replace(/_/g, ' ');
+        let partsU = rawNamaU.split(' - ');
+        $("#nmbarangU").val(partsU[0]);
+        $("#merkbarangU").val(partsU[1] || '-');
         $("#satuanU").val(data.satuan_nama.replace(/_/g, ' '));
         $("#jenisU").val(data.tipe_barang.replace(/_/g, ' '));
         $("input[name='serial_numberU']").val('');

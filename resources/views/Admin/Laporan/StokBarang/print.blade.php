@@ -38,7 +38,7 @@ use Carbon\Carbon;
 
     <div class="header">
         <img src="{{url('/assets/default/web/default.png')}}" alt="Alfatindo">
-        <h1>Laporan Stok Barang</h1>
+        <h1>Laporan Stok Barang<br><small style="font-size: 16px; font-weight: normal; color: #333;">PT ALFATINDO TEKNOLOGI</small></h1>
         @if($tglawal == '')
             <h4>Semua Periode</h4>
         @else
@@ -54,6 +54,9 @@ use Carbon\Carbon;
                 <th width="1%">NO</th>
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
+                <th>MERK</th>
+                <th>JENIS</th>
+                <th>SATUAN</th>
                 <th align="center">STOK AWAL</th>
                 <th align="center">JML MASUK</th>
                 <th align="center">JML KELUAR</th>
@@ -87,13 +90,19 @@ use Carbon\Carbon;
                 $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                            + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                                ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                               ->sum('tbl_barangkeluar.bk_jumlah')
+                           + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                               ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                                ->sum('tbl_barangkeluar.bk_jumlah');
 
                 $totalStok = $d->barang_stok + ($jmlmasuk - $jmlkeluar);
+                $satuan = $d->satuan_id ?? 'Unit';
 
                 // Penentuan Class Warna sesuai Logika Index
                 $colorClass = "stok-aman"; 
-                if ($totalStok < 5) {
+                if ($totalStok <= 0) {
+                    $colorClass = "stok-kritis";
+                } elseif ($totalStok < 5) {
                     $colorClass = "stok-kritis"; // Merah
                 } elseif ($totalStok <= 10) {
                     $colorClass = "stok-warning"; // Oranye
@@ -102,7 +111,15 @@ use Carbon\Carbon;
             <tr>
                 <td align="center">{{$no++}}</td>
                 <td>{{$d->barang_kode}}</td>
-                <td>{{str_replace('_', ' ', $d->barang_nama)}}</td>
+                @php
+                    $parts = explode(' - ', $d->barang_nama ?? '-');
+                    $nama = $parts[0] ?? '-';
+                    $merk = $parts[1] ?? '-';
+                @endphp
+                <td>{{$nama}}</td>
+                <td>{{$merk}}</td>
+                <td>{{$d->jenisbarang_nama ?? '-'}}</td>
+                <td>{{$satuan}}</td>
                 <td align="center">{{$d->barang_stok}}</td>
                 <td align="center">{{$jmlmasuk}}</td>
                 <td align="center">{{$jmlkeluar}}</td>

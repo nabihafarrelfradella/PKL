@@ -32,7 +32,17 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Daftar Data Pegawai Teknisi</h3>
-                <small class="text-muted ms-2">Owner dapat menambah, mengedit, dan menghapus data teknisi</small>
+                
+                <!-- Custom Search Bar (Injected via DataTables DOM) -->
+                <div id="custom-search-html" style="display: none;">
+                    <div class="d-flex align-items-center w-100">
+                        <div class="input-group input-group-sm w-100" style="min-width: 250px;">
+                            <input type="text" id="customSearchInput" class="form-control" placeholder="Cari teknisi...">
+                            <button type="button" id="customSearchBtn" class="btn btn-primary"><i class="fe fe-search"></i></button>
+                            <button type="button" id="customSearchResetBtn" class="btn btn-light border" title="Reset Pencarian"><i class="fe fe-x"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -105,7 +115,10 @@
                             <i class="fe fe-camera"></i> Buka Kamera
                         </button>
                     </div>
-                    <img id="imgViewTeknisiTemp" class="mt-2 d-none" style="max-height: 150px; object-fit: contain;">
+                    <div class="mt-2 position-relative d-inline-block">
+                        <img id="imgViewTeknisiTemp" class="d-none img-thumbnail" style="max-height: 150px; min-width: 120px; min-height: 120px; object-fit: contain;">
+                        <button type="button" id="btnHapusAddFoto" class="btn btn-danger btn-sm position-absolute d-none" style="top: -10px; right: -10px; border-radius: 50%; padding: 2px 6px; z-index: 10;" onclick="clearFotoAdd()"><i class="fe fe-x"></i></button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -166,7 +179,11 @@
                         </button>
                     </div>
                     <small class="text-muted d-block mt-1">Biarkan kosong jika tidak ingin mengubah foto</small>
-                    <img id="imgViewTeknisiTempU" class="mt-2 d-none" style="max-height: 150px; object-fit: contain;">
+                    <div class="mt-2 position-relative d-inline-block">
+                        <img id="imgViewTeknisiTempU" class="d-none img-thumbnail" style="max-height: 150px; min-width: 120px; min-height: 120px; object-fit: contain;">
+                        <button type="button" id="btnHapusEditFoto" class="btn btn-danger btn-sm position-absolute d-none" style="top: -10px; right: -10px; border-radius: 50%; padding: 2px 6px; z-index: 10;" onclick="clearFotoEdit()"><i class="fe fe-x"></i></button>
+                    </div>
+                    <input type="hidden" id="delete_foto" name="delete_foto" value="0">
                 </div>
             </div>
             <div class="modal-footer">
@@ -205,7 +222,7 @@
 
 <!-- MODAL FOTO TEKNISI -->
 <div class="modal fade" id="modalFotoTeknisi" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title"><i class="fe fe-image me-1"></i> Foto Profil Teknisi</h6>
@@ -233,6 +250,11 @@
             var reader = new FileReader();
             reader.onload = function(e) {
                 $('#' + imgId).attr('src', e.target.result).removeClass('d-none');
+                if (imgId === 'imgViewTeknisiTemp') {
+                    $('#btnHapusAddFoto').removeClass('d-none');
+                } else if (imgId === 'imgViewTeknisiTempU') {
+                    $('#btnHapusEditFoto').removeClass('d-none');
+                }
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -240,10 +262,41 @@
 
     var table;
     $(document).ready(function () {
+        // Reset modal tambah teknisi when closed
+        $('#modalTambahTeknisi').on('hidden.bs.modal', function () {
+            $('#add_nmlengkap').val('');
+            $('#add_email').val('');
+            $('#add_phone').val('');
+            $('#add_jenis_kelamin').val('');
+            $('#add_tanggal_lahir').val('');
+            clearFotoAdd();
+        });
+
         table = $('#tableTeknisi').DataTable({
             processing: true,
             serverSide: true,
             ajax: { url: "{{ route('user-mgmt.teknisi.show') }}" },
+            dom: "<'row mb-2'<'col-12 d-flex flex-wrap justify-content-between align-items-center gap-2'l<'#custom-search-container.flex-grow-1.ms-auto'>>>" +
+                 "<'row'<'col-sm-12 table-responsive'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            language: {
+                lengthMenu: '_MENU_'
+            },
+            initComplete: function() {
+                // Initialize custom search and length menu
+                $('#custom-search-container').html($('#custom-search-html').html());
+                $('#custom-search-container').find('#customSearchInput').on('keypress', function(e) {
+                    if (e.which === 13) table.search($(this).val()).draw();
+                });
+                $('#custom-search-container').find('#customSearchBtn').on('click', function() {
+                    table.search($('#custom-search-container').find('#customSearchInput').val()).draw();
+                });
+                $('#custom-search-container').find('#customSearchResetBtn').on('click', function() {
+                    $('#custom-search-container').find('#customSearchInput').val('');
+                    table.search('').draw();
+                });
+                $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '65px' });
+            },
             columns: [
                 { data: 'DT_RowIndex', searchable: false, orderable: false },
                 { data: 'foto', searchable: false, orderable: false },
@@ -267,13 +320,31 @@
         $('#edit_tanggal_lahir').val(data.tanggal_lahir || '');
         
         // Load existing photo
-        if (data.user_foto && data.user_foto !== 'undraw_profile.svg') {
-            $('#imgViewTeknisiTempU').attr('src', '/storage/users/' + data.user_foto).removeClass('d-none');
+        if (data.user_foto && data.user_foto !== 'undraw_profile.svg' && data.user_foto !== '') {
+            $('#imgViewTeknisiTempU').off('error').on('error', function() {
+                $(this).attr('src', '/assets/default/users/undraw_profile.svg');
+            }).attr('src', '/storage/users/' + data.user_foto).removeClass('d-none');
+            $('#btnHapusEditFoto').removeClass('d-none');
         } else {
-            $('#imgViewTeknisiTempU').attr('src', '/assets/default/users/undraw_profile.svg').removeClass('d-none');
+            $('#imgViewTeknisiTempU').off('error').addClass('d-none').attr('src', '');
+            $('#btnHapusEditFoto').addClass('d-none');
         }
-        // Clear file input
+        // Clear file input and flag
         $('#edit_foto').val('');
+        $('#delete_foto').val('0');
+    }
+
+    function clearFotoAdd() {
+        $('#add_foto').val('');
+        $('#imgViewTeknisiTemp').addClass('d-none').attr('src', '');
+        $('#btnHapusAddFoto').addClass('d-none');
+    }
+
+    function clearFotoEdit() {
+        $('#edit_foto').val('');
+        $('#imgViewTeknisiTempU').addClass('d-none').attr('src', '');
+        $('#btnHapusEditFoto').addClass('d-none');
+        $('#delete_foto').val('1');
     }
 
     function hapusTeknisi(data) {
@@ -354,6 +425,7 @@
         if (file) {
             formData.append('foto', file);
         }
+        formData.append('delete_foto', $('#delete_foto').val());
 
         $.ajax({
             type: 'POST',

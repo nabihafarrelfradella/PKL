@@ -29,7 +29,7 @@
 
     <div class="header">
         <img src="{{url('/assets/default/web/default.png')}}" alt="Alfatindo">
-        <h1>Laporan Barang Keluar</h1>
+        <h1>Laporan Barang Keluar<br><small style="font-size: 16px; font-weight: normal; color: #333;">PT ALFATINDO TEKNOLOGI</small></h1>
         @if($tglawal == '')
         <h4>Semua Tanggal</h4>
         @else
@@ -45,15 +45,15 @@
                 <th align="center" width="1%">NO</th>
                 <th>TGL KELUAR</th>
                 <th>KODE BK</th>
-                <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
+                <th>MERK</th>
                 <th>KODE UNIK</th>
                 <th>SN</th>
-                <th>TUJUAN / CUSTOMER</th>
-                <th>LOKASI</th>
-                <th>TEKNISI (ID)</th>
-                <th>STATUS</th>
+                <th>NAMA CUSTOMER</th>
+                <th>LOKASI CUSTOMER</th>
+                <th>TEKNISI</th>
                 <th>KETERANGAN</th>
+                <th>STATUS</th>
             </tr>
         </thead>
         <tbody>
@@ -69,8 +69,13 @@
                     @endif
                 </td>
                 <td>{{$d->bk_kode}}</td>
-                <td>{{$d->barang_kode}}</td>
-                <td>{{$d->barang_nama}}</td>
+                @php
+                    $parts = explode(' - ', $d->barang_nama ?? '-');
+                    $nama = $parts[0] ?? '-';
+                    $merk = $parts[1] ?? '-';
+                @endphp
+                <td>{{$nama}}</td>
+                <td>{{$merk}}</td>
                 @php
                     $cleanSN = ($d->serial_number && is_string($d->serial_number)) ? strip_tags($d->serial_number) : $d->serial_number;
                     $hasSN = $cleanSN && $cleanSN !== '-' && $cleanSN !== 'Tanpa SN';
@@ -80,8 +85,8 @@
                 <td>{{$d->bk_tujuan ?? '-'}}</td>
                 <td>{{$d->bk_lokasi ?? '-'}}</td>
                 <td>{{($d->user_nmlengkap ?? $d->teknisi_nama) ? ($d->user_nmlengkap ?? $d->teknisi_nama) . ' (' . $d->teknisi . ')' : ($d->teknisi ?? '-')}}</td>
-                <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : $d->bk_status }}</td>
                 <td>{{$d->keterangan ?? '-'}}</td>
+                <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : $d->bk_status }}</td>
             </tr>
             @endforeach
         </tbody>

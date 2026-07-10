@@ -108,16 +108,17 @@
                         <button type="button" class="btn btn-primary" onclick="openWebcamModal('ag_foto', 'imgViewAGTemp', true)">
                             <i class="fe fe-camera"></i> Buka Kamera
                         </button>
-                        <button type="button" class="btn btn-danger {{ $adminGudang->user_foto != 'undraw_profile.svg' ? '' : 'd-none' }}" id="btnHapusFotoAG" onclick="hapusFotoAG()">
-                            <i class="fe fe-trash-2"></i> Hapus Foto
-                        </button>
                     </div>
                     <small class="text-muted d-block mt-1">Biarkan kosong jika tidak ingin mengubah foto</small>
                     <input type="hidden" id="ag_remove_photo" value="0">
-                    <img id="imgViewAGTemp" class="mt-2 rounded {{ $adminGudang->user_foto != 'undraw_profile.svg' ? '' : 'd-none' }}" 
-                         src="{{ $adminGudang->user_foto != 'undraw_profile.svg' ? asset('storage/users/' . $adminGudang->user_foto) : '' }}" 
-                         onclick="lihatFotoAG(this.src)"
-                         style="max-height: 150px; object-fit: contain; cursor: pointer;">
+                    <div class="mt-2 position-relative d-inline-block">
+                        <img id="imgViewAGTemp" class="img-thumbnail {{ $adminGudang->user_foto != 'undraw_profile.svg' ? '' : 'd-none' }}" 
+                             src="{{ $adminGudang->user_foto != 'undraw_profile.svg' ? asset('storage/users/' . $adminGudang->user_foto) : '' }}" 
+                             onclick="lihatFotoAG(this.src)"
+                             style="max-height: 150px; min-width: 120px; min-height: 120px; object-fit: contain; cursor: pointer;"
+                             onerror="this.onerror=null; this.src='/assets/default/users/undraw_profile.svg';">
+                        <button type="button" id="btnHapusFotoAG" class="btn btn-danger btn-sm position-absolute {{ $adminGudang->user_foto != 'undraw_profile.svg' ? '' : 'd-none' }}" style="top: -10px; right: -10px; border-radius: 50%; padding: 2px 6px; z-index: 10;" onclick="hapusFotoAG()"><i class="fe fe-x"></i></button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -133,7 +134,7 @@
 
 <!-- MODAL PREVIEW FOTO -->
 <div class="modal fade" id="modalFotoAG" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title"><i class="fe fe-image me-1"></i> Preview Foto</h6>
@@ -158,6 +159,7 @@ function previewFotoAG(input) {
         reader.onload = function (e) {
             $('#imgViewAGTemp').attr('src', e.target.result).removeClass('d-none');
             $('#ag_remove_photo').val('0'); // Batal hapus jika pilih baru
+            $('#btnHapusFotoAG').removeClass('d-none');
         };
         reader.readAsDataURL(input.files[0]);
     }

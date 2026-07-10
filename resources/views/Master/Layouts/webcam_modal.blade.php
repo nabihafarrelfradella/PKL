@@ -113,6 +113,12 @@
             webcamStream = null;
         }
         $('#modalWebcam').modal('hide');
+        // Fix Bootstrap nested modal bug (keeps body scrollable if another modal is still open)
+        setTimeout(function() {
+            if ($('.modal.show').length > 0) {
+                $('body').addClass('modal-open');
+            }
+        }, 500);
     }
 
     function takeSnapshot() {
@@ -182,6 +188,10 @@
         if (webcamStream) {
             webcamStream.getTracks().forEach(track => track.stop());
             webcamStream = null;
+        }
+        // Fix Bootstrap nested modal bug
+        if ($('.modal.show').length > 0) {
+            $('body').addClass('modal-open');
         }
     });
 </script>

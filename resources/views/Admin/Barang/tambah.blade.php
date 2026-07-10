@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Tambah Barang</h6><button onclick="reset()" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Tambah Barang</h6><button onclick="reset()" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span class="d-md-none" aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -18,7 +18,7 @@
                         </div>
                         <div class="form-group">
                             <label for="jenisbarang" class="form-label">Jenis Barang <span class="text-danger">*</span></label>
-                            <select name="jenisbarang" class="form-control">
+                            <select name="jenisbarang" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 <option value="hp">Barang Habis Pakai (hp)</option>
                                 <option value="bk">Barang Kembali (bk)</option>
@@ -26,17 +26,21 @@
                         </div>
                         <div class="form-group">
                             <label for="satuan" class="form-label">Satuan Barang</label>
-                            <select name="satuan" class="form-control">
+                            <select name="satuan" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 <option value="Meter">Meter</option>
                                 <option value="Pcs">Pcs</option>
                                 <option value="Roll">Roll</option>
                                 <option value="Unit">Unit</option>
+                                <option value="Box">Box</option>
+                                <option value="Batang">Batang</option>
+                                <option value="Set">Set</option>
+                                <option value="Pack">Pack</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="merk" class="form-label">Merk Barang</label>
-                            <select name="merk" class="form-control">
+                            <select name="merk" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 @foreach ($merk as $m)
                                 <option value="{{$m->merk_id}}">{{$m->merk_nama}}</option>
@@ -52,7 +56,10 @@
                         <div class="form-group">
                             <label for="title" class="form-label">Foto</label>
                             <center>
-                                <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImg" class="">
+                                <div class="position-relative d-inline-block">
+                                    <img src="{{ asset('assets/default/barang/image.png') }}" alt="profile-user" id="outputImg" class="img-thumbnail" style="max-height: 250px; min-width: 150px; object-fit: contain;">
+                                    <button type="button" id="btnHapusFoto" class="btn btn-danger btn-sm position-absolute d-none" style="top: -10px; right: -10px; border-radius: 50%; padding: 2px 6px; z-index: 10;" onclick="removePhoto()"><i class="fe fe-x"></i></button>
+                                </div>
                             </center>
                             <div class="input-group mt-5">
                                 <input class="form-control" id="GetFile" name="photo" type="file" onclick="this.value=null;" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
@@ -78,6 +85,20 @@
 
 @section('formTambahJS')
 <script>
+    $(document).ready(function() {
+        $('#modaldemo8').on('shown.bs.modal', function () {
+            $('#modaldemo8 .select2').select2({
+                minimumResultsForSearch: Infinity,
+                width: '100%'
+            });
+        });
+        
+        // Fix bug letak dropdown Select2 melayang saat modal di-scroll
+        $('#modaldemo8').on('scroll', function() {
+            $('.select2').select2('close');
+        });
+    });
+
     function checkForm() {
         const nama = $("input[name='nama']").val();
         const stok = $("input[name='stok']").val();
@@ -157,12 +178,13 @@
         resetValid();
         $("input[name='kode']").val('');
         $("input[name='nama']").val('');
-        $("select[name='jenisbarang']").val('');
-        $("select[name='satuan']").val('');
-        $("select[name='merk']").val('');
+        $("select[name='jenisbarang']").val('').trigger('change');
+        $("select[name='satuan']").val('').trigger('change');
+        $("select[name='merk']").val('').trigger('change');
         $("input[name='stok']").val('0');
         $("#outputImg").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFile").val('');
+        $('#btnHapusFoto').addClass('d-none');
         setLoading(false);
     }
     function setLoading(bool) {
@@ -210,9 +232,15 @@
             ext = ext.toLowerCase();
             // $(".custom-file-label").addClass("selected").html(file.name);
             document.getElementById('outputImg').src = window.URL.createObjectURL(file);
+            $('#btnHapusFoto').removeClass('d-none');
             return true;
         } else
             return false;
+    }
+    function removePhoto() {
+        $("#outputImg").attr("src", "{{ asset('assets/default/barang/image.png') }}");
+        $("#GetFile").val('');
+        $('#btnHapusFoto').addClass('d-none');
     }
 </script>
 @endsection

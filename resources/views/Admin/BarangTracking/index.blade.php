@@ -8,9 +8,6 @@
 
 <div class="page-header">
     <h1 class="page-title">Barang Tracking</h1>
-    <div class="ms-auto pageheader-btn">
-        <small class="text-muted"><i class="fe fe-info me-1"></i>Klik ikon QR untuk generate &amp; print label barang</small>
-    </div>
 </div>
 
 <!-- FILTER -->
@@ -18,56 +15,85 @@
     <div class="col-12">
         <div class="card filter-card">
             <div class="card-body pb-3">
-                <div class="row g-2 align-items-end mb-2">
-                    <div class="col-md-2">
+                <div class="row g-3">
+                    <!-- ROW 1 -->
+                    <div class="col-6 col-md-4">
                         <label class="form-label mb-1">Nama Barang</label>
-                        <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang...">
+                        <div class="position-relative">
+                            <input type="text" id="filterNama" class="form-control form-control-sm" placeholder="Cari nama barang..." style="padding-right: 30px;">
+                            <i class="fe fe-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #a8b1c7; pointer-events: none;"></i>
+                        </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-6 col-md-4">
                         <label class="form-label mb-1">Serial Number</label>
-                        <input type="text" id="filterSerial" class="form-control form-control-sm" placeholder="SN-xxxxx...">
+                        <div class="position-relative">
+                            <input type="text" id="filterSerial" class="form-control form-control-sm" placeholder="SN-xxxxx..." style="padding-right: 30px;">
+                            <i class="fe fe-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #a8b1c7; pointer-events: none;"></i>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1">Kondisi Stok</label>
-                        <select id="filterKondisiStok" class="form-control form-select form-select-sm">
-                            <option value="">Semua</option>
-                            <option value="Tersedia">Tersedia</option>
-                            <option value="Keluar/Habis">Keluar / Habis</option>
-                            <option value="Nonaktif">Nonaktif / Dihapus</option>
-                        </select>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label mb-1">Kode BM</label>
+                        <div class="position-relative">
+                            <input type="text" id="filterBmKode" class="form-control form-control-sm" placeholder="BM-xxxxx..." style="padding-right: 30px;">
+                            <i class="fe fe-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #a8b1c7; pointer-events: none;"></i>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1">Kondisi Barang</label>
-                        <select id="filterKondisiBarang" class="form-control form-select form-select-sm">
-                            <option value="">Semua</option>
-                            <option value="Baik">Baik</option>
-                            <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Rusak Berat">Rusak Berat</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
+
+                    <!-- ROW 2 -->
+                    <div class="col-6 col-md-4">
                         <label class="form-label mb-1">Status Transaksi</label>
-                        <select id="filterStatusTransaksi" class="form-control form-select form-select-sm">
-                            <option value="">Semua</option>
-                            <option value="Tersedia">Tersedia / Masuk</option>
-                            <option value="Dipinjam">Sedang Dipinjam</option>
-                            <option value="Selesai">Sudah Kembali</option>
-                            <option value="Habis Pakai">Habis Pakai</option>
-                        </select>
+                        <div class="position-relative">
+                            <select id="filterStatusTransaksi" class="form-control form-select form-select-sm">
+                                <option value="">Semua</option>
+                                <option value="Tersedia">Tersedia / Masuk</option>
+                                <option value="Dipinjam">Sedang Dipinjam</option>
+                                <option value="Selesai">Sudah Kembali</option>
+                                <option value="Habis Pakai">Habis Pakai</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-2">
+                    <div class="col-6 col-md-4">
+                        <label class="form-label mb-1">Kondisi Stok</label>
+                        <div class="position-relative">
+                            <select id="filterKondisiStok" class="form-control form-select form-select-sm">
+                                <option value="">Semua</option>
+                                <option value="Tersedia">Tersedia</option>
+                                <option value="Keluar/Habis">Keluar / Habis</option>
+                                <option value="Nonaktif">Nonaktif / Dihapus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label mb-1">Kondisi Barang</label>
+                        <div class="position-relative">
+                            <select id="filterKondisiBarang" class="form-control form-select form-select-sm">
+                                <option value="">Semua</option>
+                                <option value="Baik">Baik</option>
+                                <option value="Rusak Ringan">Rusak Ringan</option>
+                                <option value="Rusak Berat">Rusak Berat</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ROW 3 -->
+                    <div class="col-6 col-md-4">
+                        <label class="form-label mb-1">Kode BK</label>
+                        <div class="position-relative">
+                            <input type="text" id="filterBkKode" class="form-control form-control-sm" placeholder="BK-xxxxx..." style="padding-right: 30px;">
+                            <i class="fe fe-search position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%); color: #a8b1c7; pointer-events: none;"></i>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
                         <label class="form-label mb-1">Tgl Masuk/Kembali (Awal)</label>
-                        <input type="date" id="filterTglAwal" class="form-control form-control-sm">
+                        <div class="position-relative">
+                            <input type="date" id="filterTglAwal" class="form-control form-control-sm">
+                        </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-6 col-md-4">
                         <label class="form-label mb-1">Tgl Masuk/Kembali (Akhir)</label>
-                        <input type="date" id="filterTglAkhir" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-auto ms-auto">
-                        <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fe fe-search me-1"></i>Cari</button>
-                        <button class="btn btn-light btn-sm ms-1" onclick="resetFilter()"><i class="fe fe-x me-1"></i>Reset</button>
+                        <div class="position-relative">
+                            <input type="date" id="filterTglAkhir" class="form-control form-control-sm">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -81,27 +107,32 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Riwayat Barang Masuk &amp; Tracking</h3>
-                <div class="card-options">
-                    <button class="btn btn-primary btn-sm" onclick="batchPrintQR()"><i class="fe fe-printer me-1"></i>Batch Print QR</button>
-                </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Action Buttons Template (injected via DataTables DOM) -->
+                <div id="custom-buttons-html" style="display: none;">
+                    <div class="d-flex align-items-center flex-shrink-0 gap-2">
+                        <button class="btn btn-success-light btn-sm" onclick="exportExcel()"><i class="fe fe-download"></i><span class="d-none d-md-inline ms-1">Excel</span></button>
+                        <button class="btn btn-primary-light btn-sm" onclick="batchPrintQR()"><i class="fe fe-printer"></i><span class="d-none d-md-inline ms-1">Print QR</span></button>
+                    </div>
+                </div>
+                <div class="w-100">
                     <table id="table-tracking" class="table table-bordered text-nowrap border-bottom">
                         <thead>
                             <tr>
                                 <th width="1%"><input type="checkbox" id="checkAllTracking"></th>
                                 <th width="1%">No</th>
                                 <th>Nama Barang</th>
+                                <th>Merk</th>
                                 <th>Kode Unik</th>
                                 <th>Serial Number</th>
                                 <th>Satuan</th>
-                                <th>Jml Masuk</th>
                                 <th>Kondisi Stok</th>
                                 <th>Kondisi Fisik</th>
                                 <th>Tgl Masuk</th>
                                 <th>Tgl Keluar</th>
                                 <th>Status Transaksi</th>
+                                <th>Keterangan</th>
                                 <th width="1%">QR</th>
                             </tr>
                         </thead>
@@ -115,7 +146,7 @@
 
 <!-- MODAL QR -->
 <div class="modal fade" id="modalQR" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header py-2" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">
                 <h6 class="modal-title text-white fw-bold"><i class="fe fe-grid me-1"></i>QR Code Barang</h6>
@@ -131,10 +162,9 @@
                 <p id="qrNama" class="fw-semibold mt-2 mb-0"></p>
                 <small id="qrSN" class="text-muted qr-label"></small>
             </div>
-            <div class="modal-footer py-2">
-                <button class="btn btn-primary btn-sm" onclick="printQR()"><i class="fe fe-printer me-1"></i>Print Label</button>
-                <button class="btn btn-success btn-sm" onclick="downloadQR()"><i class="fe fe-download me-1"></i>Download</button>
-                <button class="btn btn-light btn-sm" data-bs-dismiss="modal">Tutup</button>
+            <div class="modal-footer py-2 justify-content-center gap-2">
+                <button class="btn btn-primary btn-sm px-3" onclick="printQR()"><i class="fe fe-printer"></i><span class="d-none d-md-inline ms-1">Print Label</span></button>
+                <button class="btn btn-success btn-sm px-3" onclick="downloadQR()"><i class="fe fe-download"></i><span class="d-none d-md-inline ms-1">Download</span></button>
             </div>
         </div>
     </div>
@@ -147,8 +177,12 @@
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 
     var _k='', _n='', _s='';
-
     $(document).ready(function () {
+        // Initialize Select2 for filter dropdowns to use web UI instead of native OS UI
+        $('#filterStatusTransaksi, #filterKondisiStok, #filterKondisiBarang').select2({
+            minimumResultsForSearch: Infinity,
+            width: '100%'
+        });
         var table = $('#table-tracking').DataTable({
             processing: true,
             serverSide: true,
@@ -156,11 +190,22 @@
             scrollX:    true,
             order:      [],
             pageLength: 25,
+            dom: "<'row mb-2'<'col-12 d-flex flex-wrap justify-content-between align-items-center gap-2'l<'#custom-buttons-container'>>>" +
+                 "<'row'<'col-sm-12 table-responsive'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            initComplete: function() {
+                $('#custom-buttons-container').html($('#custom-buttons-html').html());
+                
+                // Initialize select2 for length menu so it looks consistent
+                $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '65px' });
+            },
             ajax: {
                 url: "{{ route('barang-tracking.show') }}",
                 data: function(d) {
                     d.filter_nama   = $('#filterNama').val();
                     d.filter_serial = $('#filterSerial').val();
+                    d.filter_bm_kode = $('#filterBmKode').val();
+                    d.filter_bk_kode = $('#filterBkKode').val();
                     d.filter_kondisi_stok = $('#filterKondisiStok').val();
                     d.filter_kondisi_barang = $('#filterKondisiBarang').val();
                     d.filter_status_transaksi = $('#filterStatusTransaksi').val();
@@ -181,11 +226,24 @@
                     }
                 },
                 { data:'DT_RowIndex',   orderable:false, searchable:false },
-                { data:'barang_nama' },
+                {
+                    data:'barang_nama',
+                    render: function(data) {
+                        return (data || '-').split(' - ')[0];
+                    }
+                },
+                {
+                    data:'barang_nama',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data) {
+                        let parts = (data || '-').split(' - ');
+                        return parts[1] || '-';
+                    }
+                },
                 { data:'kode_unik', defaultContent:'-' },
                 { data:'serial_number', defaultContent:'-' },
                 { data:'satuan_id',     defaultContent:'-' },
-                { data:'bm_jumlah' },
                 {
                     data:'stok_real', orderable:false, searchable:false,
                     render: function(data) {
@@ -209,6 +267,12 @@
                 { data:'tgl_masuk',     orderable:false, searchable:false },
                 { data:'tgl_keluar',    orderable:false, searchable:false },
                 { data:'teknisi_ket',   orderable:false, searchable:false },
+                {
+                    data: 'keterangan_bk', orderable:false, searchable:false,
+                    render: function(data) {
+                        return data && data !== '-' ? '<div class="text-muted small" style="white-space: normal; min-width: 200px; max-width: 350px;">' + data + '</div>' : '<span class="text-muted">-</span>';
+                    }
+                },
                 {
                     data: null, orderable:false, searchable:false,
                     render: function(data, type, row) {
@@ -236,10 +300,11 @@
 
             var el = document.getElementById('qrcode');
             el.innerHTML = '';
+            var qrSize = window.innerWidth <= 767.98 ? 150 : 200;
             try {
                 new QRCode(el, {
                     text:         _s || _k,
-                    width:        200, height: 200,
+                    width:        qrSize, height: qrSize,
                     colorDark:    '#1e293b',
                     colorLight:   '#ffffff',
                     correctLevel: QRCode.CorrectLevel.M
@@ -250,22 +315,19 @@
             $('#modalQR').modal('show');
         });
 
-        $('#filterNama,#filterSerial').on('keypress', function(e){
-            if(e.which===13) table.ajax.reload();
+        // Auto-filter logic
+        var filterTimer;
+        $('#filterNama, #filterSerial, #filterBmKode, #filterBkKode').on('keyup', function() {
+            clearTimeout(filterTimer);
+            filterTimer = setTimeout(function() {
+                table.ajax.reload();
+            }, 500);
         });
 
-        window.doFilter    = function(){ table.ajax.reload(); };
-        window.resetFilter = function() {
-          $('#filterNama').val('');
-          $('#filterSerial').val('');
-          $('#filterKondisiStok').val('');
-          $('#filterKondisiBarang').val('');
-          $('#filterStatusTransaksi').val('');
-          $('#filterTglAwal').val('');
-          $('#filterTglAkhir').val('');
-          table.ajax.reload();
-        };
-
+        $('#filterKondisiStok, #filterKondisiBarang, #filterStatusTransaksi, #filterTglAwal, #filterTglAkhir').on('change', function() {
+            table.ajax.reload();
+        });
+        
         $('#checkAllTracking').on('click', function() {
             $('.qr-checkbox').prop('checked', this.checked);
         });
@@ -322,6 +384,22 @@
         printWindow.document.write('<\/script>');
         printWindow.document.write('</body></html>');
         printWindow.document.close();
+    }
+
+    function exportExcel() {
+        var url = "{{ route('barang-tracking.export') }}";
+        var params = new URLSearchParams({
+            filter_nama: $('#filterNama').val(),
+            filter_serial: $('#filterSerial').val(),
+            filter_bm_kode: $('#filterBmKode').val(),
+            filter_bk_kode: $('#filterBkKode').val(),
+            filter_kondisi_stok: $('#filterKondisiStok').val(),
+            filter_kondisi_barang: $('#filterKondisiBarang').val(),
+            filter_status_transaksi: $('#filterStatusTransaksi').val(),
+            filter_tglawal: $('#filterTglAwal').val(),
+            filter_tglakhir: $('#filterTglAkhir').val()
+        });
+        window.open(url + '?' + params.toString(), '_blank');
     }
 
     function printQR() {

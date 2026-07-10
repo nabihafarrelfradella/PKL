@@ -25,13 +25,7 @@
 <!-- Toast Notification -->
 <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:9999;"></div>
 
-<div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="alert">
-    <i class="fe fe-shield fs-18 text-warning"></i>
-    <div>
-        <strong>Hak akses Owner</strong> tidak dapat diubah melalui antarmuka ini. 
-        Ubah akses <strong>Admin Gudang</strong> dengan toggle di bawah ini.
-    </div>
-</div>
+
 
 @php
     $groups = collect($modules)->groupBy('group');
@@ -136,38 +130,7 @@
 </div>
 @endforeach
 
-<!-- Keterangan Singkat -->
-<div class="row row-sm mt-2">
-    <div class="col-md-6 mb-3">
-        <div class="card border-danger border-2 h-100 mb-0">
-            <div class="card-header bg-danger text-white py-2">
-                <h6 class="mb-0"><i class="fe fe-crown me-1"></i> OWNER</h6>
-            </div>
-            <div class="card-body py-3">
-                <ul class="list-unstyled mb-0 small">
-                    <li><i class="fe fe-check text-success me-1"></i> Akses penuh ke seluruh fitur</li>
-                    <li><i class="fe fe-check text-success me-1"></i> Kelola akun Teknisi (CRUD)</li>
-                    <li><i class="fe fe-check text-success me-1"></i> Edit akun Staff Gudang</li>
-                    <li><i class="fe fe-lock text-warning me-1"></i> Tidak dapat diubah aksesnya</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-3">
-        <div class="card border-primary border-2 h-100 mb-0">
-            <div class="card-header bg-primary text-white py-2">
-                <h6 class="mb-0"><i class="fe fe-shield me-1"></i> ADMIN GUDANG</h6>
-            </div>
-            <div class="card-body py-3">
-                <ul class="list-unstyled mb-0 small">
-                    <li><i class="fe fe-check text-success me-1"></i> Default: akses hampir semua fitur</li>
-                    <li><i class="fe fe-x text-danger me-1"></i> Tidak bisa akses User Management</li>
-                    <li><i class="fe fe-edit-2 text-primary me-1"></i> Dapat dikonfigurasi via toggle di atas</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 
 

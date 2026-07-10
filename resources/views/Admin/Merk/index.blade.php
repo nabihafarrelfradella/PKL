@@ -1,15 +1,22 @@
-﻿@extends('Master.Layouts.app', ['title' => $title])
+@extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
     <!-- PAGE-HEADER -->
     <div class="page-header">
-        <h1 class="page-title">Merk Barang</h1>
         <div>
+            <h1 class="page-title">Merk Barang</h1>
             <ol class="breadcrumb">
                 <li class="breadcrumb-item text-gray">Master Barang</li>
                 <li class="breadcrumb-item active" aria-current="page">Merk Barang</li>
             </ol>
         </div>
+        @if ($hakTambah > 0)
+        <div class="ms-auto">
+            <a class="modal-effect btn btn-primary" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">
+                <i class="fe fe-plus me-1"></i> Tambah Data
+            </a>
+        </div>
+        @endif
     </div>
     <!-- PAGE-HEADER END -->
 
@@ -20,16 +27,19 @@
             <div class="card">
                 <div class="card-header justify-content-between">
                     <h3 class="card-title">Data</h3>
-                    @if ($hakTambah > 0)
-                        <div>
-                            <a class="modal-effect btn btn-primary-light"
-                                data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">Tambah Data
-                                <i class="fe fe-plus"></i></a>
-                        </div>
-                    @endif
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <!-- Search/Filter Bar Template (injected via DataTables DOM) -->
+                    <div id="custom-search-html" style="display: none;">
+                        <div class="d-flex align-items-center w-100">
+                            <div class="input-group input-group-sm w-100" style="min-width: 250px;">
+                                <input type="text" id="merkSearchInput" class="form-control" placeholder="Pencarian...">
+                                <button class="btn btn-primary" onclick="doSearchMerk()"><i class="fe fe-search"></i></button>
+                                <button class="btn btn-light border" onclick="resetSearchMerk()"><i class="fe fe-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-100">
                         <table id="table-1" width="100%"
                             class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                             <thead>
@@ -70,6 +80,14 @@
                 confirmButtonText: "Iya."
             });
         }
+        function doSearchMerk() {
+            var val = $('#merkSearchInput').val();
+            table.search(val).draw();
+        }
+        function resetSearchMerk() {
+            $('#merkSearchInput').val('');
+            table.search('').draw();
+        }
     </script>
 @endsection
 
@@ -96,8 +114,20 @@
                     [5, 10, 25, 50, 100]
                 ],
                 "pageLength": 10,
-
                 lengthChange: true,
+                "language": {
+                    "lengthMenu": "Show _MENU_"
+                },
+                "dom": "<'row mb-2'<'col-12 d-flex flex-nowrap justify-content-between align-items-center gap-2'l<'#custom-search-container.flex-grow-1.ms-auto'>>>" +
+                       "<'row'<'col-sm-12 table-responsive'tr>>" +
+                       "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                "initComplete": function() {
+                    $('#custom-search-container').html($('#custom-search-html').html());
+                    $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '55px' });
+                    $('#custom-search-container').find('#merkSearchInput').on('keypress', function(e) {
+                        if (e.which === 13) doSearchMerk();
+                    });
+                },
 
                 "ajax": {
                     "url": "{{ route('merk.getmerk') }}",

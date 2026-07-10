@@ -62,17 +62,24 @@
 
 <!-- PAGE-HEADER -->
 <div class="page-header">
-    @if($roleId == 3)
-        <h1 class="page-title">Peminjaman Barang</h1>
-    @else
-        <h1 class="page-title">Barang Keluar</h1>
-    @endif
     <div>
+        @if($roleId == 3)
+            <h1 class="page-title">Peminjaman Barang</h1>
+        @else
+            <h1 class="page-title">Barang Keluar</h1>
+        @endif
         <ol class="breadcrumb">
             <li class="breadcrumb-item text-gray">Transaksi</li>
             <li class="breadcrumb-item active">{{ $roleId == 3 ? 'Peminjaman Barang' : 'Barang Keluar' }}</li>
         </ol>
     </div>
+    @if ($hakTambah > 0 && $roleId != 3)
+    <div class="ms-auto">
+        <a class="modal-effect btn btn-primary" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">
+            <i class="fe fe-plus me-1"></i> Tambah Data 
+        </a>
+    </div>
+    @endif
 </div>
 
 {{-- INFO BAR KHUSUS TEKNISI --}}
@@ -103,25 +110,29 @@
                         <i class="fe fe-list me-1"></i>Data Barang Keluar
                     @endif
                 </h3>
-                @if ($hakTambah > 0 && $roleId != 3)
-                <div>
-                    <a class="modal-effect btn btn-primary-light" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">
-                        Tambah Data <i class="fe fe-plus"></i>
-                    </a>
-                </div>
-                @endif
             </div>
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Search/Filter Bar Template (injected via DataTables DOM) -->
+                <div id="custom-search-html" style="display: none;">
+                    <div class="d-flex align-items-center w-100">
+                        <div class="input-group input-group-sm w-100" style="min-width: 250px;">
+                            <input type="text" id="bkSearchInput" class="form-control" placeholder="Pencarian...">
+                            <button class="btn btn-primary" onclick="doSearchBK()"><i class="fe fe-search"></i></button>
+                            <button class="btn btn-light border" onclick="resetSearchBK()"><i class="fe fe-x"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-100">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
                             <th class="border-bottom-0" width="1%"></th>
                             <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Tanggal & Jam Keluar</th>
+                            <th class="border-bottom-0">Tanggal &amp; Jam Keluar</th>
                             <th class="border-bottom-0">Kode BK</th>
                             <th class="border-bottom-0">Teknisi</th>
-                            <th class="border-bottom-0">Tujuan & Lokasi</th>
+                            <th class="border-bottom-0">Tujuan &amp; Lokasi</th>
                             <th class="border-bottom-0">Total Unit</th>
+                            <th class="border-bottom-0">Keterangan</th>
                             <th class="border-bottom-0">Status</th>
                             <th class="border-bottom-0" width="1%">Aksi</th>
                         </thead>
@@ -143,6 +154,11 @@
 <script>
     function generateID() {
         $("input[name='bkkode']").val("Otomatis");
+        // Default lokasi PT Alfatindo Teknologi
+        if (!$("input[name='lokasi']").val()) {
+            $("input[name='lokasi'], #lokasiInput").val('PT Alfatindo Teknologi');
+            $("input[name='map_url'], #mapUrlInput").val('https://maps.app.goo.gl/iaQ52BrTGEfoVEP37');
+        }
     }
 
     function update(data) {
@@ -307,12 +323,16 @@
             return '<div class="child-row-table"><p class="text-muted mb-0 py-2 text-center">Tidak ada data Barang/SN.</p></div>';
         }
         let html = '<div class="child-row-table"><table>';
-        html += '<thead><tr><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Serial Number</th><th>Kode Unik</th><th>Status</th><th width="10%">Action</th></tr></thead><tbody>';
+        html += '<thead><tr><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th>Status</th><th width="10%">Action</th></tr></thead><tbody>';
         data.forEach(function(row, i) {
+            let parts = (row.barang_nama || '-').split(' - ');
+            let nama = parts[0];
+            let merk = parts[1] || '-';
             html += '<tr>';
             html += '<td class="text-center">' + (i + 1) + '</td>';
             html += '<td><span class="badge bg-secondary-light text-secondary">' + (row.barang_kode || '-') + '</span></td>';
-            html += '<td>' + (row.barang_nama || '-') + '</td>';
+            html += '<td>' + nama + '</td>';
+            html += '<td>' + merk + '</td>';
             html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
             html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
             html += '<td>' + (row.status || '-') + '</td>';
@@ -332,10 +352,34 @@
             "order": [],
 
             "stateSave": true,
+            "searching": false,
             "lengthMenu": [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
             "pageLength": 10,
             lengthChange: true,
-            "ajax": { "url": "{{ route('barang-keluar.getbarang-keluar') }}" },
+            "language": {
+                "lengthMenu": "Show _MENU_"
+            },
+            "dom": "<'row mb-2'<'col-12 d-flex flex-nowrap justify-content-between align-items-center gap-2'l<'#custom-search-container.flex-grow-1.ms-auto'>>>" +
+                   "<'row'<'col-sm-12 table-responsive'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "initComplete": function() {
+                $('#custom-search-container').html($('#custom-search-html').html());
+                
+                // Initialize select2 for length menu so it looks like the second screenshot
+                $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '55px' });
+                
+                // Re-bind enter key on the newly injected input
+                $('#custom-search-container').find('#bkSearchInput').on('keypress', function(e) {
+                    if (e.which === 13) doSearchBK();
+                });
+            },
+            "ajax": {
+                "url": "{{ route('barang-keluar.getbarang-keluar') }}",
+                "data": function(d) {
+                    d.search = d.search || {};
+                    d.search.value = typeof bkSearchTerm !== 'undefined' ? bkSearchTerm : '';
+                }
+            },
             "drawCallback": function(settings) {
                 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
                 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -385,13 +429,14 @@
                     render: function(data) { return data || ''; }
                 },
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false , orderable: false },
-                { data: 'tgl',       name: 'created_at' },
-                { data: 'bk_kode',   name: 'bk_kode' },
-                { data: 'teknisi',   name: 'teknisi_nama' },
-                { data: 'tujuan',    name: 'bk_tujuan' },
-                { data: 'serial_number', name: 'serial_number' },
-                { data: 'status',    name: 'bk_status' },
-                { data: 'action',    name: 'action', orderable: false, searchable: false },
+                { data: 'tgl',        name: 'created_at' },
+                { data: 'bk_kode',    name: 'bk_kode' },
+                { data: 'teknisi',    name: 'teknisi_nama' },
+                { data: 'tujuan',     name: 'bk_tujuan' },
+                { data: 'total_unit', name: 'total_unit', searchable: false },
+                { data: 'keterangan', name: 'keterangan', orderable: false, searchable: false },
+                { data: 'status',     name: 'bk_status' },
+                { data: 'action',     name: 'action', orderable: false, searchable: false },
             ],
         });
     });
@@ -493,7 +538,7 @@
             if (isConfirm) {
                 $.ajax({
                     url: "{{ url('admin/barang-keluar/hapus-transaksi') }}/" + encodeURIComponent(bkKode),
-                    type: "POST", // Menggunakan POST agar kompatibel dan aman CSRF
+                    type: "POST",
                     success: function(res) {
                         swal("Berhasil!", res.success, "success");
                         table.ajax.reload(null, false);
@@ -504,6 +549,45 @@
                 });
             }
         });
+    }
+
+    function batchKembaliPerBK(bkKode) {
+        swal({
+            title: "Batch Pengembalian?",
+            text: "Semua barang pada transaksi " + bkKode + " akan ditandai sebagai 'Selesai' (kembali). Lanjutkan?",
+            type: "info",
+            showCancelButton: true,
+            confirmButtonColor: "#28a745",
+            confirmButtonText: "Ya, Kembalikan Semua!",
+            cancelButtonText: "Batal"
+        }, function(isConfirm) {
+            if (isConfirm) {
+                $.ajax({
+                    url: "{{ url('admin/barang-keluar/batch-kembali') }}/" + encodeURIComponent(bkKode),
+                    type: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function(res) {
+                        swal("Berhasil!", res.success || "Semua barang berhasil dikembalikan.", "success");
+                        table.ajax.reload(null, false);
+                    },
+                    error: function(err) {
+                        swal("Gagal!", err.responseJSON?.error || "Terjadi kesalahan", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    var bkSearchTerm = '';
+    function doSearchBK() {
+        bkSearchTerm = $('#custom-search-container').find('#bkSearchInput').val().trim();
+        table.ajax.reload();
+    }
+
+    function resetSearchBK() {
+        bkSearchTerm = '';
+        $('#custom-search-container').find('#bkSearchInput').val('');
+        table.ajax.reload();
     }
 </script>
 @endsection

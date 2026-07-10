@@ -31,8 +31,7 @@ use Carbon\Carbon;
 <body>
 
     <div class="header">
-
-        <h1>Laporan Stok Barang</h1>
+        <h1>Laporan Stok Barang<br><small style="font-size: 16px; font-weight: normal;">PT ALFATINDO TEKNOLOGI</small></h1>
         @if($tglawal == '')
         <h4>Semua Tanggal</h4>
         @else
@@ -47,6 +46,8 @@ use Carbon\Carbon;
                 <th align="center" width="1%">NO</th>
                 <th>KODE BARANG</th>
                 <th>NAMA BARANG</th>
+                <th>MERK</th>
+                <th>JENIS</th>
                 <th>SATUAN</th>
                 <th align="center">STOK AWAL</th>
                 <th align="center">JML MASUK</th>
@@ -77,16 +78,33 @@ use Carbon\Carbon;
             $jmlkeluar = (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Dipinjam')->sum('tbl_barangkeluar.bk_jumlah')
                        + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
                            ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
+                           ->sum('tbl_barangkeluar.bk_jumlah')
+                       + (clone $baseQuery)->where('tbl_barangkeluar.bk_status', 'Selesai')
+                           ->where('tbl_barangkeluar.bk_kondisi_kembali', 'Rusak Berat')
                            ->sum('tbl_barangkeluar.bk_jumlah');
+            
             $totalStok = $d->barang_stok + ($jmlmasuk - $jmlkeluar);
-            $colorClass = $totalStok > 0 ? 'text-success' : ($totalStok == 0 ? '' : 'text-danger');
+            $satuan = $d->satuan_id ?? 'Unit';
+            
+            $colorClass = "text-success";
+            if ($totalStok <= 0) {
+                $colorClass = "text-danger";
+            } elseif ($totalStok < 5) {
+                $colorClass = "text-danger"; 
+            }
             ?>
             <tr>
                 <td align="center">{{$no++}}</td>
                 <td>{{$d->barang_kode}}</td>
-                <td>{{$d->barang_nama}}</td>
-                <td>{{$d->satuan_id ?? '-'}}</td>
-                <td>{{$d->jenisbarang_keterangan ?? '-'}}</td>
+                @php
+                    $parts = explode(' - ', $d->barang_nama ?? '-');
+                    $nama = $parts[0] ?? '-';
+                    $merk = $parts[1] ?? '-';
+                @endphp
+                <td>{{$nama}}</td>
+                <td>{{$merk}}</td>
+                <td>{{$d->jenisbarang_nama ?? '-'}}</td>
+                <td>{{$satuan}}</td>
                 <td align="center">{{$d->barang_stok}}</td>
                 <td align="center">{{$jmlmasuk}}</td>
                 <td align="center">{{$jmlkeluar}}</td>

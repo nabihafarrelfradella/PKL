@@ -1,9 +1,9 @@
-﻿<!-- MODAL UBAH -->
+<!-- MODAL UBAH -->
 <div class="modal fade" data-bs-backdrop="static" id="Umodaldemo8">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Ubah User</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Ubah User</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" name="myFormU" id="myFormU" enctype="multipart/form-data" onsubmit="return validateFormUpdate()">
                 @csrf
@@ -56,7 +56,7 @@
                             <div class="form-group">
                                 <label for="title" class="form-label">Foto</label>
                                 <center>
-                                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" width="80%" alt="profile-user" id="outputImgU" class="brround">
+                                    <img src="{{ asset('assets/default/users/undraw_profile.svg') }}" width="80%" alt="profile-user" id="outputImgU" class="brround" style="max-height: 250px; object-fit: contain;">
                                 </center>
                                 <input type="hidden" name="flama" id="flama">
                                 <input class="form-control mt-5" id="GetFileU" name="photoU" type="file" onchange="VerifyFileNameAndFileSizeU()" accept=".png,.jpeg,.jpg,.svg">
@@ -136,7 +136,7 @@
         $("input[name='pwdU']").val('');
         $("input[name='pwdUU']").val('');
         $("input[name='flama']").val('');
-        $("#outputImgU").attr("src", "{{url('/assets/default/users/undraw_profile.svg')}}");
+        $("#outputImgU").attr("src", "{{ asset('assets/default/users/undraw_profile.svg') }}");
         $("#GetFileU").val('');
     }
 

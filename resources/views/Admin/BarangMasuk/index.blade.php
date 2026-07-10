@@ -3,13 +3,20 @@
 @section('content')
 <!-- PAGE-HEADER -->
 <div class="page-header">
-    <h1 class="page-title">Barang Masuk</h1>
     <div>
+        <h1 class="page-title">Barang Masuk</h1>
         <ol class="breadcrumb">
             <li class="breadcrumb-item text-gray">Transaksi</li>
             <li class="breadcrumb-item active" aria-current="page">Barang Masuk</li>
         </ol>
     </div>
+    @if ($hakTambah > 0)
+    <div class="ms-auto">
+        <a class="modal-effect btn btn-primary" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">
+            <i class="fe fe-plus me-1"></i> Tambah Data
+        </a>
+    </div>
+    @endif
 </div>
 <!-- PAGE-HEADER END -->
 
@@ -19,22 +26,33 @@
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header justify-content-between">
-                <h3 class="card-title">Data</h3>
+                <h3 class="card-title"><i class="fe fe-box me-1"></i>Data Barang Masuk</h3>
                 @if ($hakTambah > 0)
-                <div>
-                    <a class="modal-effect btn btn-primary-light" onclick="generateID()" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modaldemo8">Tambah Data
-                        <i class="fe fe-plus"></i></a>
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-info-light btn-sm" id="btnBatchPrintAll" onclick="batchPrintAllChecked()" style="display:none;">
+                        <i class="fe fe-printer me-1"></i>Print Terpilih
+                    </button>
                 </div>
                 @endif
             </div>
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Search/Filter Bar Template (injected via DataTables DOM) -->
+                <div id="custom-search-html" style="display: none;">
+                    <div class="d-flex align-items-center w-100">
+                        <div class="input-group input-group-sm w-100" style="min-width: 250px;">
+                            <input type="text" id="bmSearchInput" class="form-control" placeholder="Pencarian...">
+                            <button class="btn btn-primary" onclick="doSearchBM()"><i class="fe fe-search"></i></button>
+                            <button class="btn btn-light border" onclick="resetSearchBM()"><i class="fe fe-x"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-100">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
-                            <th class="border-bottom-0" width="1%"><input type="checkbox" id="checkAllBMMain"></th>
+                            <th class="border-bottom-0" width="1%"><input type="checkbox" id="checkAllBMMain" title="Pilih/Hapus semua"></th>
                             <th class="border-bottom-0" width="1%"></th>
                             <th class="border-bottom-0" width="1%">No</th>
-                            <th class="border-bottom-0">Tanggal & Jam Masuk</th>
+                            <th class="border-bottom-0">Tanggal &amp; Jam Masuk</th>
                             <th class="border-bottom-0">Kode Barang Masuk</th>
                             <th class="border-bottom-0">Jumlah Unit</th>
                             <th class="border-bottom-0" width="1%">Action</th>
@@ -59,7 +77,7 @@
     <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">QR Code Resi</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">QR Code Resi</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
                 <div id="qrCodeContainer" class="mb-3">
@@ -329,7 +347,7 @@
         }
         var checkStr = isParentChecked ? 'checked' : '';
         let html = '<div class="child-row-table"><table>';
-        html += '<thead><tr><th width="1%"><input type="checkbox" class="checkAllSN" ' + checkStr + '></th><th width="1%">#</th><th>Kode Barang</th><th>Barang</th><th>Serial Number</th><th>Kode Unik</th><th width="10%">Action</th></tr></thead><tbody>';
+        html += '<thead><tr><th width="1%"><input type="checkbox" class="checkAllSN" ' + checkStr + '></th><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th width="10%">Action</th></tr></thead><tbody>';
         data.forEach(function(row, i) {
             var val = encodeURIComponent(JSON.stringify({
                 kode_unik: row.kode_barang_unik || row.bm_kode,
@@ -342,6 +360,7 @@
             html += '<td>' + (i + 1) + '</td>';
             html += '<td><span class="badge bg-secondary-light text-secondary">' + (row.barang_kode || '-') + '</span></td>';
             html += '<td>' + (row.barang_nama || '-') + '</td>';
+            html += '<td>' + (row.merk_nama || '-') + '</td>';
             html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
             html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
             html += '<td>' + (row.action || '-') + '</td>';
@@ -352,19 +371,40 @@
     }
 
     var table;
+    var bmSearchTerm = '';
     $(document).ready(function() {
         table = $('#table-1').DataTable({
             "processing": true,
             "serverSide": true,
             "info": true,
             "order": [],
-
-            "stateSave": true,
+            "stateSave": false,
+            "searching": false,
             "lengthMenu": [[5, 10, 25, 50, 100], [5, 10, 25, 50, 100]],
             "pageLength": 10,
             lengthChange: true,
+            "language": {
+                "lengthMenu": "Show _MENU_"
+            },
+            "dom": "<'row mb-2'<'col-12 d-flex flex-nowrap justify-content-between align-items-center gap-2'l<'#custom-search-container.flex-grow-1.ms-auto'>>>" +
+                   "<'row'<'col-sm-12 table-responsive'tr>>" +
+                   "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "initComplete": function() {
+                $('#custom-search-container').html($('#custom-search-html').html());
+                
+                // Initialize select2 for length menu so it looks like the second screenshot
+                $('.dataTables_length select').select2({ minimumResultsForSearch: Infinity, width: '55px' });
+                
+                // Re-bind enter key on the newly injected input
+                $('#custom-search-container').find('#bmSearchInput').on('keypress', function(e) {
+                    if (e.which === 13) doSearchBM();
+                });
+            },
             "ajax": {
                 "url": "{{ route('barang-masuk.getbarang-masuk') }}",
+                "data": function(d) {
+                    d.search_term = bmSearchTerm;
+                }
             },
             "columns": [
                 { data: 'chk', name: 'chk', orderable: false, searchable: false },
@@ -410,6 +450,8 @@
                         });
                     }
                 });
+                // Show/hide batch print button
+                updateBatchPrintBtn();
             }
         });
 
@@ -419,8 +461,71 @@
         $('#checkAllBMMain').on('change', function() {
             var isChecked = $(this).prop('checked');
             $('.parent-checkbox').prop('checked', isChecked);
+            updateBatchPrintBtn();
         });
+
+        // Enter key on search input is handled in initComplete
     });
+
+    function doSearchBM() {
+        bmSearchTerm = $('#custom-search-container').find('#bmSearchInput').val().trim();
+        table.ajax.reload();
+    }
+
+    function resetSearchBM() {
+        bmSearchTerm = '';
+        $('#custom-search-container').find('#bmSearchInput').val('');
+        table.ajax.reload();
+    }
+
+    function updateBatchPrintBtn() {
+        var checked = $('.parent-checkbox:checked').length;
+        if (checked > 0) {
+            $('#btnBatchPrintAll').show();
+        } else {
+            $('#btnBatchPrintAll').hide();
+        }
+    }
+
+    $(document).on('change', '.parent-checkbox', function() {
+        updateBatchPrintBtn();
+    });
+
+    function batchPrintAllChecked() {
+        var checked = $('.parent-checkbox:checked');
+        if (checked.length === 0) {
+            validasi('Pilih minimal 1 transaksi terlebih dahulu!', 'warning');
+            return;
+        }
+        var bmKodes = [];
+        checked.each(function() { bmKodes.push($(this).data('bm-kode')); });
+
+        swal({ title: 'Memproses...', text: 'Mengambil data QR Code...', showConfirmButton: false });
+        $.ajax({
+            url: "{{ url('admin/barang-masuk/detail-sn/batch') }}",
+            method: 'POST',
+            data: { _token: "{{ csrf_token() }}", bm_kodes: bmKodes },
+            success: function(data) {
+                swal.close();
+                if (!data || data.length === 0) {
+                    swal('Info', 'Tidak ada data untuk dicetak.', 'warning');
+                    return;
+                }
+                var selected = [];
+                data.forEach(function(item) {
+                    selected.push({
+                        kode_unik: item.kode_barang_unik || item.bm_kode,
+                        barang_kode: item.barang_kode,
+                        nama: item.barang_nama,
+                        sn: item.serial_number
+                    });
+                });
+                processBatchPrint(selected);
+            },
+            error: function() { swal('Gagal', 'Gagal mengambil data.', 'error'); }
+        });
+    }
+
 
     function hapusSemuaBM(bmKode) {
         hapusKelompok(bmKode);

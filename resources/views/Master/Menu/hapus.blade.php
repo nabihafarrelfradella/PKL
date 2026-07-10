@@ -5,7 +5,7 @@
             <form method="POST" action="{{url('/admin/menu/hapus')}}" name="myFormH" id="myFormH" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body text-center p-4 pb-5">
-                    <button type="reset" aria-label="Close" class="btn-close position-absolute" data-bs-dismiss="modal"><span aria-hidden="true">Ã—</span></button>
+                    <button type="reset" aria-label="Close" class="btn-close position-absolute" data-bs-dismiss="modal"></button>
                     <br>
                     <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
                     <h3 class="mb-5">Yakin hapus <span id="vmenu"></span> ?</h3>

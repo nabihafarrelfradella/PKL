@@ -19,6 +19,14 @@ use App\Http\Controllers\Master\MenuController;
 use App\Http\Controllers\Master\RoleController;
 use App\Http\Controllers\Master\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+
+// Route bantuan untuk membuat symlink di cPanel (karena cPanel seringkali tidak ada akses terminal)
+Route::get('/linkstorage', function () {
+    Artisan::call('storage:link');
+    return 'Berhasil! Symlink folder storage telah dibuat.';
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +125,7 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);
         Route::post('/admin/barang-keluar/hapus-transaksi/{bk_kode}', [BarangkeluarController::class, 'hapusTransaksi']);
+        Route::post('/admin/barang-keluar/batch-kembali/{bk_kode}', [BarangkeluarController::class, 'batchKembali']);
         Route::post('/admin/barang-keluar/proses_kembali/{barangkeluar}', [BarangkeluarController::class, 'proses_kembali']);
         Route::post('/admin/barang-keluar/terima_pinjam/{barangkeluar}', [BarangkeluarController::class, 'terima_pinjam']);
         Route::post('/admin/barang-keluar/tolak_pinjam/{barangkeluar}', [BarangkeluarController::class, 'tolak_pinjam']);
@@ -164,6 +173,7 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::middleware(['checkRoleUser:/barang-tracking,submenu'])->group(function () {
         Route::get('/admin/barang-tracking', [BarangTrackingController::class, 'index'])->name('barang-tracking.index');
         Route::get('/admin/barang-tracking/show', [BarangTrackingController::class, 'show'])->name('barang-tracking.show');
+        Route::get('/admin/barang-tracking/export', [BarangTrackingController::class, 'export'])->name('barang-tracking.export');
     });
 
 

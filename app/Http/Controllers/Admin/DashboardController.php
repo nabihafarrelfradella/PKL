@@ -62,19 +62,22 @@ class DashboardController extends Controller
         $data['teknisi']  = UserModel::where('role_id', 3)->count();
 
         // CHART 1: Barang Sering Dipinjam (Top 10)
-        // Dihitung dari jumlah transaksi dengan status 'Dipinjam'
+        // Dihitung dari semua transaksi (histori) untuk Barang Kembali (Asset/Inventaris)
         $data['chartDipinjam'] = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
-            ->where('tbl_barangkeluar.bk_status', 'Dipinjam')
+            ->where('tbl_jenisbarang.jenisbarang_nama', 'NOT LIKE', '%habis%')
             ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
             ->orderByDesc('total')
             ->limit(10)
             ->get();
 
         // CHART 2: Barang Paling Sering Habis (Top 10)
-        // Dihitung dari total unit yang keluar (bk_jumlah) keseluruhan
+        // Dihitung dari total unit yang keluar untuk Barang Habis Pakai
         $data['chartHabis'] = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total'))
+            ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
             ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
             ->orderByDesc('total')
             ->limit(10)
@@ -139,7 +142,8 @@ class DashboardController extends Controller
 
         if ($type == 'dipinjam' || $type == 'semua') {
             $qDipinjam = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-                ->where('tbl_barangkeluar.bk_status', 'Dipinjam');
+                ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->where('tbl_jenisbarang.jenisbarang_nama', 'NOT LIKE', '%habis%');
             $applyFilter($qDipinjam);
             $response['chartDipinjam'] = $qDipinjam->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('COUNT(tbl_barangkeluar.bk_id) as total'))
                 ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')
@@ -147,7 +151,9 @@ class DashboardController extends Controller
         }
 
         if ($type == 'habis' || $type == 'semua') {
-            $qHabis = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode');
+            $qHabis = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+                ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%');
             $applyFilter($qHabis);
             $response['chartHabis'] = $qHabis->select('tbl_barang.barang_nama', \Illuminate\Support\Facades\DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total'))
                 ->groupBy('tbl_barangkeluar.barang_kode', 'tbl_barang.barang_nama')

@@ -26,7 +26,7 @@
 
     <div class="header">
 
-        <h1>Laporan Barang Masuk</h1>
+        <h1>Laporan Barang Masuk<br><small style="font-size: 16px; font-weight: normal;">PT ALFATINDO TEKNOLOGI</small></h1>
         @if($tglawal == '')
         <h4>Semua Tanggal</h4>
         @else
@@ -38,35 +38,45 @@
     <table id="table1">
         <thead>
             <tr>
-                <th align="center" width="1%">NO</th>
-                <th>TGL MASUK</th>
-                <th>KODE UNIK</th>
-                <th>SN</th>
-                <th>KODE BM</th>
-                <th>KODE BARANG</th>
-                <th>NAMA BARANG</th>
-                <th>STATUS</th>
+                <th width="1%">No</th>
+                <th>Tgl Masuk</th>
+                <th>Kode BM</th>
+                <th>Nama Barang</th>
+                <th>Merk</th>
+                <th>Jenis</th>
+                <th>Satuan</th>
+                <th>Kode Unik</th>
+                <th>Serial Number</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
             @php $no=1; @endphp
             @foreach($data as $d)
-            <tr>
-                <td align="center">{{$no++}}</td>
-                <td>
-                    @if($d->jam_masuk)
-                        {{\Carbon\Carbon::parse($d->jam_masuk)->translatedFormat('d M Y H:i')}}
-                    @else
-                        {{\Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y')}}
-                    @endif
-                </td>
-                <td>{{$d->kode_barang_unik ?: ($d->bm_kode ?: '-')}}</td>
-                <td>{{ (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-' }}</td>
-                <td>{{$d->bm_kode}}</td>
-                <td>{{$d->barang_kode}}</td>
-                <td>{{$d->barang_nama}}</td>
-                <td>{{ $d->deleted_at ? 'Dihapus (' . \Carbon\Carbon::parse($d->deleted_at)->translatedFormat('d M Y H:i') . ')' : 'Aktif' }}</td>
-            </tr>
+                @php
+                    $status   = $d->deleted_at ? 'Dihapus' : 'Aktif';
+                    $statusColor = $d->deleted_at ? 'color: red;' : 'color: green;';
+
+                    $parts = explode(' - ', $d->barang_nama ?? '-');
+                    $nama = $parts[0] ?? '-';
+                    $merk = $parts[1] ?? '-';
+                    
+                    $tgl = $d->jam_masuk ? \Carbon\Carbon::parse($d->jam_masuk)->translatedFormat('d M Y H:i') : ($d->bm_tanggal ? \Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y') : '-');
+                    $kodeUnik = $d->kode_barang_unik ?: ($d->bm_kode ?: '-');
+                    $sn = (!empty($d->serial_number) && $d->serial_number !== 'Tanpa SN' && $d->serial_number !== '-') ? strip_tags($d->serial_number) : '-';
+                @endphp
+                <tr>
+                    <td align="center">{{ $no++ }}</td>
+                    <td align="center">{{ $tgl }}</td>
+                    <td align="center">{{ $d->bm_kode }}</td>
+                    <td>{{ $nama }}</td>
+                    <td>{{ $merk }}</td>
+                    <td align="center">{{ $d->jenisbarang_nama ?? '-' }}</td>
+                    <td align="center">{{ $d->satuan_id ?? 'Unit' }}</td>
+                    <td align="center">{{ $kodeUnik }}</td>
+                    <td align="center">{{ $sn }}</td>
+                    <td align="center" style="font-weight: bold; {{ $statusColor }}">{{ $status }}</td>
+                </tr>
             @endforeach
         </tbody>
     </table>

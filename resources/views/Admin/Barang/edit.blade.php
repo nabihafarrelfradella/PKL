@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Ubah Barang</h6><button onclick="resetU()" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Ubah Barang</h6><button onclick="resetU()" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span class="d-md-none" aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="idbarangU">
@@ -19,7 +19,7 @@
                         </div>
                         <div class="form-group">
                             <label for="jenisbarangU" class="form-label">Jenis Barang <span class="text-danger">*</span></label>
-                            <select name="jenisbarangU" class="form-control">
+                            <select name="jenisbarangU" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 <option value="hp">Barang Habis Pakai (hp)</option>
                                 <option value="bk">Barang Kembali (bk)</option>
@@ -27,17 +27,21 @@
                         </div>
                         <div class="form-group">
                             <label for="satuanU" class="form-label">Satuan Barang</label>
-                            <select name="satuanU" class="form-control">
+                            <select name="satuanU" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 <option value="Meter">Meter</option>
                                 <option value="Pcs">Pcs</option>
                                 <option value="Roll">Roll</option>
                                 <option value="Unit">Unit</option>
+                                <option value="Box">Box</option>
+                                <option value="Batang">Batang</option>
+                                <option value="Set">Set</option>
+                                <option value="Pack">Pack</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="merkU" class="form-label">Merk Barang</label>
-                            <select name="merkU" class="form-control">
+                            <select name="merkU" class="form-control select2">
                                 <option value="">-- Pilih --</option>
                                 @foreach ($merk as $m)
                                 <option value="{{$m->merk_id}}">{{$m->merk_nama}}</option>
@@ -53,7 +57,10 @@
                         <div class="form-group">
                             <label for="title" class="form-label">Foto</label>
                             <center>
-                                <img src="{{ asset('assets/default/barang/image.png') }}" width="80%" alt="profile-user" id="outputImgU" class="">
+                                <div class="position-relative d-inline-block">
+                                    <img src="{{ asset('assets/default/barang/image.png') }}" alt="profile-user" id="outputImgU" class="img-thumbnail" style="max-height: 250px; min-width: 150px; object-fit: contain;">
+                                    <button type="button" id="btnHapusFotoU" class="btn btn-danger btn-sm position-absolute d-none" style="top: -10px; right: -10px; border-radius: 50%; padding: 2px 6px; z-index: 10;" onclick="removePhotoU()"><i class="fe fe-x"></i></button>
+                                </div>
                             </center>
                             <input type="hidden" name="hapus_foto" id="hapus_foto" value="0">
                             <div class="input-group mt-4">
@@ -62,7 +69,6 @@
                                     <i class="fe fe-camera"></i> Buka Kamera
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-danger btn-sm mt-2 w-100" onclick="removePhotoU()"><i class="fe fe-trash me-1"></i>Hapus Foto</button>
                         </div>
                     </div>
                 </div>
@@ -81,6 +87,20 @@
 
 @section('formEditJS')
 <script>
+    $(document).ready(function() {
+        $('#Umodaldemo8').on('shown.bs.modal', function () {
+            $('#Umodaldemo8 .select2').select2({
+                minimumResultsForSearch: Infinity,
+                width: '100%'
+            });
+        });
+        
+        // Fix bug letak dropdown Select2 melayang saat modal di-scroll
+        $('#Umodaldemo8').on('scroll', function() {
+            $('.select2').select2('close');
+        });
+    });
+
     function checkFormU() {
         const kode = $("input[name='kodeU']").val();
         const nama = $("input[name='namaU']").val();
@@ -164,19 +184,21 @@
         $("input[name='idbarangU']").val('');
         $("input[name='kodeU']").val('');
         $("input[name='namaU']").val('');
-        $("select[name='jenisbarangU']").val('');
-        $("select[name='satuanU']").val('');
-        $("select[name='merkU']").val('');
+        $("select[name='jenisbarangU']").val('').trigger('change');
+        $("select[name='satuanU']").val('').trigger('change');
+        $("select[name='merkU']").val('').trigger('change');
         $("input[name='stokU']").val('0');
         $("#hapus_foto").val('0');
         $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFileU").val('');
+        $('#btnHapusFotoU').addClass('d-none');
         setLoadingU(false);
     }
     function removePhotoU() {
         $("#outputImgU").attr("src", "{{ asset('assets/default/barang/image.png') }}");
         $("#GetFileU").val('');
         $("#hapus_foto").val('1');
+        $('#btnHapusFotoU').addClass('d-none');
     }
     function setLoadingU(bool) {
         if (bool == true) {
@@ -222,6 +244,7 @@
             var ext = fileName.match(/\.([^\.]+)$/)[1];
             ext = ext.toLowerCase();
             document.getElementById('outputImgU').src = window.URL.createObjectURL(file);
+            $('#btnHapusFotoU').removeClass('d-none');
             return true;
         } else
             return false;

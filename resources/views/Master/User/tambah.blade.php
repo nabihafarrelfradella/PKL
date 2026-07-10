@@ -1,9 +1,9 @@
-﻿<!-- MODAL TAMBAH -->
+<!-- MODAL TAMBAH -->
 <div class="modal fade" data-bs-backdrop="static" id="modaldemo8">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h6 class="modal-title">Tambah User</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title">Tambah User</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ route('user.store') }}" name="myForm" enctype="multipart/form-data" onsubmit="return validateForm()">
                 @csrf
@@ -44,7 +44,7 @@
                             <div class="form-group">
                                 <label for="title" class="form-label">Foto</label>
                                 <center>
-                                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" width="80%" alt="profile-user" id="outputImg" class="brround">
+                                    <img src="{{ asset('assets/default/users/undraw_profile.svg') }}" width="80%" alt="profile-user" id="outputImg" class="brround" style="max-height: 250px; object-fit: contain;">
                                 </center>
                                 <input class="form-control mt-5" id="GetFile" name="photo" type="file" onchange="VerifyFileNameAndFileSize()" accept=".png,.jpeg,.jpg,.svg">
                             </div>
@@ -127,7 +127,7 @@
         $("input[name='role']").val('');
         $("input[name='pwd']").val('');
         $("input[name='pwdU']").val('');
-        $("#outputImg").attr("src", "{{url('/assets/default/users/undraw_profile.svg')}}");
+        $("#outputImg").attr("src", "{{ asset('assets/default/users/undraw_profile.svg') }}");
         $("#GetFile").val('');
     }
 

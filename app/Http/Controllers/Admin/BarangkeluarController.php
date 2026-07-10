@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -67,6 +68,7 @@ class BarangkeluarController extends Controller
                     DB::raw('MAX(tbl_user.user_foto) as teknisi_foto'),
                     DB::raw('MAX(tbl_user.user_phone) as teknisi_phone'),
                     DB::raw('MAX(tbl_user.jenis_kelamin) as teknisi_jk'),
+                    DB::raw('MAX(tbl_barangkeluar.keterangan) as bk_keterangan'),
                     DB::raw("GROUP_CONCAT(DISTINCT tbl_barangkeluar.bk_status ORDER BY tbl_barangkeluar.bk_id SEPARATOR ', ') as bk_status_list")
                 )
                 ->groupBy('tbl_barangkeluar.bk_kode')
@@ -77,9 +79,32 @@ class BarangkeluarController extends Controller
                 $query->where('tbl_barangkeluar.teknisi', $user->teknisi_sn);
             }
 
+            $search = $request->input('search.value');
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('tbl_barangkeluar.bk_kode', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.teknisi', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_user.user_nmlengkap', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.bk_tujuan', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.bk_lokasi', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.barang_kode', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.serial_number', 'LIKE', "%{$search}%")
+                      ->orWhere('tbl_barangkeluar.kode_barang_unik', 'LIKE', "%{$search}%")
+                      ->orWhereIn('tbl_barangkeluar.barang_kode', function($subQ) use ($search) {
+                          $subQ->select('barang_kode')->from('tbl_barang')->where('barang_nama', 'LIKE', "%{$search}%");
+                      });
+                });
+            }
+
             $data = $query->get();
 
+            // Clear search string from request to prevent DataTables Collection Engine from filtering the collection again and hiding rows where the search string wasn't explicitly returned in the collection.
+            $request->merge(['search' => ['value' => '']]);
+
             return DataTables::of($data)
+                ->filter(function ($query) {
+                    // prevent default collection filtering so our query filter takes effect exactly
+                })
                 ->addIndexColumn()
                 ->addColumn('tgl', function ($row) {
                     return $row->created_at == '' ? '-' : Carbon::parse($row->created_at)->translatedFormat('d F Y H:i:s');
@@ -128,8 +153,12 @@ class BarangkeluarController extends Controller
                     
                     return $html;
                 })
-                ->addColumn('serial_number', function ($row) {
-                    return $row->total_unit . ' unit';
+                ->addColumn('total_unit', function ($row) {
+                    return $row->total_unit ?? 0;
+                })
+                ->addColumn('keterangan', function ($row) {
+                    $ket = $row->bk_keterangan ?? '';
+                    return $ket ? '<span class="text-dark">' . htmlspecialchars($ket) . '</span>' : '<span class="text-muted">-</span>';
                 })
                 ->addColumn('status', function ($row) {
                     // Tampilkan status dari seluruh unit dalam kelompok
@@ -162,9 +191,12 @@ class BarangkeluarController extends Controller
                 })
                 ->addColumn('action', function ($row) use ($roleId) {
                     $hakAksesDelete = $this->checkAccess($roleId, '/barang-keluar', 'delete');
-                    return $hakAksesDelete ? '<button class="btn btn-danger-light btn-sm" onclick="hapusTransaksi(\'' . htmlspecialchars($row->bk_kode) . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>' : '-';
+                    $bkKode = htmlspecialchars($row->bk_kode, ENT_QUOTES, 'UTF-8');
+                    $btnReturn = '<button class="btn btn-success-light btn-sm" onclick="batchKembaliPerBK(\'' . $bkKode . '\')" title="Batch Pengembalian"><i class="fe fe-rotate-ccw"></i></button>';
+                    $btnHapus = $hakAksesDelete ? '<button class="btn btn-danger-light btn-sm ms-1" onclick="hapusTransaksi(\'' . $bkKode . '\')" title="Hapus Transaksi"><i class="fe fe-trash-2"></i></button>' : '';
+                    return $btnReturn . $btnHapus;
                 })
-                ->rawColumns(['action', 'tgl', 'status', 'teknisi', 'tujuan', 'serial_number', 'expand'])
+                ->rawColumns(['action', 'tgl', 'status', 'teknisi', 'tujuan', 'keterangan', 'total_unit', 'expand'])
                 ->make(true);
         }
     }
@@ -463,7 +495,7 @@ class BarangkeluarController extends Controller
                     $bk = BarangkeluarModel::create([
                         'bk_kode'          => $bk_kode,
                         'barang_kode'      => $kode,
-                        'kode_barang_unik' => null,
+                        'kode_barang_unik' => '-',
                         'bk_tanggal'       => $tglkeluar->toDateString(),
                         'bk_tujuan'        => $customer,
                         'bk_lokasi'        => $lokasi,
@@ -472,7 +504,7 @@ class BarangkeluarController extends Controller
                         'bk_lng'           => $request->lng,
                         'bk_jumlah'        => $jml,
                         'bk_status'        => $status,
-                        'serial_number'    => null,
+                        'serial_number'    => '-',
                         'teknisi'          => $teknisiSN,
                         'teknisi_nama'     => $teknisiNm,
                         'keterangan'       => $request->keterangan,
@@ -825,8 +857,12 @@ class BarangkeluarController extends Controller
 
     public function resolveMapLink(Request $request)
     {
-        $url = $request->input('url');
-        if (!$url) return response()->json(['error' => 'URL kosong'], 400);
+        $inputUrl = $request->input('url');
+        if (!$inputUrl) return response()->json(['error' => 'URL kosong'], 400);
+
+        // Extract the actual URL if there is text around it (e.g., from mobile share)
+        preg_match('/(https?:\/\/[^\s]+)/', $inputUrl, $urlMatches);
+        $url = $urlMatches[1] ?? $inputUrl;
 
         try {
             // Using cURL to follow redirect and get the final URL
@@ -851,6 +887,9 @@ class BarangkeluarController extends Controller
             if (preg_match('/@(-?\d+\.\d+),(-?\d+\.\d+)/', $finalUrl, $matches)) {
                 $lat = $matches[1];
                 $lng = $matches[2];
+            } elseif (preg_match('/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/', $finalUrl, $matches)) {
+                $lat = $matches[1];
+                $lng = $matches[2];
             } elseif (preg_match('/search\/(-?\d+\.\d+),\+?(-?\d+\.\d+)/', $finalUrl, $matches)) {
                 $lat = $matches[1];
                 $lng = $matches[2];
@@ -872,6 +911,46 @@ class BarangkeluarController extends Controller
             }
             
             return response()->json(['error' => 'Gagal mengekstrak koordinat. Pastikan link Google Maps menunjukkan lokasi spesifik (titik pin/alamat rinci), bukan link area atau kota.'], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Batch Kembali: Kembalikan semua barang dalam satu kode BK sekaligus
+     */
+    public function batchKembali(Request $request, $bk_kode)
+    {
+        try {
+            $rows = BarangkeluarModel::where('bk_kode', $bk_kode)
+                ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam'])
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return response()->json(['error' => 'Tidak ada barang dengan status Dipinjam pada transaksi ini.'], 400);
+            }
+
+            $count = 0;
+            foreach ($rows as $row) {
+                $row->bk_status       = 'Selesai';
+                $row->bk_tgl_kembali  = now();
+                $row->bk_kondisi_kembali = $row->bk_kondisi_kembali ?? 'Baik';
+                $row->save();
+
+                // Restore stock jika bukan habis pakai
+                $barang = BarangModel::where('barang_kode', $row->barang_kode)->first();
+                if ($barang) {
+                    $jenis = DB::table('tbl_jenisbarang')->where('jenisbarang_id', $barang->jenisbarang_id)->first();
+                    $isHabis = $jenis && str_contains(strtolower($jenis->jenisbarang_nama ?? ''), 'habis');
+                    if (!$isHabis) {
+                        $barang->barang_stok = ($barang->barang_stok ?? 0) + ($row->bk_jumlah ?? 1);
+                        $barang->save();
+                    }
+                }
+                $count++;
+            }
+
+            return response()->json(['success' => $count . ' barang berhasil dikembalikan pada transaksi ' . $bk_kode . '.']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

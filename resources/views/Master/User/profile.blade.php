@@ -1,4 +1,4 @@
-﻿@extends('Master.Layouts.app', ['title' => $title])
+@extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
 <!-- PAGE-HEADER -->
@@ -19,7 +19,7 @@
             <div class="card-body text-center">
                 <div class="avatar avatar-xxl chat-profile mb-3 brround">
                     @if($data->user_foto == 'undraw_profile.svg' || $data->user_foto == '')
-                    <img src="{{url('/assets/default/users/undraw_profile.svg')}}" alt="profile-user" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    <img src="{{ asset('assets/default/users/undraw_profile.svg') }}" alt="profile-user" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     @else
                     <img src="{{asset('storage/users/'.$data->user_foto)}}" alt="profile-user" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     @endif

@@ -4,7 +4,7 @@
         <div class="modal-content modal-content-demo">
             <div class="modal-header">
                 <h6 class="modal-title">Tambah Merk</h6><button aria-label="Close" class="btn-close"
-                    data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">

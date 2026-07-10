@@ -1,4 +1,4 @@
-﻿@extends('Master.Layouts.app', ['title' => $title])
+@extends('Master.Layouts.app', ['title' => $title])
 
 @section('content')
 <!-- PAGE-HEADER -->
@@ -59,6 +59,8 @@
         $("input[name='flama']").val(data.user_foto);
         if(data.user_foto != 'undraw_profile.svg'){
             $("#outputImgU").attr("src", "{{asset('storage/users/')}}"+"/"+data.user_foto);
+        }else{
+            $("#outputImgU").attr("src", "{{ asset('assets/default/users/undraw_profile.svg') }}");
         }
     }
 
