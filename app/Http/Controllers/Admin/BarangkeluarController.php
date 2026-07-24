@@ -57,7 +57,7 @@ class BarangkeluarController extends Controller
                     'tbl_barangkeluar.bk_kode',
                     DB::raw('MAX(tbl_barangkeluar.bk_id) as bk_id'),
                     DB::raw('MAX(tbl_barangkeluar.created_at) as created_at'),
-                    DB::raw('SUM(tbl_barangkeluar.bk_jumlah) as total_unit'),
+                    DB::raw('COUNT(tbl_barangkeluar.bk_id) as total_unit'),
                     DB::raw('MAX(tbl_barangkeluar.bk_tujuan) as bk_tujuan'),
                     DB::raw('MAX(tbl_barangkeluar.bk_lokasi) as bk_lokasi'),
                     DB::raw('MAX(tbl_barangkeluar.bk_lat) as bk_lat'),
@@ -210,8 +210,10 @@ class BarangkeluarController extends Controller
         $roleId = $user->role_id ?? 0;
 
         $query = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+            ->leftJoin('tbl_satuan', 'tbl_satuan.satuan_id', '=', 'tbl_barang.satuan_id')
             ->where('tbl_barangkeluar.bk_kode', $bk_kode)
-            ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama')
+            ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama', 'tbl_merk.merk_nama', 'tbl_barang.satuan_id')
             ->orderBy('bk_id', 'DESC');
 
         if ($roleId == 3) {
@@ -267,6 +269,7 @@ class BarangkeluarController extends Controller
             // Kembali
             if (in_array($roleId, [1, 2, 3]) && $row->bk_status == 'Dipinjam') {
                 $action .= '<a class="btn text-info btn-sm" data-bs-toggle="modal" href="#Kmodaldemo8" onclick="kembali(' . $json . ')" title="Kembalikan"><span class="fe fe-corner-up-left fs-13"></span></a>';
+                $action .= '<a class="btn text-warning btn-sm ms-1" href="javascript:void(0)" onclick="batalPinjam(' . $row->bk_id . ')" title="Batal Pinjam (Barang Cadangan)"><span class="fe fe-rotate-ccw fs-13"></span></a>';
             }
 
             // Edit & Hapus
@@ -295,8 +298,11 @@ class BarangkeluarController extends Controller
             return [
                 'barang_kode'      => $row->barang_kode ?? '-',
                 'barang_nama'      => $row->barang_nama ?? '-',
+                'merk_nama'        => $row->merk_nama ?? '-',
                 'serial_number'    => empty($row->serial_number) || $row->serial_number == '-' ? '<span class="text-muted">-</span>' : $row->serial_number,
                 'kode_barang_unik' => $row->kode_barang_unik ?? '-',
+                'bk_jumlah'        => $row->bk_jumlah ?? '-',
+                'satuan_id'        => $row->satuan_id ?? '-',
                 'status'           => $statusBadge,
                 'action'           => $action,
             ];
@@ -350,7 +356,7 @@ class BarangkeluarController extends Controller
             // GENERATE KODE BK (1 TRANSAKSI = 1 KODE)
             // Format: BK-MMYY-001
             $monthYear = $tglkeluar->format('my');
-            $lastBK    = BarangkeluarModel::where('bk_kode', 'LIKE', 'BK-' . $monthYear . '-%')
+            $lastBK    = BarangkeluarModel::withTrashed()->where('bk_kode', 'LIKE', 'BK-' . $monthYear . '-%')
                 ->orderBy('bk_kode', 'DESC')->lockForUpdate()->first();
             $nextNo    = $lastBK ? str_pad(intval(substr($lastBK->bk_kode, -3)) + 1, 3, '0', STR_PAD_LEFT) : '001';
             $bk_kode   = "BK-{$monthYear}-{$nextNo}";
@@ -418,43 +424,67 @@ class BarangkeluarController extends Controller
                     $status = 'Menunggu Persetujuan Pinjam';
                 }
 
+                $is_kabel = in_array(strtolower($barang->satuan_id ?? ''), ['meter', 'm', 'mtr']);
+                $is_habis = str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis');
+
                 // Validasi dan Insert SN
                 if (!empty($sns)) {
                     if (count($sns) !== count(array_unique($sns))) {
                         DB::rollBack();
                         return response()->json(['error' => "Terdapat Serial Number yang sama/duplikat pada barang {$barang->barang_nama}!"], 400);
                     }
-                    if (count($sns) !== $jml) {
+                    
+                    // Jika BUKAN kabel meteran, jumlah SN yang dipilih harus persis sama dengan jumlah keluar
+                    if (!$is_kabel && count($sns) !== $jml) {
                         DB::rollBack();
                         return response()->json(['error' => "Jumlah SN tidak cocok dengan jumlah keluar untuk barang {$barang->barang_nama}!"], 400);
                     }
 
                     foreach ($sns as $sn) {
-                        if ($sn && $sn !== '-') {
-                            // 1. Cek apakah SN sedang dipinjam/menunggu persetujuan
-                            $isBorrowed = BarangkeluarModel::where(function($q) use ($sn) {
-                                    $q->where('serial_number', $sn)
-                                      ->orWhere('kode_barang_unik', $sn);
-                                })
-                                ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
-                                ->exists();
-                            if ($isBorrowed) {
-                                DB::rollBack();
-                                return response()->json(['error' => "Barang dengan identitas {$sn} sedang dipinjam/menunggu persetujuan!"], 400);
-                            }
+                        // Jumlah per kode unik: untuk meter ambil dari sn_jumlah map, untuk non-meter = 1
+                        $sn_jumlah_map = $item['sn_jumlah'] ?? [];
+                        $req_qty_sn = $is_kabel ? intval($sn_jumlah_map[$sn] ?? $jml) : 1;
 
-                            // 2. Cek apakah SN habis pakai sudah pernah digunakan
-                            $isConsumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-                                ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-                                ->where(function($q) use ($sn) {
-                                    $q->where('tbl_barangkeluar.serial_number', $sn)
-                                      ->orWhere('tbl_barangkeluar.kode_barang_unik', $sn);
-                                })
-                                ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
-                                ->exists();
-                            if ($isConsumed) {
-                                DB::rollBack();
-                                return response()->json(['error' => "Barang dengan identitas {$sn} adalah barang habis pakai yang sudah digunakan!"], 400);
+                        if ($sn && $sn !== '-') {
+                            if ($is_habis) {
+                                // 1. Cek stok khusus untuk barang habis pakai per Kode Unik
+                                $bmRow = \App\Models\Admin\BarangmasukModel::where('barang_kode', $kode)
+                                    ->where(function($q) use ($sn) {
+                                        $q->where('serial_number', $sn)
+                                          ->orWhere('kode_barang_unik', $sn);
+                                    })
+                                    ->first();
+                                    
+                                if ($bmRow) {
+                                    $stok_awal_sn = $bmRow->bm_jumlah;
+                                    
+                                    // Hitung total keluar untuk SN ini
+                                    $total_keluar_sn = BarangkeluarModel::where('barang_kode', $kode)
+                                        ->where('kode_barang_unik', $bmRow->kode_barang_unik)
+                                        ->sum('bk_jumlah');
+                                        
+                                    $sisa_stok_sn = $stok_awal_sn - $total_keluar_sn;
+                                    
+                                    if ($req_qty_sn > $sisa_stok_sn) {
+                                        DB::rollBack();
+                                        return response()->json(['error' => "Stok untuk kode unik {$sn} tidak mencukupi! Sisa stok: {$sisa_stok_sn}, diminta: {$req_qty_sn}"], 400);
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return response()->json(['error' => "Data barang masuk untuk kode {$sn} tidak ditemukan!"], 400);
+                                }
+                            } else {
+                                // 2. Cek apakah SN inventaris sedang dipinjam/menunggu persetujuan
+                                $isBorrowed = BarangkeluarModel::where(function($q) use ($sn) {
+                                        $q->where('serial_number', $sn)
+                                          ->orWhere('kode_barang_unik', $sn);
+                                    })
+                                    ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
+                                    ->exists();
+                                if ($isBorrowed) {
+                                    DB::rollBack();
+                                    return response()->json(['error' => "Barang dengan identitas {$sn} sedang dipinjam/menunggu persetujuan!"], 400);
+                                }
                             }
                         }
 
@@ -469,6 +499,10 @@ class BarangkeluarController extends Controller
                         $kbu = $bmRow ? $bmRow->kode_barang_unik : null;
                         $real_sn = $bmRow ? $bmRow->serial_number : $sn; // fallback to $sn if not found
 
+                        // Untuk kabel meter: bk_jumlah = jumlah meter dari kode unik ini
+                        // Untuk non-meter: bk_jumlah = 1
+                        $bk_jumlah_save = $is_kabel ? $req_qty_sn : 1;
+
                         $bk = BarangkeluarModel::create([
                             'bk_kode'          => $bk_kode,
                             'barang_kode'      => $kode,
@@ -479,7 +513,7 @@ class BarangkeluarController extends Controller
                             'bk_map_url'       => $request->map_url,
                             'bk_lat'           => $request->lat,
                             'bk_lng'           => $request->lng,
-                            'bk_jumlah'        => 1,
+                            'bk_jumlah'        => $bk_jumlah_save,
                             'bk_status'        => $status,
                             'serial_number'    => $real_sn,
                             'teknisi'          => $teknisiSN,
@@ -746,60 +780,92 @@ class BarangkeluarController extends Controller
 
     public function getAvailableSN($barang_kode)
     {
-        // 1. Ambil semua serial number dari tbl_barangmasuk untuk barang_kode ini
+        $barang = \App\Models\Admin\BarangModel::leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->where('barang_kode', $barang_kode)
+            ->first();
+            
+        $is_meter = false;
+        $is_habis = false;
+        if ($barang) {
+            $is_meter = in_array(strtolower($barang->satuan_id ?? ''), ['m', 'mtr', 'meter']);
+            $is_habis = str_contains(strtolower($barang->jenisbarang_nama ?? ''), 'habis');
+        }
+
+        // 1. Ambil barang masuk dan jumlah awal
         $incomings = \App\Models\Admin\BarangmasukModel::where('barang_kode', $barang_kode)
-            ->select('serial_number', 'kode_barang_unik')
+            ->select('serial_number', 'kode_barang_unik', 'bm_jumlah')
             ->get();
 
-        // 2. Cari serial number yang tidak tersedia (sedang dipinjam / proses pinjam / proses kembali / habis pakai)
+        // 2. Hitung total yang sudah terpakai per kode unik (untuk barang habis pakai)
+        $consumedAmounts = DB::table('tbl_barangkeluar')
+            ->select('kode_barang_unik', DB::raw('SUM(bk_jumlah) as total_keluar'))
+            ->where('barang_kode', $barang_kode)
+            ->whereNull('deleted_at')
+            ->groupBy('kode_barang_unik')
+            ->pluck('total_keluar', 'kode_barang_unik')
+            ->toArray();
+
+        // 3. Cari yang sedang dipinjam (untuk barang inventaris)
         $borrowed = BarangkeluarModel::where('barang_kode', $barang_kode)
             ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
-            ->get();
-            
-        $borrowedSNs = $borrowed->pluck('serial_number')->filter()->toArray();
-        $borrowedKBUs = $borrowed->pluck('kode_barang_unik')->filter()->toArray();
+            ->pluck('kode_barang_unik')
+            ->filter()
+            ->toArray();
 
-        $consumed = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
-            ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
-            ->where('tbl_barangkeluar.barang_kode', $barang_kode)
-            ->where('tbl_jenisbarang.jenisbarang_nama', 'LIKE', '%habis%')
-            ->get();
-            
-        $consumedSNs = $consumed->pluck('serial_number')->filter()->toArray();
-        $consumedKBUs = $consumed->pluck('kode_barang_unik')->filter()->toArray();
-
-        $unavailableSNs = array_unique(array_merge($borrowedSNs, $borrowedKBUs, $consumedSNs, $consumedKBUs));
+        $unavailableKBUs = array_unique($borrowed);
 
         // Cari kondisi terakhir dari masing-masing SN
         $latestConditions = DB::table('tbl_barangkeluar')
             ->select('kode_barang_unik', 'bk_kondisi_kembali')
             ->whereNotNull('bk_kondisi_kembali')
+            ->whereNull('deleted_at')
             ->whereIn('bk_id', function($query) {
                 $query->select(DB::raw('MAX(bk_id)'))
                       ->from('tbl_barangkeluar')
+                      ->whereNull('deleted_at')
                       ->groupBy('kode_barang_unik');
             })
             ->pluck('bk_kondisi_kembali', 'kode_barang_unik')
             ->toArray();
 
-        // 3. Filter data ketersediaan
+        // 4. Filter data ketersediaan
         $available = [];
         foreach ($incomings as $incoming) {
-            // HANYA gunakan kode_barang_unik sebagai identifier utama
             $identifier = $incoming->kode_barang_unik;
             
-            if ($identifier && !in_array($identifier, $unavailableSNs)) {
+            if ($identifier && !in_array($identifier, $unavailableKBUs)) {
                 $kondisi = $latestConditions[$identifier] ?? 'Baik';
                 
-                // Jangan tampilkan jika Rusak Berat (karena nonaktif)
                 if ($kondisi == 'Rusak Berat') {
                     continue;
+                }
+                
+                $label = $kondisi;
+                // Hanya tampilkan sisa untuk barang habis pakai yang satuannya meter
+                if ($is_habis && $is_meter) {
+                    $total_keluar = $consumedAmounts[$identifier] ?? 0;
+                    $sisa = $incoming->bm_jumlah - $total_keluar;
+                    
+                    if ($sisa <= 0) {
+                        continue; // Habis total, jangan tampilkan di dropdown
+                    }
+                    
+                    $label .= ' (Sisa: ' . $sisa . ' meter)';
+                } else if ($is_habis) {
+                    // Jika barang habis pakai tapi BUKAN meter (contoh: Pcs, Lembar),
+                    // tetap cek sisa stoknya agar jika sudah 0, tidak muncul di dropdown
+                    $total_keluar = $consumedAmounts[$identifier] ?? 0;
+                    $sisa = $incoming->bm_jumlah - $total_keluar;
+                    
+                    if ($sisa <= 0) {
+                        continue; // Habis total
+                    }
                 }
                 
                 $available[] = [
                     'serial_number' => $identifier,
                     'kode_barang_unik' => $incoming->kode_barang_unik,
-                    'kondisi' => $kondisi
+                    'kondisi' => $label
                 ];
             }
         }
@@ -853,6 +919,25 @@ class BarangkeluarController extends Controller
 
         $bk->update(['bk_status' => 'Dipinjam']);
         return response()->json(['success' => 'Pengembalian ditolak! Status dikembalikan ke Dipinjam.']);
+    }
+
+    public function proses_batal(Request $request, $id)
+    {
+        try {
+            $bk = BarangkeluarModel::find($id);
+            if (!$bk) return response()->json(['error' => 'Data tidak ditemukan'], 404);
+
+            if ($bk->bk_status != 'Dipinjam') {
+                return response()->json(['error' => 'Hanya barang yang sedang dipinjam yang dapat dibatalkan.'], 400);
+            }
+
+            // Hapus record (soft delete) agar stok otomatis kembali dan tidak tampil di laporan
+            $bk->delete();
+            
+            return response()->json(['success' => 'Peminjaman barang berhasil dibatalkan.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function resolveMapLink(Request $request)
@@ -916,13 +1001,32 @@ class BarangkeluarController extends Controller
         }
     }
 
+    public function unreturnedItems($bk_kode)
+    {
+        $items = BarangkeluarModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
+            ->where('tbl_barangkeluar.bk_kode', $bk_kode)
+            ->whereIn('tbl_barangkeluar.bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam', 'Menunggu Persetujuan Kembali'])
+            ->select('tbl_barangkeluar.*', 'tbl_barang.barang_nama')
+            ->get();
+
+        return response()->json($items);
+    }
+
     /**
      * Batch Kembali: Kembalikan semua barang dalam satu kode BK sekaligus
      */
     public function batchKembali(Request $request, $bk_kode)
     {
         try {
+            $itemsData = $request->input('items_data', []);
+            $tglKembali = $request->input('tglkembali', now());
+            
+            if (empty($itemsData)) {
+                return response()->json(['error' => 'Tidak ada barang yang dipilih untuk dikembalikan.'], 400);
+            }
+
             $rows = BarangkeluarModel::where('bk_kode', $bk_kode)
+                ->whereIn('bk_id', array_keys($itemsData))
                 ->whereIn('bk_status', ['Dipinjam', 'Menunggu Persetujuan Pinjam'])
                 ->get();
 
@@ -932,21 +1036,14 @@ class BarangkeluarController extends Controller
 
             $count = 0;
             foreach ($rows as $row) {
+                $kondisi = $itemsData[$row->bk_id] ?? 'Baik';
                 $row->bk_status       = 'Selesai';
-                $row->bk_tgl_kembali  = now();
-                $row->bk_kondisi_kembali = $row->bk_kondisi_kembali ?? 'Baik';
+                $row->bk_tgl_kembali  = $tglKembali;
+                $row->bk_kondisi_kembali = $kondisi;
                 $row->save();
 
-                // Restore stock jika bukan habis pakai
-                $barang = BarangModel::where('barang_kode', $row->barang_kode)->first();
-                if ($barang) {
-                    $jenis = DB::table('tbl_jenisbarang')->where('jenisbarang_id', $barang->jenisbarang_id)->first();
-                    $isHabis = $jenis && str_contains(strtolower($jenis->jenisbarang_nama ?? ''), 'habis');
-                    if (!$isHabis) {
-                        $barang->barang_stok = ($barang->barang_stok ?? 0) + ($row->bk_jumlah ?? 1);
-                        $barang->save();
-                    }
-                }
+                // Notifikasi pengembalian bisa ditambahkan jika perlu (opsional)
+
                 $count++;
             }
 

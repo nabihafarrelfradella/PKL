@@ -54,7 +54,7 @@
                             <th class="border-bottom-0" width="1%">No</th>
                             <th class="border-bottom-0">Tanggal &amp; Jam Masuk</th>
                             <th class="border-bottom-0">Kode Barang Masuk</th>
-                            <th class="border-bottom-0">Jumlah Unit</th>
+                            <th class="border-bottom-0">Jumlah Barang</th>
                             <th class="border-bottom-0" width="1%">Action</th>
                         </thead>
                         <tbody></tbody>
@@ -347,7 +347,7 @@
         }
         var checkStr = isParentChecked ? 'checked' : '';
         let html = '<div class="child-row-table"><table>';
-        html += '<thead><tr><th width="1%"><input type="checkbox" class="checkAllSN" ' + checkStr + '></th><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th width="10%">Action</th></tr></thead><tbody>';
+        html += '<thead><tr><th width="1%"><input type="checkbox" class="checkAllSN" ' + checkStr + '></th><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th width="10%">Jumlah</th><th>Satuan</th><th width="10%">Action</th></tr></thead><tbody>';
         data.forEach(function(row, i) {
             var val = encodeURIComponent(JSON.stringify({
                 kode_unik: row.kode_barang_unik || row.bm_kode,
@@ -363,6 +363,8 @@
             html += '<td>' + (row.merk_nama || '-') + '</td>';
             html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
             html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
+            html += '<td class="text-center font-weight-bold">' + (row.bm_jumlah || '-') + '</td>';
+            html += '<td>' + (row.satuan_id || '-') + '</td>';
             html += '<td>' + (row.action || '-') + '</td>';
             html += '</tr>';
         });

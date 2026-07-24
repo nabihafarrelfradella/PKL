@@ -1,4 +1,4 @@
-﻿<!-- MODAL EDIT -->
+<!-- MODAL EDIT -->
 <div class="modal fade" data-bs-backdrop="static" id="Umodaldemo8">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
@@ -37,9 +37,19 @@
                                 <button class="btn btn-success-light" onclick="modalBarangU()" type="button"><i class="fe fe-box"></i></button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Nama Barang</label>
-                            <input type="text" class="form-control" id="nmbarangU" readonly>
+                        <div class="row">
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label>Nama Barang</label>
+                                    <input type="text" class="form-control" id="nmbarangU" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>Merk</label>
+                                    <input type="text" class="form-control" id="merkbarangU" readonly placeholder="-">
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -85,8 +95,8 @@
     });
 
     function modalBarangU() {
+        $('#Umodaldemo8').modal('hide');
         $('#modalBarang').modal('show');
-        $('#Umodaldemo8').addClass('d-none');
         $('input[name="param"]').val('ubah');
         resetValidU();
         table2.ajax.reload();
@@ -109,13 +119,16 @@
                 if (data.length > 0) {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("true");
-                    $("#nmbarangU").val(data[0].barang_nama);
+                    let partsU = data[0].barang_nama.split(' - ');
+                    $("#nmbarangU").val(partsU[0] || data[0].barang_nama);
+                    $("#merkbarangU").val(data[0].merk_nama || partsU[1] || '-');
                     $("#satuanU").val(data[0].satuan_id);
                     $("#jenisU").val(data[0].tipe_barang);
                 } else {
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("false");
                     $("#nmbarangU").val('');
+                    $("#merkbarangU").val('');
                     $("#satuanU").val('');
                     $("#jenisU").val('');
                 }
@@ -198,6 +211,7 @@
         $("input[name='serial_numberU']").val('');
         $("input[name='jmlU']").val('0');
         $("#nmbarangU").val('');
+        $("#merkbarangU").val('');
         $("#satuanU").val('');
         $("#jenisU").val('');
         $("#statusU").val('false');

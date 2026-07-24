@@ -94,7 +94,7 @@
                                     <a class="dropdown-item" href="{{url('/admin/profile')}}/{{Session::get('user')->user_id}}">
                                         <i class="dropdown-icon fe fe-user"></i> Profile
                                     </a>
-                                    <a class="dropdown-item" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modalLogout">
+                                    <a class="dropdown-item" href="javascript:void(0)" onclick="confirmLogout()">
                                         <i class="dropdown-icon fe fe-log-out"></i> Log out
                                     </a>
                                 </div>

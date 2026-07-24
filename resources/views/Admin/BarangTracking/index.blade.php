@@ -126,6 +126,7 @@
                                 <th>Merk</th>
                                 <th>Kode Unik</th>
                                 <th>Serial Number</th>
+                                <th width="1%" class="text-center">Jumlah</th>
                                 <th>Satuan</th>
                                 <th>Kondisi Stok</th>
                                 <th>Kondisi Fisik</th>
@@ -219,7 +220,7 @@
                     render: function(data, type, row) {
                         var val = encodeURIComponent(JSON.stringify({
                             kode_unik: row.kode_barang_unik || row.bm_kode,
-                            nama: row.barang_nama,
+                            nama: row.barang,
                             sn: row.serial_number
                         }));
                         return '<input type="checkbox" class="qr-checkbox" value="' + val + '">';
@@ -227,22 +228,22 @@
                 },
                 { data:'DT_RowIndex',   orderable:false, searchable:false },
                 {
-                    data:'barang_nama',
+                    data:'barang',
                     render: function(data) {
-                        return (data || '-').split(' - ')[0];
+                        return data || '-';
                     }
                 },
                 {
-                    data:'barang_nama',
+                    data:'merk_nama',
                     orderable: false,
                     searchable: false,
                     render: function(data) {
-                        let parts = (data || '-').split(' - ');
-                        return parts[1] || '-';
+                        return data || '-';
                     }
                 },
                 { data:'kode_unik', defaultContent:'-' },
                 { data:'serial_number', defaultContent:'-' },
+                { data:'bm_jumlah', className: 'text-center', defaultContent:'0' },
                 { data:'satuan_id',     defaultContent:'-' },
                 {
                     data:'stok_real', orderable:false, searchable:false,
@@ -279,7 +280,7 @@
                         // Simpan di data-attribute agar aman dari newline/quote
                         return '<button class="btn btn-sm btn-primary-light btn-qr" title="Lihat QR Code"'
                              + ' data-k="' + (row.kode_barang_unik||row.bm_kode||'').replace(/"/g,'&quot;') + '"'
-                             + ' data-n="' + (row.barang_nama||'').replace(/"/g,'&quot;') + '"'
+                             + ' data-n="' + (row.barang||'').replace(/"/g,'&quot;') + '"'
                              + ' data-s="' + (row.serial_number||'').replace(/"/g,'&quot;') + '">'
                              + '<i class="fe fe-grid"></i></button>';
                     }

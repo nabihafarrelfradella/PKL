@@ -49,7 +49,6 @@ use Carbon\Carbon;
                 <th>MERK</th>
                 <th>JENIS</th>
                 <th>SATUAN</th>
-                <th align="center">STOK AWAL</th>
                 <th align="center">JML MASUK</th>
                 <th align="center">JML KELUAR</th>
                 <th align="center">TOTAL STOK</th>
@@ -99,13 +98,12 @@ use Carbon\Carbon;
                 @php
                     $parts = explode(' - ', $d->barang_nama ?? '-');
                     $nama = $parts[0] ?? '-';
-                    $merk = $parts[1] ?? '-';
+                    $merk = $d->merk_nama ?? $parts[1] ?? '-';
                 @endphp
                 <td>{{$nama}}</td>
                 <td>{{$merk}}</td>
                 <td>{{$d->jenisbarang_nama ?? '-'}}</td>
                 <td>{{$satuan}}</td>
-                <td align="center">{{$d->barang_stok}}</td>
                 <td align="center">{{$jmlmasuk}}</td>
                 <td align="center">{{$jmlkeluar}}</td>
                 <td align="center" class="{{$colorClass}}">{{$totalStok}}</td>

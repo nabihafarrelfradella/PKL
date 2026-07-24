@@ -272,6 +272,7 @@ class BarangController extends Controller
                     $array = array(
                         "barang_kode" => $row->barang_kode,
                         "barang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->barang_nama)),
+                        "merk_nama" => $row->merk_nama,
                         "satuan_nama" => $row->satuan_id,
                         "jenisbarang_nama" => trim(preg_replace('/[^A-Za-z0-9-]+/', '_', $row->jenisbarang_nama)),
                         "tipe_barang" => $row->tipe_barang,
@@ -401,25 +402,42 @@ class BarangController extends Controller
             }
             $bm_kode = "BM-{$monthYear}-{$nextNo}";
 
-            for ($i = 1; $i <= $stok; $i++) {
-                $loop_index   = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $random_code  = strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
-                $serial_number = "{$prefix_sn}-{$date_now}-{$random_code}-{$loop_index}";
-                $kode_barang_unik = 'BRG-' . now()->timestamp . '-' . $loop_index;
+            $is_kabel = strtolower($request->satuan ?? '') === 'meter';
 
+            if ($is_kabel) {
+                $kode_barang_unik = $barang_kode . '-01';
                 BarangmasukModel::create([
                     'bm_tanggal'       => now()->toDateString(),
                     'bm_kode'          => $bm_kode,
                     'barang_kode'      => $barang_kode,
-                    'bm_jumlah'        => 1,
-                    'serial_number'    => $serial_number,
+                    'bm_jumlah'        => $stok, // Total stok untuk kabel
+                    'serial_number'    => null,  // Dikosongkan sesuai permintaan
                     'kode_barang_unik' => $kode_barang_unik,
                     'jam_masuk'        => now(),
                     'customer_id'      => 0,
                 ]);
+            } else {
+                for ($i = 1; $i <= $stok; $i++) {
+                    $loop_index   = str_pad($i, 2, '0', STR_PAD_LEFT);
+                    // Generate format seragam dengan Barang Masuk: [BarangKode]-[Increment]
+                    $kode_barang_unik = $barang_kode . '-' . $loop_index;
+                    $serial_number = null; // Dikosongkan sesuai permintaan untuk stok awal
+
+                    BarangmasukModel::create([
+                        'bm_tanggal'       => now()->toDateString(),
+                        'bm_kode'          => $bm_kode,
+                        'barang_kode'      => $barang_kode,
+                        'bm_jumlah'        => 1,
+                        'serial_number'    => $serial_number,
+                        'kode_barang_unik' => $kode_barang_unik,
+                        'jam_masuk'        => now(),
+                        'customer_id'      => 0,
+                    ]);
+                }
             }
         }
 
+        \App\Helpers\AuditLogHelper::log('Aktivitas Master Barang', 'Master Barang');
         return response()->json(['success' => 'Berhasil']);
     }
 
@@ -478,6 +496,7 @@ class BarangController extends Controller
 
         $barang->update($updateData);
 
+        \App\Helpers\AuditLogHelper::log('Aktivitas Master Barang', 'Master Barang');
         return response()->json(['success' => 'Berhasil']);
     }
 
@@ -508,7 +527,8 @@ class BarangController extends Controller
             //delete
             $barang->delete();
 
-            return response()->json(['success' => 'Berhasil']);
+            \App\Helpers\AuditLogHelper::log('Aktivitas Master Barang', 'Master Barang');
+        return response()->json(['success' => 'Berhasil']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
@@ -553,3 +573,4 @@ class BarangController extends Controller
         return response()->json($lowStockItems);
     }
 }
+

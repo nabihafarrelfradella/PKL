@@ -6,42 +6,50 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
 
 class AuditController extends Controller
 {
     public function index()
     {
-        $data["title"] = "Audit Trail";
+        $data['title'] = 'Audit Trail';
         return view('Master.Audit.index', $data);
     }
 
     public function show(Request $request)
     {
         if ($request->ajax()) {
-            $data = DB::table('tbl_audit_log')
+            // Get all logs, joined with tbl_user and tbl_role
+            $query = DB::table('tbl_audit_log')
                 ->leftJoin('tbl_user', 'tbl_user.user_id', '=', 'tbl_audit_log.user_id')
-                ->select('tbl_audit_log.*', 'tbl_user.user_nama', 'tbl_user.user_nmlengkap')
-                ->orderBy('tbl_audit_log.created_at', 'DESC')
-                ->get();
+                ->leftJoin('tbl_role', 'tbl_role.role_slug', '=', 'tbl_audit_log.role_slug')
+                ->select(
+                    'tbl_audit_log.*',
+                    'tbl_user.user_nmlengkap',
+                    'tbl_role.role_title'
+                )
+                ->orderBy('tbl_audit_log.created_at', 'desc');
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('user', function ($row) {
-                    return $row->user_nmlengkap . ' (' . $row->user_nama . ')';
-                })
+            $searchTerm = $request->search_term;
+            if (!empty($searchTerm)) {
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('tbl_user.user_nmlengkap', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('tbl_role.role_title', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('tbl_audit_log.activity', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('tbl_audit_log.module', 'LIKE', "%{$searchTerm}%");
+                });
+            }
+
+            return DataTables::of($query)
                 ->editColumn('created_at', function ($row) {
-                    return date('d-m-Y H:i:s', strtotime($row->created_at));
+                    return $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i:s') : '-';
                 })
-                ->addColumn('badge_activity', function ($row) {
-                    $class = 'primary';
-                    if ($row->activity == 'CREATE') $class = 'success';
-                    if ($row->activity == 'UPDATE' || $row->activity == 'UPDATE_PASSWORD') $class = 'warning';
-                    if ($row->activity == 'DELETE') $class = 'danger';
-                    if ($row->activity == 'UNAUTHORIZED_ACCESS_ATTEMPT') $class = 'dark';
-                    
-                    return '<span class="badge bg-' . $class . '">' . $row->activity . '</span>';
+                ->addColumn('user_info', function ($row) {
+                    $name = $row->user_nmlengkap ?? 'System';
+                    $role = $row->role_title ?? $row->role_slug;
+                    return "<b>{$name}</b><br><small class='text-muted'>{$role}</small>";
                 })
-                ->rawColumns(['badge_activity'])
+                ->rawColumns(['user_info'])
                 ->make(true);
         }
     }

@@ -96,8 +96,9 @@ class BarangmasukController extends Controller
         // Filter HANYA berdasarkan bm_kode (semua barang di transaksi tsb)
         $rows = BarangmasukModel::leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
+            ->leftJoin('tbl_satuan', 'tbl_satuan.satuan_id', '=', 'tbl_barang.satuan_id')
             ->where('tbl_barangmasuk.bm_kode', $bm_kode)
-            ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama', 'tbl_merk.merk_nama')
+            ->select('tbl_barangmasuk.*', 'tbl_barang.barang_nama', 'tbl_merk.merk_nama', 'tbl_barang.satuan_id')
             ->orderBy('bm_id', 'DESC')
             ->get();
 
@@ -145,6 +146,8 @@ class BarangmasukController extends Controller
                 'merk_nama'        => $merkBarang ?? '-',
                 'serial_number'    => $row->serial_number ?? '-',
                 'kode_barang_unik' => $row->kode_barang_unik ?? '-',
+                'bm_jumlah'        => $row->bm_jumlah ?? '-',
+                'satuan_id'        => $row->satuan_id ?? '-',
                 'action'           => $action,
             ];
         });
@@ -194,7 +197,7 @@ class BarangmasukController extends Controller
 
             // Generate ONE bm_kode for the entire transaction batch
             $monthYear = now()->format('my');
-            $lastBM = BarangmasukModel::where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
+            $lastBM = BarangmasukModel::withTrashed()->where('bm_kode', 'LIKE', 'BM-' . $monthYear . '-%')
                 ->orderBy('bm_kode', 'DESC')
                 ->first();
 
@@ -218,38 +221,58 @@ class BarangmasukController extends Controller
                     continue; // Skip barang yang tidak ditemukan
                 }
 
-                // Prefix SN dari kode barang (BK / HP)
-                $prefix_sn = strtoupper(substr($barang->barang_kode, 0, 2));
-                $date_now  = now()->format('Ymd');
+                // Cek apakah barang ini bersatuan Meter (disimpan dalam 1 baris, bukan per unit)
+                $isMeter = strtolower(trim($barang->satuan_id ?? '')) === 'meter';
 
                 $existingCount = BarangmasukModel::where('barang_kode', $barangKode)->count();
 
-                // Looping Simpan Berdasarkan Jumlah
-                for ($i = 1; $i <= $jml; $i++) {
+                if ($isMeter) {
+                    // Khusus barang Meter: simpan 1 baris dengan bm_jumlah = total panjang (meter)
+                    // Kode unik: auto-increment berikutnya
+                    $kode_barang_unik = $barangKode . '-' . str_pad($existingCount + 1, 2, '0', STR_PAD_LEFT);
+
                     $sn_input = !empty($item['sn']) ? $item['sn'] : null;
-
-                    if ($sn_input) {
-                        // SN hanya sebagai catatan
-                        $serial_number = ($jml > 1) ? $sn_input . '-' . $i : $sn_input;
-                    } else {
-                        $serial_number = null;
-                    }
-
-                    // Kode unik SELALU menggunakan Kode Barang + Auto Increment (meskipun ada SN)
-                    $kode_barang_unik = $barangKode . '-' . str_pad($existingCount + $i, 2, '0', STR_PAD_LEFT);
 
                     BarangmasukModel::create([
                         'bm_tanggal'       => $tglmasuk->toDateString(),
                         'bm_kode'          => $bm_kode,
                         'barang_kode'      => $barangKode,
-                        'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
-                        'serial_number'    => $serial_number,
+                        'bm_jumlah'        => $jml, // Total panjang meter dalam satu roll/entry
+                        'serial_number'    => $sn_input,
                         'kode_barang_unik' => $kode_barang_unik,
                         'jam_masuk'        => $tglmasuk,
                         'customer_id'      => $request->customer_id ?? 0,
                     ]);
 
                     $totalSaved++;
+                } else {
+                    // Barang NON-Meter: setiap unit = 1 baris terpisah dengan kode unik masing-masing
+                    for ($i = 1; $i <= $jml; $i++) {
+                        $sn_input = !empty($item['sn']) ? $item['sn'] : null;
+
+                        if ($sn_input) {
+                            // SN hanya sebagai catatan
+                            $serial_number = ($jml > 1) ? $sn_input . '-' . $i : $sn_input;
+                        } else {
+                            $serial_number = null;
+                        }
+
+                        // Kode unik SELALU menggunakan Kode Barang + Auto Increment (meskipun ada SN)
+                        $kode_barang_unik = $barangKode . '-' . str_pad($existingCount + $i, 2, '0', STR_PAD_LEFT);
+
+                        BarangmasukModel::create([
+                            'bm_tanggal'       => $tglmasuk->toDateString(),
+                            'bm_kode'          => $bm_kode,
+                            'barang_kode'      => $barangKode,
+                            'bm_jumlah'        => 1, // Setiap baris adalah 1 unit
+                            'serial_number'    => $serial_number,
+                            'kode_barang_unik' => $kode_barang_unik,
+                            'jam_masuk'        => $tglmasuk,
+                            'customer_id'      => $request->customer_id ?? 0,
+                        ]);
+
+                        $totalSaved++;
+                    }
                 }
             }
 

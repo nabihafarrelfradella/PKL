@@ -24,7 +24,7 @@ class LapStokBarangController extends Controller
         // Query dibersihkan dari filter tipe
         $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
-            ->orderBy('barang_id', 'DESC');
+            ->orderBy('barang_id', 'ASC');
         
         $data['data'] = $query->get();
 
@@ -39,7 +39,7 @@ class LapStokBarangController extends Controller
         // Query dibersihkan dari filter tipe
         $query = BarangModel::withTrashed()->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
-            ->orderBy('barang_id', 'DESC');
+            ->orderBy('barang_id', 'ASC');
         
         $data['data'] = $query->get();
 
@@ -60,7 +60,7 @@ class LapStokBarangController extends Controller
         $query = BarangModel::withTrashed()
             ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
-            ->orderBy('barang_id', 'DESC');
+            ->orderBy('barang_id', 'ASC');
 
         $items      = $query->get();
         $exportTime = now()->translatedFormat('d F Y H:i');
@@ -93,19 +93,19 @@ class LapStokBarangController extends Controller
         $sheet->getRowDimension(2)->setRowHeight(18);
 
         // === HEADER ===
-        $headers = ['No', 'Kode Barang', 'Nama Barang', 'Merk', 'Jenis', 'Satuan', 'Stok Awal', 'Jml Masuk', 'Jml Keluar', 'Total Stok', 'Status'];
-        foreach (range('A', 'K') as $i => $col) {
+        $headers = ['No', 'Kode Barang', 'Nama Barang', 'Merk', 'Jenis', 'Satuan', 'Jml Masuk', 'Jml Keluar', 'Total Stok', 'Status'];
+        foreach (range('A', 'J') as $i => $col) {
             $sheet->setCellValue($col . '3', $headers[$i]);
         }
-        $sheet->getStyle('A3:K3')->applyFromArray([
+        $sheet->getStyle('A3:J3')->applyFromArray([
             'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill'      => ['fillType' => 'solid', 'startColor' => ['rgb' => '1E3A5F']],
+            'fill'      => ['fillType' => 'solid', 'startColor' => ['rgb' => '2563EB']],
             'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
-            'borders'   => ['allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => 'AAAAAA']]],
+            'borders'   => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => '94A3B8']]],
         ]);
         $sheet->getRowDimension(3)->setRowHeight(20);
 
-        // === DATA ===
+        // === DATA ROWS ===
         $row = 4;
         $no  = 1;
         foreach ($items as $item) {
@@ -139,7 +139,7 @@ class LapStokBarangController extends Controller
 
             $parts = explode(' - ', $item->barang_nama ?? '-');
             $nama = $parts[0] ?? '-';
-            $merk = $parts[1] ?? '-';
+            $merk = $item->merk_nama ?? $parts[1] ?? '-';
 
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->barang_kode);
@@ -147,39 +147,41 @@ class LapStokBarangController extends Controller
             $sheet->setCellValue('D' . $row, $merk);
             $sheet->setCellValue('E' . $row, $item->jenisbarang_nama ?? '-');
             $sheet->setCellValue('F' . $row, $satuan);
-            $sheet->setCellValue('G' . $row, $item->barang_stok . ' ' . $satuan);
-            $sheet->setCellValue('H' . $row, $jmlMasuk . ' ' . $satuan);
-            $sheet->setCellValue('I' . $row, $jmlKeluar . ' ' . $satuan);
-            $sheet->setCellValue('J' . $row, $totalStok . ' ' . $satuan);
-            $sheet->setCellValue('K' . $row, $status);
+            $sheet->setCellValue('G' . $row, $jmlMasuk);
+            $sheet->setCellValue('H' . $row, $jmlKeluar);
+            $sheet->setCellValue('I' . $row, $totalStok);
+            $sheet->setCellValue('J' . $row, $status);
 
             $bg = ($no % 2 == 0) ? 'F0F7FF' : 'FFFFFF';
-            $sheet->getStyle('A' . $row . ':K' . $row)->applyFromArray([
+            $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray([
                 'fill'    => ['fillType' => 'solid', 'startColor' => ['rgb' => $bg]],
-                'borders' => ['allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => 'DDDDDD']]],
                 'alignment' => ['vertical' => 'center'],
             ]);
 
             // Color stok
             if ($totalStok <= 0) {
-                $sheet->getStyle('J' . $row)->getFont()->getColor()->setRGB('DC2626');
+                $sheet->getStyle('I' . $row)->getFont()->getColor()->setRGB('DC2626');
             } elseif ($totalStok < 5) {
-                $sheet->getStyle('J' . $row)->getFont()->getColor()->setRGB('D97706');
+                $sheet->getStyle('I' . $row)->getFont()->getColor()->setRGB('D97706');
             } else {
-                $sheet->getStyle('J' . $row)->getFont()->getColor()->setRGB('16A34A');
+                $sheet->getStyle('I' . $row)->getFont()->getColor()->setRGB('16A34A');
             }
 
             // Color status
             if ($status === 'Dihapus') {
-                $sheet->getStyle('K' . $row)->getFont()->getColor()->setRGB('DC2626');
+                $sheet->getStyle('J' . $row)->getFont()->getColor()->setRGB('DC2626');
             } else {
-                $sheet->getStyle('K' . $row)->getFont()->getColor()->setRGB('16A34A');
+                $sheet->getStyle('J' . $row)->getFont()->getColor()->setRGB('16A34A');
             }
 
             $row++;
         }
 
-        foreach (range('A', 'K') as $col) {
+        $sheet->getStyle('A4:J' . ($row - 1))->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
+        ]);
+
+        foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
         $sheet->freezePane('A4');
@@ -199,7 +201,7 @@ class LapStokBarangController extends Controller
             $query = BarangModel::withTrashed()
                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
                 ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
-                ->orderBy('barang_id', 'DESC');
+                ->orderBy('barang_id', 'ASC');
 
             if ($request->filter_nama) {
                 $query->where('tbl_barang.barang_nama', 'LIKE', '%' . $request->filter_nama . '%');
@@ -216,6 +218,9 @@ class LapStokBarangController extends Controller
             $data = $query->get();
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('merk_nama', function($row) {
+                    return $row->merk_nama ?? (explode(' - ', $row->barang_nama)[1] ?? '-');
+                })
                 ->addColumn('jenis', function ($row) {
                     return $row->jenisbarang_nama ?? '-';
                 })

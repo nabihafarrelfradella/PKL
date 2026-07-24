@@ -23,11 +23,13 @@ class LapBarangKeluarController extends Controller
         $query = BarangkeluarModel::withTrashed()
             ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangkeluar.barang_kode')
             ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->leftJoin('tbl_user', 'tbl_user.teknisi_sn', '=', 'tbl_barangkeluar.teknisi')
             ->select(
                 'tbl_barangkeluar.*',
                 'tbl_barang.barang_nama',
                 'tbl_jenisbarang.jenisbarang_nama',
+                'tbl_merk.merk_nama',
                 'tbl_user.user_nmlengkap as user_nmlengkap'
             );
 
@@ -54,7 +56,7 @@ class LapBarangKeluarController extends Controller
             }
         }
 
-        return $query->orderBy('bk_id', 'DESC');
+        return $query->orderBy('bk_id', 'ASC');
     }
 
     public function show(Request $request)
@@ -81,7 +83,10 @@ class LapBarangKeluarController extends Controller
                     return $nama ? htmlspecialchars($nama) . ' (' . htmlspecialchars($row->teknisi) . ')' : ($row->teknisi ?? '-');
                 })
                 ->addColumn('barang', function ($row) {
-                    return $row->barang_nama ?? '-';
+                    return (explode(' - ', $row->barang_nama ?? '-')[0]) ?? '-';
+                })
+                ->addColumn('merk_nama', function ($row) {
+                    return $row->merk_nama ?? (explode(' - ', $row->barang_nama ?? '-')[1] ?? '-');
                 })
                 ->addColumn('serial_number', function ($row) {
                     return $row->serial_number ?? '-';
@@ -207,7 +212,7 @@ class LapBarangKeluarController extends Controller
 
             $parts = explode(' - ', $item->barang_nama ?? '-');
             $nama = $parts[0] ?? '-';
-            $merk = $parts[1] ?? '-';
+            $merk = $item->merk_nama ?? ($parts[1] ?? '-');
 
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $tgl);

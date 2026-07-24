@@ -160,20 +160,28 @@
     $('input[name="kdbarangU"]').keypress(function(event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         if (keycode == '13') {
-            getbarangbyidU($('input[name="kdbarangU"]').val());
+            var kd = $('input[name="kdbarangU"]').val();
+            getbarangbyidU(kd);
+            if (typeof fetchAvailableSNsU === 'function') {
+                fetchAvailableSNsU(kd, null, null);
+            }
         }
     });
 
     function modalBarangU() {
+        $('#Umodaldemo8').modal('hide');
         $('#modalBarang').modal('show');
-        $('#Umodaldemo8').addClass('d-none');
         $('input[name="param"]').val('ubah');
         resetValidU();
         table2.ajax.reload();
     }
 
     function searchBarangU() {
-        getbarangbyidU($('input[name="kdbarangU"]').val());
+        var kd = $('input[name="kdbarangU"]').val();
+        getbarangbyidU(kd);
+        if (typeof fetchAvailableSNsU === 'function') {
+            fetchAvailableSNsU(kd, null, null);
+        }
         resetValidU();
     }
 
@@ -222,8 +230,8 @@
                     $("#loaderkdU").addClass('d-none');
                     $("#statusU").val("true");
                     let partsU = data[0].barang_nama.split(' - ');
-                    $("#nmbarangU").val(partsU[0]);
-                    $("#merkbarangU").val(partsU[1] || '-');
+                    $("#nmbarangU").val(partsU[0] || data[0].barang_nama);
+                    $("#merkbarangU").val(data[0].merk_nama || partsU[1] || '-');
                     $("#satuanU").val(data[0].satuan_id);
                     $("#jenisU").val(data[0].tipe_barang);
                 } else {

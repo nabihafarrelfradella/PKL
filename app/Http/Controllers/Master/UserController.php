@@ -643,13 +643,14 @@ class UserController extends Controller
             ['label' => 'Transaksi (menu)', 'group' => 'Transaksi', 'ref_type' => 'menu', 'ref_slug' => 'transaksi', 'types' => ['view']],
             ['label' => 'Barang Masuk', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-masuk', 'types' => ['view', 'create', 'update', 'delete']],
             ['label' => 'Barang Keluar', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-keluar', 'types' => ['view', 'create', 'update', 'delete']],
-            ['label' => 'Barang Tracking', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-tracking', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Barang Tracking', 'group' => 'Transaksi', 'ref_type' => 'submenu', 'ref_slug' => '/barang-tracking', 'types' => ['view']],
 
             // Laporan
             ['label' => 'Laporan (menu)', 'group' => 'Laporan', 'ref_type' => 'menu', 'ref_slug' => 'laporan', 'types' => ['view']],
-            ['label' => 'Lap. Barang Masuk', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-masuk', 'types' => ['view', 'create', 'update', 'delete']],
-            ['label' => 'Lap. Barang Keluar', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-keluar', 'types' => ['view', 'create', 'update', 'delete']],
-            ['label' => 'Lap. Stok Barang', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-stok-barang', 'types' => ['view', 'create', 'update', 'delete']],
+            ['label' => 'Lap. Barang Masuk', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-masuk', 'types' => ['view']],
+            ['label' => 'Lap. Barang Keluar', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-barang-keluar', 'types' => ['view']],
+            ['label' => 'Lap. Stok Barang', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-stok-barang', 'types' => ['view']],
+            ['label' => 'Lap. Rekap Bulanan', 'group' => 'Laporan', 'ref_type' => 'submenu', 'ref_slug' => '/lap-rekap-bulanan', 'types' => ['view']],
         ];
     }
 }

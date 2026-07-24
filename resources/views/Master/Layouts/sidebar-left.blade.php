@@ -135,8 +135,8 @@
                 </li>
 
                 <!-- Laporan -->
-                <li class="slide {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'is-expanded' : ''}}">
-                    <a class="side-menu__item {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
+                <li class="slide {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Lap Rekap Bulanan', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'is-expanded' : ''}}">
+                    <a class="side-menu__item {{in_array($title, ['Lap Barang Masuk', 'Lap Barang Keluar', 'Lap Stok Barang', 'Lap Rekap Bulanan', 'Laporan Barang Masuk', 'Laporan Barang Keluar', 'Laporan Stok Barang']) ? 'active' : ''}}" data-bs-toggle="slide" href="javascript:void(0)">
                         <i class="side-menu__icon fe fe-printer"></i>
                         <span class="side-menu__label">Laporan</span><i class="angle fe fe-chevron-right"></i>
                     </a>
@@ -149,6 +149,9 @@
                         @endif
                         @if(hasViewAccess($roleId, '/lap-stok-barang', 'submenu', $aksesMenus, $aksesSubmenus))
                         <li><a href="{{url('/admin/lap-stok-barang')}}" class="slide-item {{in_array($title, ['Lap Stok Barang', 'Laporan Stok Barang']) ? 'active' : ''}}">Lap. Stok Barang</a></li>
+                        @endif
+                        @if(hasViewAccess($roleId, '/lap-rekap-bulanan', 'submenu', $aksesMenus, $aksesSubmenus))
+                        <li><a href="{{url('/admin/lap-rekap-bulanan')}}" class="slide-item {{$title == 'Lap Rekap Bulanan' ? 'active' : ''}}">Lap. Rekap Bulanan</a></li>
                         @endif
                     </ul>
                 </li>
@@ -170,6 +173,7 @@
                     <ul class="slide-menu">
                         <li><a href="{{route('user-mgmt.teknisi')}}" class="slide-item {{$title == 'Daftar Teknisi' ? 'active' : ''}}">Daftar Teknisi</a></li>
                         <li><a href="{{route('user-mgmt.admin-gudang')}}" class="slide-item {{$title == 'Admin Gudang' ? 'active' : ''}}">Admin Gudang</a></li>
+                        <li><a href="{{route('audit.index')}}" class="slide-item {{$title == 'Audit Trail' ? 'active' : ''}}">Log Aktivitas</a></li>
                         <li><a href="{{route('user-mgmt.access-control')}}" class="slide-item {{$title == 'Access Control' ? 'active' : ''}}">Access Control</a></li>
                     </ul>
                 </li>
@@ -183,7 +187,7 @@
 
                 <!-- Log Out -->
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-effect="effect-super-scaled" data-bs-toggle="modal" href="#modalLogout">
+                    <a class="side-menu__item" href="javascript:void(0)" onclick="confirmLogout()">
                         <i class="side-menu__icon fe fe-log-out"></i>
                         <span class="side-menu__label">Log Out</span>
                     </a>

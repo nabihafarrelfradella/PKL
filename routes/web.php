@@ -125,8 +125,10 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::post('/admin/barang-keluar/proses_ubah/{barangkeluar}', [BarangkeluarController::class, 'proses_ubah']);
         Route::post('/admin/barang-keluar/proses_hapus/{barangkeluar}', [BarangkeluarController::class, 'proses_hapus']);
         Route::post('/admin/barang-keluar/hapus-transaksi/{bk_kode}', [BarangkeluarController::class, 'hapusTransaksi']);
+        Route::get('/admin/barang-keluar/unreturned-items/{bk_kode}', [BarangkeluarController::class, 'unreturnedItems']);
         Route::post('/admin/barang-keluar/batch-kembali/{bk_kode}', [BarangkeluarController::class, 'batchKembali']);
         Route::post('/admin/barang-keluar/proses_kembali/{barangkeluar}', [BarangkeluarController::class, 'proses_kembali']);
+        Route::post('/admin/barang-keluar/batal/{barangkeluar}', [BarangkeluarController::class, 'proses_batal']);
         Route::post('/admin/barang-keluar/terima_pinjam/{barangkeluar}', [BarangkeluarController::class, 'terima_pinjam']);
         Route::post('/admin/barang-keluar/tolak_pinjam/{barangkeluar}', [BarangkeluarController::class, 'tolak_pinjam']);
         Route::post('/admin/barang-keluar/terima_kembali/{barangkeluar}', [BarangkeluarController::class, 'terima_kembali']);
@@ -169,6 +171,15 @@ Route::group(['middleware' => 'userlogin'], function () {
         Route::get('/admin/lap-stok-barang/show/', [LapStokBarangController::class, 'show'])->name('lap-sb.getlap-sb');
     });
 
+    Route::middleware(['checkRoleUser:/lap-rekap-bulanan,submenu'])->group(function () {
+        // Rekap Bulanan (Gabungan 3 Laporan)
+        Route::get('/admin/lap-rekap-bulanan', [\App\Http\Controllers\Admin\LapRekapBulananController::class, 'index'])->name('lap-rekap.index');
+        Route::get('/admin/lap-rekap-bulanan/show-masuk', [\App\Http\Controllers\Admin\LapRekapBulananController::class, 'showMasuk'])->name('lap-rekap.showMasuk');
+        Route::get('/admin/lap-rekap-bulanan/show-keluar', [\App\Http\Controllers\Admin\LapRekapBulananController::class, 'showKeluar'])->name('lap-rekap.showKeluar');
+        Route::get('/admin/lap-rekap-bulanan/show-stok', [\App\Http\Controllers\Admin\LapRekapBulananController::class, 'showStok'])->name('lap-rekap.showStok');
+        Route::get('/admin/lap-rekap-bulanan/excel', [\App\Http\Controllers\Admin\LapRekapBulananController::class, 'excelRekap'])->name('lap-rekap.excel');
+    });
+
     // Barang Tracking — Owner & Admin Gudang saja (role_id 1 & 2)
     Route::middleware(['checkRoleUser:/barang-tracking,submenu'])->group(function () {
         Route::get('/admin/barang-tracking', [BarangTrackingController::class, 'index'])->name('barang-tracking.index');
@@ -183,8 +194,8 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::middleware(['checkOwnerOnly'])->group(function () {
 
         // Audit Trail
-        #Route::get('/admin/audit', [AuditController::class, 'index'])->name('audit.index');
-        #Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('audit.getaudit');
+        Route::get('/admin/audit', [\App\Http\Controllers\Master\AuditController::class, 'index'])->name('audit.index');
+        Route::get('/admin/audit/show', [\App\Http\Controllers\Master\AuditController::class, 'show'])->name('audit.getaudit');
 
         // Role Management
         Route::resource('/admin/role', \App\Http\Controllers\Master\RoleController::class);
@@ -223,5 +234,43 @@ Route::group(['middleware' => 'userlogin'], function () {
     Route::get('/admin/notifikasi', [\App\Http\Controllers\Admin\NotifikasiController::class, 'getNotifikasi'])->name('notifikasi.get');
     Route::post('/admin/notifikasi/read/{id}', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markRead'])->name('notifikasi.read');
     Route::post('/admin/notifikasi/read-all', [\App\Http\Controllers\Admin\NotifikasiController::class, 'markAllRead'])->name('notifikasi.read-all');
+
+    Route::get('/fix-rbac', function() {
+        $exists = \Illuminate\Support\Facades\DB::table('tbl_submenu')->where('submenu_slug', 'lap-rekap-bulanan')->exists();
+        if (!$exists) {
+            $id = \Illuminate\Support\Facades\DB::table('tbl_submenu')->insertGetId([
+                'menu_id' => '1000000003', 
+                'submenu_judul' => 'Lap. Rekap Bulanan', 
+                'submenu_slug' => 'lap-rekap-bulanan', 
+                'submenu_redirect' => '/lap-rekap-bulanan', 
+                'submenu_sort' => '4', 
+                'created_at' => now(), 
+                'updated_at' => now()
+            ]);
+            \Illuminate\Support\Facades\DB::table('tbl_akses')->insert([
+                ['role_id' => 1, 'submenu_id' => $id, 'akses_type' => 'view', 'created_at' => now(), 'updated_at' => now()],
+                ['role_id' => 2, 'submenu_id' => $id, 'akses_type' => 'view', 'created_at' => now(), 'updated_at' => now()]
+            ]);
+            return "Fix RBAC Berhasil! Lap. Rekap Bulanan sudah ditambahkan ke sistem Hak Akses. Silakan kembali ke aplikasi.";
+        }
+        return "Fix RBAC sudah diterapkan sebelumnya.";
+    });
+
+    Route::get('/fix-db', function() {
+        $msg = "";
+        try {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tbl_barangkeluar DROP INDEX tbl_barangkeluar_bk_kode_unique");
+            $msg .= "Berhasil menghapus constraint unik pada Barang Keluar.<br>";
+        } catch (\Exception $e) {
+            $msg .= "Constraint Barang Keluar sudah terhapus atau tidak ditemukan.<br>";
+        }
+        try {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tbl_barangmasuk DROP INDEX tbl_barangmasuk_bm_kode_unique");
+            $msg .= "Berhasil menghapus constraint unik pada Barang Masuk.<br>";
+        } catch (\Exception $e) {
+            $msg .= "Constraint Barang Masuk sudah terhapus atau tidak ditemukan.<br>";
+        }
+        return $msg . "<br><b>Selesai! Silakan kembali ke aplikasi.</b>";
+    });
 
 });

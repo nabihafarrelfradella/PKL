@@ -27,7 +27,7 @@
                         </div>
                         <div class="form-group">
                             <label for="kondisi" class="form-label">Kondisi Barang <span class="text-danger">*</span></label>
-                            <select name="kondisi" class="form-control">
+                            <select name="kondisi" class="form-control form-select select2" data-bs-placeholder="Pilih Kondisi" style="width: 100%;">
                                 <option value="">-- Pilih --</option>
                                 <option value="Baik">Baik</option>
                                 <option value="Rusak Ringan">Rusak Ringan</option>
@@ -63,6 +63,15 @@
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     var dateTimeString = now.toISOString().slice(0, 16);
     $("input[name='tglkembali']").val(dateTimeString);
+    
+    if ($("select[name='kondisi']").hasClass("select2-hidden-accessible")) {
+        $("select[name='kondisi']").select2("destroy");
+    }
+    $("select[name='kondisi']").select2({
+        dropdownParent: $("#Kmodaldemo8"),
+        width: '100%',
+        minimumResultsForSearch: Infinity
+    });
     }
 
     function checkFormK() {
@@ -131,7 +140,7 @@
         $("#nmbarangK").val('');
         $("input[name='tglkembali']").val('');
         $("input[name='jmlK']").val('');
-        $("select[name='kondisi']").val('');
+        $("select[name='kondisi']").val('').trigger('change');
         setLoadingK(false);
     }
 

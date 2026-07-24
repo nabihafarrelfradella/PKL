@@ -208,6 +208,7 @@
                                 <th width="1%">No</th>
                                 <th>Kode Barang</th>
                                 <th>Nama Barang</th>
+                                <th>Merk</th>
                                 <th>Kode Unik Terpilih</th>
                                 <th width="8%">Jumlah</th>
                                 <th width="1%">Aksi</th>
@@ -215,7 +216,7 @@
                         </thead>
                         <tbody id="batchItemsBody">
                             <tr id="emptyBatchRow">
-                                <td colspan="6" class="text-center text-muted py-3">
+                                <td colspan="7" class="text-center text-muted py-3">
                                     <i class="fe fe-inbox d-block mb-1" style="font-size:24px;"></i>
                                     Belum ada barang. Pilih barang, tentukan SN, dan klik <strong>"Tambah ke Daftar"</strong>.
                                 </td>
@@ -424,8 +425,8 @@
     });
 
     function modalBarang() {
+        $('#modaldemo8').modal('hide');
         $('#modalBarang').modal('show');
-        $('#modaldemo8').addClass('d-none');
         $('input[name="param"]').val('tambah');
         resetValid();
         table2.ajax.reload();
@@ -501,6 +502,14 @@
             var maxFromAttr  = parseInt($(this).attr('data-max')) || 1;
             var maxSel = Math.max(maxFromInput, maxFromAttr);
             var currentCount = ($(this).val() || []).length;
+            
+            let satuan = $("#satuan").val() || "";
+            let isKabel = satuan.toUpperCase().includes('METER');
+            if (isKabel) {
+                // For meter based items, we only need 1 SN (the roll's SN), not `jml` SNs.
+                maxSel = 1; 
+            }
+
             if (currentCount >= maxSel) {
                 e.preventDefault();
                 validasi('Maksimal ' + maxSel + ' SN sesuai jumlah barang keluar', 'warning');
@@ -554,8 +563,8 @@
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("true");
                     let parts = data[0].barang_nama.split(' - ');
-                    $("#nmbarang").val(parts[0]);
-                    $("#merkbarang").val(parts[1] || '-');
+                    $("#nmbarang").val(parts[0] || data[0].barang_nama);
+                    $("#merkbarang").val(data[0].merk_nama || parts[1] || '-');
                     $("#satuan").val(data[0].satuan_id);
                     $("#jenis").val(data[0].tipe_barang);
                     // Set SN dari scan/QR ke Select2
@@ -576,8 +585,8 @@
                                 $("#loaderkd").addClass('d-none');
                                 $("#status").val("true");
                                 let parts2 = resp[0].barang_nama.split(' - ');
-                                $("#nmbarang").val(parts2[0]);
-                                $("#merkbarang").val(parts2[1] || '-');
+                                $("#nmbarang").val(parts2[0] || resp[0].barang_nama);
+                                $("#merkbarang").val(resp[0].merk_nama || parts2[1] || '-');
                                 $("#satuan").val(resp[0].satuan_id);
                                 $("#jenis").val(resp[0].tipe_barang);
                                 $("input[name='kode_barang_unik']").val('');
@@ -737,7 +746,8 @@
     function addToBatch() {
         const status = $("#status").val();
         const kdbarang = $("input[name='kdbarang']").val().trim();
-        const nmbarang = $("#nmbarang").val() + ($("#merkbarang").val() !== '-' && $("#merkbarang").val() !== '' ? ' - ' + $("#merkbarang").val() : '');
+        const nmbarang = $("#nmbarang").val();
+        const merkbarang = $("#merkbarang").val();
         const jml = parseInt($("input[name='jml']").val()) || 0;
         
         var selectedSNs = [];
@@ -763,9 +773,55 @@
             $("input[name='jml']").addClass('is-invalid');
             return;
         }
-        if (hasSNOptions && selectedSNs.length !== jml) {
+        
+        let satuan = $("#satuan").val() || "";
+        let satuanU = satuan.toUpperCase();
+        let isKabel = satuanU.includes('METER') || satuanU === 'M' || satuanU === 'MTR';
+        
+        if (!hasSNOptions) {
+            validasi('Tidak ada Kode Unik yang tersedia untuk barang ini (Stok Habis / Semua terpakai).', 'warning');
+            return;
+        }
+        
+        if (selectedSNs.length === 0) {
+            validasi('Anda harus memilih Kode Unik barang!', 'warning');
+            return;
+        }
+        if (isKabel && selectedSNs.length > 1) {
+            validasi('Untuk kabel/meteran, Anda hanya boleh memilih 1 Kode Unik per baris. Jika ingin potong dari roll berbeda, tambah ke keranjang 2 kali.', 'warning');
+            return;
+        }
+        if (!isKabel && selectedSNs.length !== jml) {
             validasi('Jumlah SN yang terpilih (' + selectedSNs.length + ') harus sama dengan Jumlah Keluar (' + jml + ')!', 'warning');
             return;
+        }
+        
+        // Pengecekan limit sisa stok khusus untuk kabel meteran
+        if (isKabel && selectedSNTexts.length > 0) {
+            let snText = selectedSNTexts[0]; // contoh: "HP-01 - Baik (Sisa: 2 meter)"
+            let match = snText.match(/\(Sisa:\s*([\d\.]+)/i);
+            if (match) {
+                let sisaStok = parseFloat(match[1]);
+                
+                // Cari berapa jumlah yang sudah ada di keranjang untuk kode unik ini
+                let qtyInCart = 0;
+                batchItems.forEach(function(item) {
+                    if (item.sns && item.sns.includes(selectedSNs[0])) {
+                        qtyInCart += item.jumlah;
+                    }
+                });
+                
+                if ((jml + qtyInCart) > sisaStok) {
+                    let sisaBisaDiambil = sisaStok - qtyInCart;
+                    if (qtyInCart > 0) {
+                        validasi('Jumlah keluar (' + jml + ') + di keranjang (' + qtyInCart + ') melebihi sisa stok pada kode unik terpilih (' + sisaStok + ')! Maksimal yg bisa ditambah lagi: ' + sisaBisaDiambil, 'warning');
+                    } else {
+                        validasi('Jumlah keluar (' + jml + ') melebihi sisa stok pada kode unik terpilih (' + sisaStok + ')!', 'warning');
+                    }
+                    $("input[name='jml']").addClass('is-invalid');
+                    return;
+                }
+            }
         }
 
         // Cek apakah barang sudah ada di daftar
@@ -775,15 +831,32 @@
             batchItems[existingIndex].jumlah += jml;
             batchItems[existingIndex].sns = batchItems[existingIndex].sns.concat(selectedSNs);
             batchItems[existingIndex].sn_texts = (batchItems[existingIndex].sn_texts || batchItems[existingIndex].sns.slice(0, batchItems[existingIndex].sns.length - selectedSNs.length)).concat(selectedSNTexts);
+            // Untuk meter: simpan peta jumlah per kode unik
+            if (isKabel) {
+                if (!batchItems[existingIndex].sn_jumlah) batchItems[existingIndex].sn_jumlah = {};
+                selectedSNs.forEach(function(sn) {
+                    batchItems[existingIndex].sn_jumlah[sn] = (batchItems[existingIndex].sn_jumlah[sn] || 0) + jml;
+                });
+            }
         } else {
             // Tambah item baru
-            batchItems.push({
+            let newItem = {
                 kode: kdbarang,
                 nama: nmbarang,
+                merk: merkbarang,
                 jumlah: jml,
                 sns: selectedSNs,
-                sn_texts: selectedSNTexts
-            });
+                sn_texts: selectedSNTexts,
+                isKabel: isKabel
+            };
+            // Untuk meter: simpan peta jumlah per kode unik
+            if (isKabel) {
+                newItem.sn_jumlah = {};
+                selectedSNs.forEach(function(sn) {
+                    newItem.sn_jumlah[sn] = jml;
+                });
+            }
+            batchItems.push(newItem);
         }
 
         renderBatchTable();
@@ -797,7 +870,7 @@
         if (batchItems.length === 0) {
             tbody.html(`
                 <tr id="emptyBatchRow">
-                    <td colspan="6" class="text-center text-muted py-3">
+                    <td colspan="7" class="text-center text-muted py-3">
                         <i class="fe fe-inbox d-block mb-1" style="font-size:24px;"></i>
                         Belum ada barang. Pilih barang, tentukan SN, dan klik <strong>"Tambah ke Daftar"</strong>.
                     </td>
@@ -813,6 +886,9 @@
             if (item.sns && item.sns.length > 0) {
                 snHtml = item.sns.map((sn, sIdx) => {
                     let displaySn = (item.sn_texts && item.sn_texts[sIdx]) ? item.sn_texts[sIdx] : sn;
+                    if (item.isKabel && item.sn_jumlah && item.sn_jumlah[sn]) {
+                        displaySn += ` <strong class="text-success">(Diambil: ${item.sn_jumlah[sn]} meter)</strong>`;
+                    }
                     return `<div class="d-flex align-items-center justify-content-between mb-1">
                                 <div style="min-width: 100px;"><code>${displaySn}</code></div>
                                 <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="removeBatchDetail(${index}, ${sIdx})" title="Hapus SN">
@@ -829,6 +905,7 @@
                     <td class="text-center align-middle">${index + 1}</td>
                     <td class="align-middle"><span class="badge bg-primary-transparent text-primary">${item.kode}</span></td>
                     <td class="align-middle">${item.nama}</td>
+                    <td class="align-middle">${item.merk}</td>
                     <td class="align-middle">${snHtml}</td>
                     <td class="align-middle text-center"><strong>${item.jumlah}</strong></td>
                     <td class="align-middle text-center">
@@ -857,12 +934,21 @@
 
     function removeBatchDetail(itemIndex, snIndex) {
         let item = batchItems[itemIndex];
+        let removedSN = item.sns[snIndex];
+
+        // Hitung berapa meter yang dihapus (untuk barang meter)
+        let removedQty = 1;
+        if (item.isKabel && item.sn_jumlah && item.sn_jumlah[removedSN] !== undefined) {
+            removedQty = item.sn_jumlah[removedSN];
+            delete item.sn_jumlah[removedSN];
+        }
+
         item.sns.splice(snIndex, 1);
         if (item.sn_texts) {
             item.sn_texts.splice(snIndex, 1);
         }
-        item.jumlah -= 1;
-        if (item.jumlah <= 0) {
+        item.jumlah -= removedQty;
+        if (item.jumlah <= 0 || item.sns.length === 0) {
             batchItems.splice(itemIndex, 1);
         }
         renderBatchTable();

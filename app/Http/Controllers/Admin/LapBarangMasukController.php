@@ -23,6 +23,7 @@ class LapBarangMasukController extends Controller
         $query = BarangmasukModel::withTrashed()
             ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
             ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->select([
                 'tbl_barangmasuk.bm_id',
                 'tbl_barangmasuk.bm_kode',
@@ -35,6 +36,7 @@ class LapBarangMasukController extends Controller
                 'tbl_barang.barang_nama',
                 'tbl_barang.satuan_id',
                 'tbl_jenisbarang.jenisbarang_nama',
+                'tbl_merk.merk_nama',
                 'tbl_barangmasuk.deleted_at'
             ]);
 
@@ -59,7 +61,7 @@ class LapBarangMasukController extends Controller
             $query->whereNull('tbl_barangmasuk.deleted_at');
         }
 
-        return $query->orderBy('tbl_barangmasuk.bm_id', 'DESC');
+        return $query->orderBy('tbl_barangmasuk.bm_id', 'ASC');
     }
 
     public function show(Request $request)
@@ -76,7 +78,10 @@ class LapBarangMasukController extends Controller
                     return $row->bm_tanggal ? \Carbon\Carbon::parse($row->bm_tanggal)->translatedFormat('d F Y') : '-';
                 })
                 ->addColumn('barang', function ($row) {
-                    return $row->barang_nama ?? '-';
+                    return (explode(' - ', $row->barang_nama ?? '-')[0]) ?? '-';
+                })
+                ->addColumn('merk_nama', function ($row) {
+                    return $row->merk_nama ?? (explode(' - ', $row->barang_nama ?? '-')[1] ?? '-');
                 })
                 ->addColumn('kode_unik', function ($row) {
                     return $row->kode_barang_unik ?: ($row->bm_kode ?: '-');
@@ -196,7 +201,7 @@ class LapBarangMasukController extends Controller
 
             $parts = explode(' - ', $item->barang_nama ?? '-');
             $nama = $parts[0] ?? '-';
-            $merk = $parts[1] ?? '-';
+            $merk = $item->merk_nama ?? ($parts[1] ?? '-');
 
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $tgl);

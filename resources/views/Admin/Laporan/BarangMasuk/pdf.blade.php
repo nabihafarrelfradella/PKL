@@ -59,7 +59,7 @@
 
                     $parts = explode(' - ', $d->barang_nama ?? '-');
                     $nama = $parts[0] ?? '-';
-                    $merk = $parts[1] ?? '-';
+                    $merk = $d->merk_nama ?? $parts[1] ?? '-';
                     
                     $tgl = $d->jam_masuk ? \Carbon\Carbon::parse($d->jam_masuk)->translatedFormat('d M Y H:i') : ($d->bm_tanggal ? \Carbon\Carbon::parse($d->bm_tanggal)->translatedFormat('d M Y') : '-');
                     $kodeUnik = $d->kode_barang_unik ?: ($d->bm_kode ?: '-');

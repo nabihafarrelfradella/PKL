@@ -733,20 +733,19 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
 
 <!-- MODAL LOGOUT -->
 <div class="modal fade" data-bs-backdrop="static" id="modalLogout">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
         <div class="modal-content modal-content-demo">
-            <form method="GET" action="{{ url('admin/logout') }}" name="myFormH" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body text-center p-4 pb-5">
-                    <button type="reset" aria-label="Close" class="btn-close position-absolute"
-                        data-bs-dismiss="modal"></button>
-                    <br>
-                    <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
-                    <h3 class="mb-5">Yakin logout ?</h3>
-                    <button type="submit" class="btn btn-danger-light pd-x-25">Iya</button>
-                    <button type="reset" data-bs-dismiss="modal" class="btn btn-default pd-x-25">Batal</button>
+            <div class="modal-body text-center p-4 pb-5">
+                <button type="reset" aria-label="Close" class="btn-close position-absolute"
+                    data-bs-dismiss="modal"></button>
+                <br>
+                <i class="icon icon-exclamation fs-70 text-warning lh-1 my-5 d-inline-block"></i>
+                <h3 class="mb-5">Yakin logout ?</h3>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{{ url('admin/logout') }}" class="btn btn-danger-light w-45">Iya</a>
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-default border w-45">Batal</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1028,6 +1027,29 @@ $appreance = AppreanceModel::where('user_id', '=', Session::get('user')->user_id
             }
         }, 310); // Wait slightly longer than 300ms CSS transition
     });
+
+    // â”€â”€ Responsive Logout â”€â”€
+    function confirmLogout() {
+        if (window.innerWidth <= 768) {
+            $('#modalLogout').modal('show');
+        } else {
+            swal({
+                title: "Yakin logout ?",
+                text: "Anda akan keluar dari sesi ini.",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#dc3545",
+                confirmButtonText: "Iya, Logout",
+                cancelButtonText: "Batal",
+                closeOnConfirm: false,
+                showLoaderOnConfirm: true
+            }, function(isConfirm) {
+                if (isConfirm) {
+                    window.location.href = "{{ url('admin/logout') }}";
+                }
+            });
+        }
+    }
 </script>
 
 @include('Master.Layouts.webcam_modal')

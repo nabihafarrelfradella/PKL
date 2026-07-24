@@ -71,6 +71,7 @@ class LoginController extends Controller
 
     public function logout()
     {
+        \App\Helpers\AuditLogHelper::log('Logout', 'Auth', 'User logged out of the system');
         Session::forget('user');
         Session::forget('user_role');
         return redirect('/admin/login');

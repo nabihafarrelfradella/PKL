@@ -174,7 +174,7 @@ $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('cont
 
 function showToast(msg, type) {
     const color = type === 'success' ? '#28a745' : '#dc3545';
-    const icon  = type === 'success' ? 'âœ“' : 'âœ—';
+    const icon  = type === 'success' ? '&#10004;' : '&#10006;';
     const id    = 'toast_' + Date.now();
     const html  = `
         <div id="${id}" class="toast-rbac p-3 mb-2 text-white d-flex align-items-center gap-2"

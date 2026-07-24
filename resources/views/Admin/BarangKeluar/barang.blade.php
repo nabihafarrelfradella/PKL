@@ -37,10 +37,10 @@
         param = $('input[name="param"]').val();
         if (param == 'tambah') {
             $('#modalBarang').modal('hide');
-            $('#modaldemo8').removeClass('d-none');
+            setTimeout(() => { $('#modaldemo8').modal('show'); }, 400);
         } else {
             $('#modalBarang').modal('hide');
-            $('#Umodaldemo8').removeClass('d-none');
+            setTimeout(() => { $('#Umodaldemo8').modal('show'); }, 400);
         }
 
     }
@@ -52,15 +52,28 @@
         
         let rawNama = data.barang_nama.replace(/_/g, ' ');
         let parts = rawNama.split(' - ');
-        $("#nmbarang").val(parts[0]);
-        $("#merkbarang").val(parts[1] || '-');
+        $("#nmbarang").val(parts[0] || data.barang_nama);
+        let merk_val = data.merk_nama ? data.merk_nama.replace(/_/g, ' ') : null;
+        $("#merkbarang").val(merk_val || parts[1] || '-');
         
         $("#satuan").val(data.satuan_nama.replace(/_/g, ' '));
         $("#jenis").val(data.tipe_barang.replace(/_/g, ' '));
+        
+        let satuanStr = (data.satuan_nama || "").toString().toLowerCase().replace(/_/g, ' ');
+        if (satuanStr.includes("meter") || satuanStr === "mtr" || satuanStr === "m") {
+            $("input[name='jml']").removeAttr('readonly');
+            $("input[name='jml']").removeAttr('style');
+            $("input[name='jml']").removeAttr('title');
+        } else {
+            $("input[name='jml']").val('1');
+            $("input[name='jml']").attr('readonly', true);
+            $("input[name='jml']").css({'background-color': '#f3f6f9', 'cursor': 'not-allowed'});
+            $("input[name='jml']").attr('title', 'Jumlah dikunci 1 karena wajib scan Serial Number per item');
+        }
         setSNSelect2('', '');
         fetchAvailableSNs(data.barang_kode);
-        $('#modaldemo8').removeClass('d-none');
         $('#modalBarang').modal('hide');
+        setTimeout(() => { $('#modaldemo8').modal('show'); }, 400);
     }
 
     function pilihBarangU(data) {
@@ -69,14 +82,27 @@
         $("input[name='kdbarangU']").val(data.barang_kode);
         let rawNamaU = data.barang_nama.replace(/_/g, ' ');
         let partsU = rawNamaU.split(' - ');
-        $("#nmbarangU").val(partsU[0]);
-        $("#merkbarangU").val(partsU[1] || '-');
+        $("#nmbarangU").val(partsU[0] || data.barang_nama);
+        let merk_valU = data.merk_nama ? data.merk_nama.replace(/_/g, ' ') : null;
+        $("#merkbarangU").val(merk_valU || partsU[1] || '-');
         $("#satuanU").val(data.satuan_nama.replace(/_/g, ' '));
         $("#jenisU").val(data.tipe_barang.replace(/_/g, ' '));
+        
+        let satuanStrU = (data.satuan_nama || "").toString().toLowerCase().replace(/_/g, ' ');
+        if (satuanStrU.includes("meter") || satuanStrU === "mtr" || satuanStrU === "m") {
+            $("input[name='jmlU']").removeAttr('readonly');
+            $("input[name='jmlU']").removeAttr('style');
+            $("input[name='jmlU']").removeAttr('title');
+        } else {
+            $("input[name='jmlU']").val('1');
+            $("input[name='jmlU']").attr('readonly', true);
+            $("input[name='jmlU']").css({'background-color': '#f3f6f9', 'cursor': 'not-allowed'});
+            $("input[name='jmlU']").attr('title', 'Jumlah dikunci 1 karena wajib scan Serial Number per item');
+        }
         $("input[name='serial_numberU']").val('');
         fetchAvailableSNsU(data.barang_kode);
-        $('#Umodaldemo8').removeClass('d-none');
         $('#modalBarang').modal('hide');
+        setTimeout(() => { $('#Umodaldemo8').modal('show'); }, 400);
     }
 
     var table2;

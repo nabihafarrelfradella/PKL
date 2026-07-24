@@ -25,6 +25,7 @@ class BarangTrackingController extends Controller
             $query = DB::table('tbl_barangmasuk')
                 ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
                 ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
+                ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
                 // Join ke subquery untuk mendapatkan transaksi terakhir saja beserta nama teknisi aslinya
                 ->leftJoin(DB::raw('(SELECT tbl_barangkeluar.*, tbl_user.user_nmlengkap as user_nmlengkap_user FROM tbl_barangkeluar LEFT JOIN tbl_user ON tbl_user.teknisi_sn = tbl_barangkeluar.teknisi WHERE tbl_barangkeluar.bk_id IN (SELECT MAX(bk_id) FROM tbl_barangkeluar GROUP BY kode_barang_unik)) as tbl_barangkeluar'), function($join) {
                     $join->on('tbl_barangkeluar.kode_barang_unik', '=', 'tbl_barangmasuk.kode_barang_unik');
@@ -35,6 +36,7 @@ class BarangTrackingController extends Controller
                     'tbl_barang.satuan_id',
                     'tbl_barang.barang_stok',
                     'tbl_jenisbarang.jenisbarang_nama',
+                    'tbl_merk.merk_nama',
                     'tbl_barangkeluar.jam_keluar as tgl_keluar_jam',
                     'tbl_barangkeluar.bk_tanggal as tgl_keluar_tgl',
                     'tbl_barangkeluar.teknisi as teknisi_sn_keluar',
@@ -44,9 +46,14 @@ class BarangTrackingController extends Controller
                     'tbl_barangkeluar.keterangan as ket_keluar',
                     'tbl_barangkeluar.bk_status',
                     'tbl_barangkeluar.bk_tgl_kembali',
-                    DB::raw('COALESCE((SELECT bk_kondisi_kembali FROM tbl_barangkeluar AS tbk WHERE tbk.kode_barang_unik = tbl_barangmasuk.kode_barang_unik AND tbk.bk_kondisi_kembali IS NOT NULL ORDER BY tbk.bk_id DESC LIMIT 1), "Baik") AS kondisi_terakhir')
+                    DB::raw('COALESCE((SELECT bk_kondisi_kembali FROM tbl_barangkeluar AS tbk WHERE tbk.kode_barang_unik = tbl_barangmasuk.kode_barang_unik AND tbk.bk_kondisi_kembali IS NOT NULL ORDER BY tbk.bk_id DESC LIMIT 1), "Baik") AS kondisi_terakhir'),
+                    DB::raw('GREATEST(
+                        COALESCE(tbl_barangkeluar.bk_tgl_kembali, "1970-01-01"),
+                        COALESCE(tbl_barangkeluar.jam_keluar, tbl_barangkeluar.bk_tanggal, "1970-01-01"),
+                        COALESCE(tbl_barangmasuk.jam_masuk, tbl_barangmasuk.bm_tanggal, "1970-01-01")
+                    ) as activity_date')
                 )
-                ->orderBy('tbl_barangmasuk.bm_id', 'DESC');
+                ->orderBy('activity_date', 'DESC');
 
             // Logika Filter
             if ($request->filter_serial) {
@@ -139,6 +146,12 @@ class BarangTrackingController extends Controller
                     }
                     return '-';
                 })
+                ->addColumn('barang', function ($row) {
+                    return (explode(' - ', $row->barang_nama ?? '-')[0]) ?? '-';
+                })
+                ->addColumn('merk_nama', function ($row) {
+                    return $row->merk_nama ?? (explode(' - ', $row->barang_nama ?? '-')[1] ?? '-');
+                })
                 ->addColumn('teknisi_ket', function ($row) {
                     $info = [];
                     $nama = $row->nama_teknisi_keluar ?? $row->user_nmlengkap_user;
@@ -206,6 +219,7 @@ class BarangTrackingController extends Controller
     {
         $query = DB::table('tbl_barangmasuk')
             ->leftJoin('tbl_barang', 'tbl_barang.barang_kode', '=', 'tbl_barangmasuk.barang_kode')
+            ->leftJoin('tbl_merk', 'tbl_merk.merk_id', '=', 'tbl_barang.merk_id')
             ->leftJoin('tbl_jenisbarang', 'tbl_jenisbarang.jenisbarang_id', '=', 'tbl_barang.jenisbarang_id')
             ->leftJoin(DB::raw('(SELECT tbl_barangkeluar.*, tbl_user.user_nmlengkap as user_nmlengkap_user FROM tbl_barangkeluar LEFT JOIN tbl_user ON tbl_user.teknisi_sn = tbl_barangkeluar.teknisi WHERE tbl_barangkeluar.bk_id IN (SELECT MAX(bk_id) FROM tbl_barangkeluar GROUP BY kode_barang_unik)) as tbl_barangkeluar'), function($join) {
                 $join->on('tbl_barangkeluar.kode_barang_unik', '=', 'tbl_barangmasuk.kode_barang_unik');
@@ -215,6 +229,7 @@ class BarangTrackingController extends Controller
                 'tbl_barang.barang_nama',
                 'tbl_barang.satuan_id',
                 'tbl_barang.barang_stok',
+                'tbl_merk.merk_nama',
                 'tbl_jenisbarang.jenisbarang_nama',
                 'tbl_barangkeluar.jam_keluar as tgl_keluar_jam',
                 'tbl_barangkeluar.bk_tanggal as tgl_keluar_tgl',
@@ -225,9 +240,14 @@ class BarangTrackingController extends Controller
                 'tbl_barangkeluar.keterangan as ket_keluar',
                 'tbl_barangkeluar.bk_status',
                 'tbl_barangkeluar.bk_tgl_kembali',
-                DB::raw('COALESCE((SELECT bk_kondisi_kembali FROM tbl_barangkeluar AS tbk WHERE tbk.kode_barang_unik = tbl_barangmasuk.kode_barang_unik AND tbk.bk_kondisi_kembali IS NOT NULL ORDER BY tbk.bk_id DESC LIMIT 1), "Baik") AS kondisi_terakhir')
+                DB::raw('COALESCE((SELECT bk_kondisi_kembali FROM tbl_barangkeluar AS tbk WHERE tbk.kode_barang_unik = tbl_barangmasuk.kode_barang_unik AND tbk.bk_kondisi_kembali IS NOT NULL ORDER BY tbk.bk_id DESC LIMIT 1), "Baik") AS kondisi_terakhir'),
+                DB::raw('GREATEST(
+                    COALESCE(tbl_barangkeluar.bk_tgl_kembali, "1970-01-01"),
+                    COALESCE(tbl_barangkeluar.jam_keluar, tbl_barangkeluar.bk_tanggal, "1970-01-01"),
+                    COALESCE(tbl_barangmasuk.jam_masuk, tbl_barangmasuk.bm_tanggal, "1970-01-01")
+                ) as activity_date')
             )
-            ->orderBy('tbl_barangmasuk.bm_id', 'DESC');
+            ->orderBy('activity_date', 'DESC');
 
         if ($request->filter_serial) {
             $query->where('tbl_barangmasuk.serial_number', 'LIKE', '%' . $request->filter_serial . '%');
@@ -395,7 +415,7 @@ class BarangTrackingController extends Controller
             // Split Nama dan Merk
             $parts = explode(' - ', $item->barang_nama ?? '-');
             $nama = $parts[0] ?? '-';
-            $merk = $parts[1] ?? '-';
+            $merk = $item->merk_nama ?? ($parts[1] ?? '-');
 
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $nama);

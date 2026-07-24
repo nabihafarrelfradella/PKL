@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-8">
+                            <div class="col-md-5">
                                 <div class="form-group">
                                     <label>Nama Barang</label>
                                     <input type="text" class="form-control" id="nmbarang" readonly>
@@ -48,8 +48,14 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="jml" class="form-label">Jumlah <span class="text-danger">*</span></label>
-                                    <input type="text" name="jml" value="1" class="form-control" readonly style="background-color: #f3f6f9; cursor: not-allowed;" title="Jumlah tidak bisa diubah" placeholder="">
+                                    <label>Merk</label>
+                                    <input type="text" class="form-control" id="merkbarang" readonly placeholder="-">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Jumlah <span class="text-danger">*</span></label>
+                                    <input type="number" name="jml" value="1" min="1" class="form-control" readonly style="background-color: #f3f6f9; cursor: not-allowed;" title="Pilih barang terlebih dahulu">
                                 </div>
                             </div>
                         </div>
@@ -96,6 +102,7 @@
                                 <th width="1%">No</th>
                                 <th>Kode Barang</th>
                                 <th>Nama Barang</th>
+                                <th>Merk</th>
                                 <th>Satuan</th>
                                 <th>Jenis</th>
                                 <th>Serial Number</th>
@@ -105,7 +112,7 @@
                         </thead>
                         <tbody id="batchItemsBody">
                             <tr id="emptyBatchRow">
-                                <td colspan="7" class="text-center text-muted py-3">
+                                <td colspan="9" class="text-center text-muted py-3">
                                     <i class="fe fe-inbox d-block mb-1" style="font-size:24px;"></i>
                                     Belum ada barang. Pilih barang dan klik <strong>"Tambah ke Daftar"</strong>.
                                 </td>
@@ -160,8 +167,8 @@
     });
 
     function modalBarang() {
+        $('#modaldemo8').modal('hide');
         $('#modalBarang').modal('show');
-        $('#modaldemo8').addClass('d-none');
         $('input[name="param"]').val('tambah');
         resetValid();
         table2.ajax.reload();
@@ -184,15 +191,37 @@
                 if (data.length > 0) {
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("true");
-                    $("#nmbarang").val(data[0].barang_nama);
+                    let parts = data[0].barang_nama.split(' - ');
+                    $("#nmbarang").val(parts[0] || data[0].barang_nama);
+                    $("#merkbarang").val(data[0].merk_nama || parts[1] || '-');
                     $("#satuan").val(data[0].satuan_id); // Mengambil nama satuan (sesuai field di DB)
                     $("#jenis").val(data[0].tipe_barang);
+                    
+                    // Kunci field jumlah jika bukan meter atau roll
+                    let satuan = (data[0].satuan_id || "").toString().toLowerCase().trim();
+                    if (satuan.includes("meter") || satuan.includes("mtr") || satuan === "m" || satuan.includes("roll")) {
+                        $("input[name='jml']").removeAttr('readonly');
+                        $("input[name='jml']").removeAttr('style');
+                        $("input[name='jml']").removeAttr('title');
+                    } else {
+                        $("input[name='jml']").val('1');
+                        $("input[name='jml']").attr('readonly', true);
+                        $("input[name='jml']").css({'background-color': '#f3f6f9', 'cursor': 'not-allowed'});
+                        $("input[name='jml']").attr('title', 'Jumlah dikunci 1 karena wajib scan Serial Number per item');
+                    }
                 } else {
                     $("#loaderkd").addClass('d-none');
                     $("#status").val("false");
                     $("#nmbarang").val('');
+                    $("#merkbarang").val('');
                     $("#satuan").val('');
                     $("#jenis").val('');
+                    
+                    // Reset kunci jumlah
+                    $("input[name='jml']").val('1');
+                    $("input[name='jml']").attr('readonly', true);
+                    $("input[name='jml']").css({'background-color': '#f3f6f9', 'cursor': 'not-allowed'});
+                    $("input[name='jml']").attr('title', 'Pilih barang terlebih dahulu');
                 }
             }
         });
@@ -203,6 +232,7 @@
         const status = $("#status").val();
         const kdbarang = $("input[name='kdbarang']").val().trim();
         const nmbarang = $("#nmbarang").val();
+        const merkbarang = $("#merkbarang").val();
         const satuan = $("#satuan").val();
         const jenis = $("#jenis").val();
         const sn = $("input[name='serial_number']").val().trim();
@@ -241,6 +271,7 @@
             batchItems.push({
                 kode: kdbarang,
                 nama: nmbarang,
+                merk: merkbarang,
                 satuan: satuan,
                 jenis: jenis,
                 totalJumlah: jml,
@@ -262,7 +293,7 @@
         if (batchItems.length === 0) {
             tbody.html(`
                 <tr id="emptyBatchRow">
-                    <td colspan="7" class="text-center text-muted py-3">
+                    <td colspan="9" class="text-center text-muted py-3">
                         <i class="fe fe-inbox d-block mb-1" style="font-size:24px;"></i>
                         Belum ada barang. Pilih barang dan klik <strong>"Tambah ke Daftar"</strong>.
                     </td>
@@ -294,6 +325,7 @@
                     <td class="text-center align-middle">${index + 1}</td>
                     <td class="align-middle"><code>${item.kode}</code></td>
                     <td class="align-middle">${item.nama}</td>
+                    <td class="align-middle">${item.merk}</td>
                     <td class="align-middle">${item.satuan}</td>
                     <td class="align-middle">${item.jenis}</td>
                     <td class="align-middle">${snHtml}</td>
@@ -348,7 +380,15 @@
 
     // â”€â”€ Clear form input barang (tanpa reset tanggal & daftar) â”€â”€
     function clearItemInput() {
-        $("input[name='jml']").val('1');
+        let satuan = ($("#satuan").val() || "").toString().toLowerCase().trim();
+        if (satuan.includes("meter") || satuan.includes("mtr") || satuan === "m" || satuan.includes("roll")) {
+            $("input[name='jml']").val('1').removeAttr('readonly').removeAttr('style').removeAttr('title');
+        } else {
+            $("input[name='jml']").val('1').prop('readonly', true).css({
+                'background-color': '#f3f6f9',
+                'cursor': 'not-allowed'
+            }).attr('title', 'Jumlah dikunci 1 karena wajib scan Serial Number per item');
+        }
         $("input[name='serial_number']").val('');
         resetValid();
         // Focus kembali ke field serial number agar cepat menginput SN berikutnya
@@ -435,6 +475,9 @@
         $("input[name='kdbarang']").val('');
         $("input[name='serial_number']").val('');
         $("input[name='jml']").val('1');
+        $("input[name='jml']").attr('readonly', true);
+        $("input[name='jml']").css({'background-color': '#f3f6f9', 'cursor': 'not-allowed'});
+        $("input[name='jml']").attr('title', 'Pilih barang terlebih dahulu');
         $("#nmbarang").val('');
         $("#satuan").val('');
         $("#jenis").val('');

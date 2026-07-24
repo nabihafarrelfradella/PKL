@@ -69,7 +69,7 @@
                 @php
                     $parts = explode(' - ', $d->barang_nama ?? '-');
                     $nama = $parts[0] ?? '-';
-                    $merk = $parts[1] ?? '-';
+                    $merk = $d->merk_nama ?? $parts[1] ?? '-';
                 @endphp
                 <td>{{$d->bm_kode}}</td>
                 <td>{{$nama}}</td>

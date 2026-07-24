@@ -150,6 +150,7 @@
 @include('Admin.BarangKeluar.hapus')
 @include('Admin.BarangKeluar.barang')
 @include('Admin.BarangKeluar.kembali')
+@include('Admin.BarangKeluar.batch_kembali')
 
 <script>
     function generateID() {
@@ -170,15 +171,10 @@
         $("input[name='teknisiU']").val(data.teknisi);
         $("input[name='jmlU']").val(data.bk_jumlah);
         
-        // Show/hide select2 wrapper dynamically depending on serial number usage
-        if (data.serial_number && data.serial_number !== '-') {
-            $("#sn_wrapperU").show();
-            $("#serial_number_inputU").hide().val('');
-        } else {
-            $("#sn_wrapperU").hide();
-            $("#serial_number_inputU").show().val('-');
-        }
-
+        // Async fill satuan/jenis and SNs
+        getbarangbyidU(data.barang_kode);
+        fetchAvailableSNsU(data.barang_kode, data.serial_number, data.kode_barang_unik);
+        
         $("input[name='keteranganU']").val(data.keterangan);
         $("input[name='customerU']").val(data.bk_tujuan || '');
         $("input[name='lokasiU']").val(data.bk_lokasi || '');
@@ -188,9 +184,6 @@
             $("#nmbarangU").val(data.barang_nama);
             $("#statusU").val("true");
         }
-        // Async fill satuan/jenis
-        getbarangbyidU(data.barang_kode);
-        fetchAvailableSNsU(data.barang_kode, data.serial_number, data.kode_barang_unik);
         if (data.teknisi) {
             if (typeof getTeknisiInfoU === 'function') {
                 getTeknisiInfoU(data.teknisi);
@@ -213,11 +206,31 @@
                 
                 var displayKBU = (currentKBU && currentKBU !== '-') ? currentKBU : currentSN;
                 
-                if (displayKBU && displayKBU !== '-') {
-                    var hasCurrent = data.some(item => item.serial_number === displayKBU || item.kode_barang_unik === displayKBU);
-                    if (!hasCurrent) {
-                        list.append(`<option value="${displayKBU}">${displayKBU}</option>`);
+                if (displayKBU && displayKBU !== '-' && typeof displayKBU === 'string') {
+                    // hapus tag HTML jika ada
+                    displayKBU = displayKBU.replace(/<[^>]*>?/gm, '');
+                    if (displayKBU !== '-' && displayKBU !== 'Tanpa SN') {
+                        var hasCurrent = data.some(item => item.serial_number === displayKBU || item.kode_barang_unik === displayKBU);
+                        if (!hasCurrent) {
+                            list.append(`<option value="${displayKBU}">${displayKBU}</option>`);
+                        }
                     }
+                }
+                
+                if (data.length > 0 || (displayKBU && displayKBU !== '-' && displayKBU !== 'Tanpa SN')) {
+                    $("#sn_wrapperU").show();
+                    $("#serial_number_inputU").hide().val('');
+                    
+                    if ($("#sn_listU").hasClass("select2-hidden-accessible")) {
+                        $("#sn_listU").select2("destroy");
+                    }
+                    $("#sn_listU").select2({
+                        dropdownParent: $("#Umodaldemo8"),
+                        width: '100%'
+                    });
+                } else {
+                    $("#sn_wrapperU").hide();
+                    $("#serial_number_inputU").show().val('-');
                 }
                 
                 data.forEach(function(item) {
@@ -323,11 +336,10 @@
             return '<div class="child-row-table"><p class="text-muted mb-0 py-2 text-center">Tidak ada data Barang/SN.</p></div>';
         }
         let html = '<div class="child-row-table"><table>';
-        html += '<thead><tr><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th>Status</th><th width="10%">Action</th></tr></thead><tbody>';
+        html += '<thead><tr><th width="1%">#</th><th>Kode Barang</th><th>Nama Barang</th><th>Merk</th><th>Serial Number</th><th>Kode Unik</th><th>Jumlah</th><th>Satuan</th><th>Status</th><th width="10%">Action</th></tr></thead><tbody>';
         data.forEach(function(row, i) {
-            let parts = (row.barang_nama || '-').split(' - ');
-            let nama = parts[0];
-            let merk = parts[1] || '-';
+            let nama = row.barang_nama || '-';
+            let merk = row.merk_nama || '-';
             html += '<tr>';
             html += '<td class="text-center">' + (i + 1) + '</td>';
             html += '<td><span class="badge bg-secondary-light text-secondary">' + (row.barang_kode || '-') + '</span></td>';
@@ -335,6 +347,8 @@
             html += '<td>' + merk + '</td>';
             html += '<td><code>' + (row.serial_number || '-') + '</code></td>';
             html += '<td><span class="badge bg-info-light text-info">' + (row.kode_barang_unik || '-') + '</span></td>';
+            html += '<td class="text-center font-weight-bold">' + (row.bk_jumlah || '-') + '</td>';
+            html += '<td>' + (row.satuan_id || '-') + '</td>';
             html += '<td>' + (row.status || '-') + '</td>';
             html += '<td class="text-center">' + (row.action || '-') + '</td>';
             html += '</tr>';
@@ -449,7 +463,9 @@
             showCancelButton: true,
             confirmButtonColor: "#28a745",
             confirmButtonText: "Ya, Setujui!",
-            cancelButtonText: "Batal"
+            cancelButtonText: "Batal",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.post(`/admin/barang-keluar/terima_pinjam/${id}`, function(res) {
@@ -470,7 +486,9 @@
             showCancelButton: true,
             confirmButtonColor: "#dc3545",
             confirmButtonText: "Ya, Tolak!",
-            cancelButtonText: "Batal"
+            cancelButtonText: "Batal",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.post(`/admin/barang-keluar/tolak_pinjam/${id}`, function(res) {
@@ -491,7 +509,9 @@
             showCancelButton: true,
             confirmButtonColor: "#28a745",
             confirmButtonText: "Ya, Setujui!",
-            cancelButtonText: "Batal"
+            cancelButtonText: "Batal",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.post(`/admin/barang-keluar/terima_kembali/${id}`, function(res) {
@@ -512,7 +532,9 @@
             showCancelButton: true,
             confirmButtonColor: "#dc3545",
             confirmButtonText: "Ya, Tolak!",
-            cancelButtonText: "Batal"
+            cancelButtonText: "Batal",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.post(`/admin/barang-keluar/tolak_kembali/${id}`, function(res) {
@@ -533,7 +555,9 @@
             showCancelButton: true,
             confirmButtonColor: "#dc3545",
             confirmButtonText: "Ya, Hapus Semua!",
-            cancelButtonText: "Batal"
+            cancelButtonText: "Batal",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.ajax({
@@ -551,29 +575,160 @@
         });
     }
 
-    function batchKembaliPerBK(bkKode) {
+    function batalPinjam(id) {
         swal({
-            title: "Batch Pengembalian?",
-            text: "Semua barang pada transaksi " + bkKode + " akan ditandai sebagai 'Selesai' (kembali). Lanjutkan?",
-            type: "info",
+            title: "Batalkan Peminjaman?",
+            text: "Barang ini akan dikembalikan ke stok gudang tanpa dicatat sebagai barang keluar (digunakan jika barang cadangan tidak terpakai).",
+            type: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#28a745",
-            confirmButtonText: "Ya, Kembalikan Semua!",
-            cancelButtonText: "Batal"
+            confirmButtonColor: "#f1c40f",
+            confirmButtonText: "Ya, Batalkan!",
+            cancelButtonText: "Tidak",
+            closeOnConfirm: false,
+            showLoaderOnConfirm: true
         }, function(isConfirm) {
             if (isConfirm) {
                 $.ajax({
-                    url: "{{ url('admin/barang-keluar/batch-kembali') }}/" + encodeURIComponent(bkKode),
                     type: "POST",
+                    url: "{{ url('admin/barang-keluar/batal') }}/" + id,
                     data: { _token: "{{ csrf_token() }}" },
-                    success: function(res) {
-                        swal("Berhasil!", res.success || "Semua barang berhasil dikembalikan.", "success");
+                    success: function(data) {
+                        swal("Berhasil!", "Peminjaman barang berhasil dibatalkan.", "success");
                         table.ajax.reload(null, false);
                     },
-                    error: function(err) {
-                        swal("Gagal!", err.responseJSON?.error || "Terjadi kesalahan", "error");
+                    error: function(data) {
+                        swal("Gagal!", "Gagal membatalkan peminjaman.", "error");
                     }
                 });
+            }
+        });
+    }
+
+    function batchKembaliPerBK(bkKode) {
+        $("input[name='batchBkKode']").val(bkKode);
+        $("#batchBkKodeTitle").text(bkKode);
+        
+        // Auto-populate current date and time
+        var now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        var dateTimeString = now.toISOString().slice(0, 16);
+        $("#batchTglkembali").val(dateTimeString);
+        
+        // Reset table body
+        $("#batchItemsTableBody").html('<tr><td colspan="4" class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>');
+        $("#checkAllBatch").prop("checked", true);
+        
+        $('#BatchKmodaldemo8').modal('show');
+        
+        $.ajax({
+            url: "{{ url('admin/barang-keluar/unreturned-items') }}/" + encodeURIComponent(bkKode),
+            type: "GET",
+            dataType: 'json',
+            success: function(data) {
+                var tbody = $("#batchItemsTableBody");
+                tbody.empty();
+                
+                if(data.length === 0) {
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted">Semua barang sudah dikembalikan.</td></tr>');
+                    return;
+                }
+                
+                data.forEach(function(item) {
+                    var kbuStr = (item.kode_barang_unik && item.kode_barang_unik !== '-') ? item.kode_barang_unik : '-';
+                    var snStr = (item.serial_number && item.serial_number !== '-') ? '( ' + item.serial_number + ' )' : '';
+                    var snHtml = kbuStr;
+                    if (kbuStr !== '-' && snStr !== '') {
+                        snHtml = kbuStr + '<br><small class="text-muted">' + snStr + '</small>';
+                    } else if (kbuStr === '-' && snStr !== '') {
+                        snHtml = snStr;
+                    }
+                    
+                    var row = `
+                        <tr>
+                            <td class="text-center align-middle">
+                                <input type="checkbox" class="batch-item-checkbox" value="${item.bk_id}" checked onchange="checkBatchSelection()">
+                            </td>
+                            <td class="align-middle">${item.barang_nama}</td>
+                            <td class="align-middle">${snHtml}</td>
+                            <td class="text-center align-middle">${item.bk_jumlah}</td>
+                            <td class="align-middle">
+                                <select class="form-select form-control select2 batch-kondisi-select" data-id="${item.bk_id}">
+                                    <option value="Baik">Baik</option>
+                                    <option value="Rusak Ringan">Rusak Ringan</option>
+                                    <option value="Rusak Berat">Rusak Berat</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+                
+                // Initialize select2 for dynamically added dropdowns
+                $('.batch-kondisi-select').select2({
+                    dropdownParent: $("#BatchKmodaldemo8"),
+                    width: '100%',
+                    minimumResultsForSearch: Infinity
+                });
+            },
+            error: function(err) {
+                $("#batchItemsTableBody").html('<tr><td colspan="5" class="text-center text-danger">Gagal memuat data barang.</td></tr>');
+            }
+        });
+    }
+    
+    function toggleAllBatch(source) {
+        $(".batch-item-checkbox").prop('checked', source.checked);
+    }
+    
+    function checkBatchSelection() {
+        var allChecked = $(".batch-item-checkbox").length === $(".batch-item-checkbox:checked").length;
+        $("#checkAllBatch").prop('checked', allChecked);
+    }
+    
+    function submitBatchK() {
+        var bkKode = $("input[name='batchBkKode']").val();
+        var tgl = $("#batchTglkembali").val();
+        var itemsData = {};
+        
+        $(".batch-item-checkbox:checked").each(function() {
+            var id = $(this).val();
+            var kondisi = $('.batch-kondisi-select[data-id="' + id + '"]').val() || 'Baik';
+            itemsData[id] = kondisi;
+        });
+        
+        if (Object.keys(itemsData).length === 0) {
+            validasi('Pilih minimal satu barang untuk dikembalikan!', 'warning');
+            return;
+        }
+        if (tgl === "") {
+            validasi('Tanggal Kembali wajib di isi!', 'warning');
+            return;
+        }
+
+        $("#btnSimpanBatchK").addClass('d-none');
+        $("#btnLoaderBatchK").removeClass('d-none');
+
+        $.ajax({
+            url: "{{ url('admin/barang-keluar/batch-kembali') }}/" + encodeURIComponent(bkKode),
+            type: "POST",
+            data: { 
+                _token: "{{ csrf_token() }}",
+                items_data: itemsData,
+                tglkembali: tgl
+            },
+            success: function(res) {
+                $("#btnLoaderBatchK").addClass('d-none');
+                $("#btnSimpanBatchK").removeClass('d-none');
+                
+                swal("Berhasil!", res.success || "Barang berhasil dikembalikan.", "success");
+                $('#BatchKmodaldemo8').modal('hide');
+                table.ajax.reload(null, false);
+            },
+            error: function(err) {
+                $("#btnLoaderBatchK").addClass('d-none');
+                $("#btnSimpanBatchK").removeClass('d-none');
+                
+                swal("Gagal!", err.responseJSON?.error || "Terjadi kesalahan", "error");
             }
         });
     }

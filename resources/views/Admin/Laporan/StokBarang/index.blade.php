@@ -17,8 +17,42 @@
                 <h3 class="card-title">Data</h3>
             </div>
             <div class="card-body">
+                <style>
+                    /* ── Mobile Responsive: Laporan Stok Barang ─────── */
+                    .lap-table-wrap {
+                        width: 100%;
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    .lap-table-wrap table {
+                        min-width: 700px;
+                    }
+                    /* Pastikan Show entries & tombol selalu 1 baris */
+                    .lap-control-bar {
+                        flex-wrap: nowrap !important;
+                        align-items: center !important;
+                    }
+                    @media (max-width: 767px) {
+                        .lap-filter-row > [class*="col-6"] {
+                            flex: 0 0 50% !important;
+                            max-width: 50% !important;
+                        }
+                        .lap-filter-row .col-12 {
+                            flex: 0 0 100% !important;
+                            max-width: 100% !important;
+                        }
+                        .dataTables_paginate .paginate_button {
+                            padding: 4px 8px !important;
+                            font-size: 0.8rem !important;
+                        }
+                        .card-body { padding: 12px !important; }
+                    }
+                    @media (max-width: 420px) {
+                        .card-body { padding: 10px !important; }
+                    }
+                </style>
                 <!-- FILTER -->
-                <div class="row row-sm mb-4 g-2">
+                <div class="row row-sm mb-4 g-2 lap-filter-row">
                     <div class="col-6 col-md-2">
                         <label class="form-label mb-1 small text-muted">Nama Barang</label>
                         <input type="text" id="filter_nama" class="form-control form-control-sm" placeholder="Cari nama...">
@@ -48,7 +82,9 @@
                         <label class="form-label mb-1 small text-muted">Sampai Tanggal</label>
                         <input type="date" name="tglakhir" id="tglakhir" class="form-control form-control-sm">
                     </div>
-                    <div class="col-12 d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2">
+                    
+                    <!-- Control Row: Show entries & Action Buttons -->
+                    <div class="col-12 d-flex flex-wrap align-items-center justify-content-between mt-2 gap-2 lap-control-bar">
                         <div class="d-flex align-items-center flex-shrink-0">
                             <span class="me-2 text-muted small">Show</span>
                             <select id="custom-length" class="form-select form-select-sm w-auto d-inline-block">
@@ -61,15 +97,24 @@
                             </select>
                             <span class="ms-2 text-muted small">entries</span>
                         </div>
+
                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                            <button class="btn btn-success-light btn-sm" onclick="filter()" title="Filter"><i class="fe fe-filter"></i><span class="d-none d-md-inline ms-1">Filter</span></button>
-                            <button class="btn btn-secondary-light btn-sm" onclick="reset()" title="Reset"><i class="fe fe-refresh-ccw"></i><span class="d-none d-md-inline ms-1">Reset</span></button>
-                            <button class="btn btn-success-light btn-sm" onclick="exportExcel()" title="Export Excel"><i class="fe fe-file-text"></i><span class="d-none d-md-inline ms-1">Excel</span></button>
-                            <button class="btn btn-primary-light btn-sm" onclick="print()" title="Print"><i class="fe fe-printer"></i><span class="d-none d-md-inline ms-1">Print</span></button>
+                            <button class="btn btn-success-light btn-sm" onclick="filter()" title="Filter">
+                                <i class="fe fe-filter"></i><span class="d-none d-md-inline ms-1">Filter</span>
+                            </button>
+                            <button class="btn btn-secondary-light btn-sm" onclick="reset()" title="Reset">
+                                <i class="fe fe-refresh-ccw"></i><span class="d-none d-md-inline ms-1">Reset</span>
+                            </button>
+                            <button class="btn btn-success-light btn-sm" onclick="exportExcel()" title="Export Excel">
+                                <i class="fe fe-file-text"></i><span class="d-none d-md-inline ms-1">Excel</span>
+                            </button>
+                            <button class="btn btn-primary-light btn-sm" onclick="print()" title="Print">
+                                <i class="fe fe-printer"></i><span class="d-none d-md-inline ms-1">Print</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="w-100">
+                <div class="lap-table-wrap">
                     <table id="table-1" class="table table-bordered text-nowrap border-bottom dataTable no-footer dtr-inline collapsed">
                         <thead>
                             <tr>
@@ -79,7 +124,6 @@
                                 <th class="border-bottom-0">Merk</th>
                                 <th class="border-bottom-0">Jenis</th>
                                 <th class="border-bottom-0">Satuan</th>
-                                <th class="border-bottom-0">Stok Awal</th>
                                 <th class="border-bottom-0">Jumlah Masuk</th>
                                 <th class="border-bottom-0">Jumlah Keluar</th>
                                 <th class="border-bottom-0">Total Stok</th>
@@ -149,18 +193,16 @@
                     }
                 },
                 { 
-                    data: 'barang_nama', 
-                    name: 'barang_nama',
+                    data: 'merk_nama', 
+                    name: 'merk_nama',
                     orderable: false,
                     searchable: false,
                     render: function(data) {
-                        let parts = (data || '-').split(' - ');
-                        return parts[1] || '-';
+                        return data || '-';
                     }
                 },
                 { data: 'jenis', name: 'tbl_jenisbarang.jenisbarang_nama' },
                 { data: 'satuan', name: 'tbl_barang.satuan_id' },
-                { data: 'stokawal', name: 'barang_stok' },
                 { data: 'jmlmasuk', name: 'jmlmasuk', orderable: false },
                 { data: 'jmlkeluar', name: 'jmlkeluar', searchable: false, orderable: false },
                 { 
